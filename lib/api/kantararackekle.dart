@@ -30,7 +30,7 @@ class KantarApi {
     required int doluagirlik,
     required String tckimlik,
   }) async {
-    final Uri uri = Uri.parse('${App.outsideurl}/Kantar/kayit');
+    final Uri uri = Uri.parse('${App.localurl}/Kantar/kayit');
 
     final payload = <String, dynamic>{
       'adsoyad': adsoyad,

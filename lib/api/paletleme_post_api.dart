@@ -33,7 +33,7 @@ class PaletlemeApi {
     required String cihazadi,
     required String stokkodu,
   }) async {
-    final Uri uri = Uri.parse('${App.outsideurl}/Serapaket/Paletleme');
+    final Uri uri = Uri.parse('${App.localurl}/Serapaket/Paletleme');
 
     final payload = <String, dynamic>{
       'personelkodu': personelkodu,

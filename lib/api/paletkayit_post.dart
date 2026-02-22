@@ -20,7 +20,7 @@ class PaletKayitApi {
     required List<dynamic> paletler,
     required String id,
   }) async {
-    final Uri uri = Uri.parse('${App.outsideurl}/Kantar/paletkayit');
+    final Uri uri = Uri.parse('${App.localurl}/Kantar/paletkayit');
 
     final payload = <String, dynamic>{
       'paletler': paletler,

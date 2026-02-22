@@ -1,5 +1,4 @@
 import 'package:agronet/api/login_api.dart';
-import 'package:agronet/models/login_user_model.dart';
 import 'package:agronet/page/HomePage/GirisSayfaDrawer.dart';
 import 'package:agronet/page/LoginPage/otp_dogrulama_page.dart';
 import 'package:flutter/material.dart';
