@@ -1,0 +1,90 @@
+name: agronet
+description: A new Flutter project.
+publish_to: "none"
+
+version: 1.0.0+44
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Networking
+  http: ^1.6.0 # :contentReference[oaicite:2]{index=2}
+  dio: ^5.9.1 # :contentReference[oaicite:3]{index=3}
+
+
+  # UI / Animations
+  cupertino_icons: ^1.0.8
+  animations: ^2.1.1 # :contentReference[oaicite:4]{index=4}
+  flutter_slidable: ^4.0.3 # :contentReference[oaicite:5]{index=5}
+  flutter_spinkit: ^5.2.2 # :contentReference[oaicite:6]{index=6}
+  introduction_screen: ^4.0.0
+  grouped_list: ^6.0.0 # :contentReference[oaicite:8]{index=8}
+
+  # Loading (progress_dialog yerine)
+  flutter_easyloading: ^3.0.5 # :contentReference[oaicite:9]{index=9}
+
+  # Date / Time
+  intl: ^0.20.2 # :contentReference[oaicite:10]{index=10}
+  jiffy: ^6.4.4 # :contentReference[oaicite:11]{index=11}
+
+  # Date range picker (date_range_picker yerine)
+  flutter_date_range_picker: ^0.2.1 # :contentReference[oaicite:12]{index=12}
+
+  # Datetime picker (flutter_datetime_picker yerine)
+  flutter_datetime_picker_plus: ^2.2.0 # :contentReference[oaicite:13]{index=13}
+
+  # Storage
+  shared_preferences: ^2.5.4
+
+
+
+  # Crypto
+  crypto: ^3.0.7 # :contentReference[oaicite:15]{index=15}
+
+  # Charts (Syncfusion - lisans gerektiğini unutma)
+  syncfusion_flutter_charts: ^32.1.25 # :contentReference[oaicite:16]{index=16}
+  mobile_scanner: ^7.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+  # Icon generator (dependencies değil dev_dependencies olmalı)
+  flutter_launcher_icons: ^0.14.4 # :contentReference[oaicite:17]{index=17}
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/1234.png"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/agronet.png
+    - assets/1234.png
+    - assets/1212.jpg
+    - assets/1.jpg
+    - assets/2.jpg
+    - assets/3.jpg
+    - assets/4.jpg
+    - assets/5.jpg
+    - assets/agronet.png
+    - assets/IMG-0155.jpg
+    - assets/IMG-0156.jpg
+    - assets/IMG-0157.jpg
+    - assets/qr.jpg
+
+  fonts:
+    - family: Montserrat
+      fonts:
+        - asset: font/Montserrat-Regular.ttf
+          weight: 400
+        - asset: font/Montserrat-Regular.ttf
+          weight: 700
