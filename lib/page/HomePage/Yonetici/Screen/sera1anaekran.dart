@@ -1,4 +1,3 @@
-import 'package:agronet/api/bitenisler_api.dart';
 import 'package:agronet/api/bosta_olanlar_api.dart';
 import 'package:agronet/api/personelanlik_api.dart';
 import 'package:agronet/api/seraistanimlari.dart';

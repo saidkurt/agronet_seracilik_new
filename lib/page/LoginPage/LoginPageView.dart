@@ -83,7 +83,7 @@ class _LoginPageViewState extends State<LoginPageView> {
 
     try {
       // ✅ UI endpoint bilmez -> sadece API çağırır
-    final users = await LoginApi().girisTel(
+    final users = await _api.girisTel(
   telefon: telDigits,
   sifre: sifre,
 );

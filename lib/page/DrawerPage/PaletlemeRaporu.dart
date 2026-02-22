@@ -28,7 +28,6 @@ class _PaletlemeRaporPageState extends State<PaletlemeRaporPage> {
   String? _error;
 
   List<PaletlemeRaporModel> _items = [];
-  String _query = "";
 
   final _df = DateFormat('dd.MM.yyyy');
   final _tf = DateFormat('HH:mm');
@@ -37,7 +36,6 @@ class _PaletlemeRaporPageState extends State<PaletlemeRaporPage> {
   void initState() {
     super.initState();
     _searchCtrl.addListener(() {
-      setState(() => _query = _searchCtrl.text.trim().toLowerCase());
     });
     _getir();
   }

@@ -1,5 +1,4 @@
 import 'package:agronet/api/depo_durum_api.dart';
-import 'package:agronet/comp/appbar.dart';
 import 'package:agronet/models/depo_durum_model.dart';
 import 'package:flutter/material.dart';
 
@@ -58,7 +57,7 @@ void initState() {
     setState(() => _loading = true);
 
     try {
-      final data = await DepoDurumApi().depoDurumGetir(_value);
+      final data = await _api.depoDurumGetir(_value);
       if (!mounted) return;
       setState(() => sonuc = data);
     } catch (e) {

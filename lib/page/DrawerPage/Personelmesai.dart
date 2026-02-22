@@ -1,5 +1,4 @@
 import 'package:agronet/api/personelmesai_api.dart';
-import 'package:agronet/comp/appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
 
@@ -305,12 +304,6 @@ class _PersonelMesaiState extends State<PersonelMesai> {
       final d = _parseDate(row["tarih"]);
       final weekIndex = ((d.day - 1) ~/ 7); // 0:1-7, 1:8-14 ...
 
-      final startDay = 1 + (weekIndex * 7);
-      final start = DateTime(d.year, d.month, startDay);
-
-      final lastDayOfMonth = DateTime(d.year, d.month + 1, 0).day;
-      final endDay = (startDay + 6) > lastDayOfMonth ? lastDayOfMonth : (startDay + 6);
-      final end = DateTime(d.year, d.month, endDay);
 
       final key = "${d.year}-${d.month.toString().padLeft(2, '0')}-$weekIndex";
       map.putIfAbsent(key, () => []);

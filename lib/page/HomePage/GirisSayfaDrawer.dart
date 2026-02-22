@@ -1,9 +1,5 @@
-import 'package:agronet/api/kututipi_api.dart';
-import 'package:agronet/api/palet_tipi.dart';
 import 'package:agronet/api/serabarkodislistesi_api.dart';
-import 'package:agronet/comp/appbar.dart';
 import 'package:agronet/const/string.dart';
-import 'package:agronet/models/login_user_model.dart';
 import 'package:agronet/page/DrawerPage/BitkiOlcumGiris/Bitki_yerleri.dart';
 import 'package:agronet/page/DrawerPage/Depodurumraporu.dart';
 import 'package:agronet/page/DrawerPage/PaletlemeRaporu.dart';
