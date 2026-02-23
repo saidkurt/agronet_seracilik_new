@@ -1,11 +1,8 @@
-import 'package:agronet/page/HomePage/GirisSayfaDrawer.dart';
-import 'package:agronet/page/HomePage/Yonetici/Screen/sera2anaekran.dart';
-import 'package:agronet/page/HomePage/Yonetici/Screen/sera3anaekran.dart';
-import 'package:agronet/page/HomePage/Yonetici/Screen/sera4anaekran.dart';
+
+
 import 'package:agronet/page/LoginPage/LoginPageView.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'page/HomePage/Yonetici/Screen/sera1anaekran.dart';
 
 Future<void> main() async {
   runApp(MyApp());  WidgetsFlutterBinding.ensureInitialized();
@@ -23,12 +20,7 @@ class MyApp extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             initialRoute: '/',
             routes: {
-              '/girissayfa': (context) => DrawerPageView(),
-              '/anasayfa': (context) => LoginPageView(),
-              '/sera1anaekran': (contex) => Sera1AnaEkran(),
-              '/sera2anaekran': (contex) => Sera2AnaEkran(),
-              '/sera3anaekran': (contex) => Sera3AnaEkran(),
-              '/sera4anaekran': (contex) => Sera4AnaEkran(),
+              '/login': (context) => LoginPageView(),
             },
             theme: ThemeData(
               fontFamily: "Montserrat",

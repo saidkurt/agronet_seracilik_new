@@ -1,6 +1,6 @@
 import 'package:agronet/api/login_api.dart';
-import 'package:agronet/page/HomePage/GirisSayfaDrawer.dart';
 import 'package:agronet/page/LoginPage/otp_dogrulama_page.dart';
+import 'package:agronet/page/Homepage/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -107,18 +107,7 @@ final u = users.first;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) =>  DrawerPageView(
-      isimsoyisim: u.kullaniciadi,
-      bileklikno: u.bileklikid,
-      seraci: u.seraraporlarigorebilir,
-      kontrolcu: u.kontrolcuraporlarigorebilir,
-      yonetici: u.yonetimraporlarigorebilir,
-      depopaketleme: u.depopaketleme,
-      personelkodu: u.prosiskodu,
-      deporaporlarinigorebilir: u.deporaporlarinigorebilir,
-      tip: u.tip,
-      danismanraporlari: u.danismanraporlari,
-    ),
+          builder: (_) =>  HomeMenuPage(user: u)
         ),
       );
     } catch (e) {
@@ -284,7 +273,7 @@ final u = users.first;
                           Row(
                             children: [
                               Checkbox(
-                                activeColor: Colors.red,
+                                activeColor:Colors.green,
                                 value: _rememberMe,
                                 onChanged: (v) => _onRememberChanged(v ?? false),
                               ),
@@ -301,7 +290,7 @@ final u = users.first;
                             child: ElevatedButton(
                               onPressed: _isLoading ? null : _login,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
+                                backgroundColor: Colors.green,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
