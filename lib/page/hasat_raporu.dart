@@ -1,3 +1,4 @@
+import 'package:agronet/widget/shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -288,20 +289,6 @@ String _fmtInt(num? v) => _nf.format((v ?? 0).round());
                     const Icon(Icons.chevron_right),
                   ],
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          SizedBox(
-            height: 52,
-            child: OutlinedButton.icon(
-              onPressed: _loading ? null : _setTodayAndFetch,
-              icon: const Icon(Icons.today, size: 18),
-              label: const Text("Bugün"),
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                side: BorderSide(color: Colors.grey.shade300),
-                foregroundColor: Colors.black87,
               ),
             ),
           ),
@@ -739,19 +726,21 @@ class _HasatSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
-      children: const [
-        _SkeletonGroupCard(),
-        SizedBox(height: 10),
-        _SkeletonGroupCard(),
-        SizedBox(height: 10),
-        _SkeletonGroupCard(),
-        SizedBox(height: 10),
-        _SkeletonGroupCard(),
-        SizedBox(height: 10),
-        _SkeletonGroupCard(),
-      ],
+    return Shimmer(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+        children: const [
+          _SkeletonGroupCard(),
+          SizedBox(height: 10),
+          _SkeletonGroupCard(),
+          SizedBox(height: 10),
+          _SkeletonGroupCard(),
+          SizedBox(height: 10),
+          _SkeletonGroupCard(),
+          SizedBox(height: 10),
+          _SkeletonGroupCard(),
+        ],
+      ),
     );
   }
 }

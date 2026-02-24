@@ -1,3 +1,4 @@
+import 'package:agronet/widget/shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:agronet/api/personelanlik_api.dart';
 import 'package:agronet/models/personelanlik_model.dart';
@@ -421,66 +422,68 @@ class _SkeletonCard extends StatelessWidget {
           ),
         );
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withOpacity(.06)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(.06),
-              borderRadius: BorderRadius.circular(14),
+    return Shimmer(
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.black.withOpacity(.06)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(.06),
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    bar(w: 170, h: 12),
-                    const Spacer(),
-                    Container(
-                      width: 64,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(.06),
-                        borderRadius: BorderRadius.circular(999),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      bar(w: 170, h: 12),
+                      const Spacer(),
+                      Container(
+                        width: 64,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(.06),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                bar(w: 220, h: 12),
-                const SizedBox(height: 8),
-                bar(w: 180, h: 12),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    bar(w: 140, h: 12),
-                    const Spacer(),
-                    Container(
-                      width: 64,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(.06),
-                        borderRadius: BorderRadius.circular(999),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  bar(w: 220, h: 12),
+                  const SizedBox(height: 8),
+                  bar(w: 180, h: 12),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      bar(w: 140, h: 12),
+                      const Spacer(),
+                      Container(
+                        width: 64,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(.06),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          )
-        ],
+                    ],
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
       ),
     );
   }

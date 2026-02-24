@@ -1,4 +1,5 @@
 import 'package:agronet/api/personelmesai_api.dart';
+import 'package:agronet/widget/shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
 
@@ -609,145 +610,170 @@ class _WeekGroup {
 
 // ------------------ Skeleton Widgets ------------------
 
+
 class _SkeletonPrimCard extends StatelessWidget {
   const _SkeletonPrimCard();
 
   @override
   Widget build(BuildContext context) {
-    Widget bar({double w = 160, double h = 12}) => Container(
+    Widget block({double w = 160, double h = 12, double r = 10}) => Container(
           width: w,
           height: h,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(r),
             color: Colors.black.withOpacity(0.06),
           ),
         );
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(14, 12, 14, 6),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black12),
-        color: Colors.white,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(14),
+    return Shimmer(
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.black12),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 6),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                bar(w: 220, h: 16),
-                const SizedBox(height: 8),
-                bar(w: 140, h: 12),
-              ],
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
-          ),
-          Container(
-            width: 72,
-            height: 36,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(40),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  block(w: 220, h: 16, r: 10),
+                  const SizedBox(height: 8),
+                  block(w: 150, h: 12, r: 10),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Container(
+              width: 76,
+              height: 34,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-
 class _SkeletonWeekCard extends StatelessWidget {
   const _SkeletonWeekCard();
 
   @override
   Widget build(BuildContext context) {
-    Widget bar({double w = 160, double h = 12}) => Container(
+    Widget block({double w = 160, double h = 12, double r = 10}) => Container(
           width: w,
           height: h,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(r),
             color: Colors.black.withOpacity(0.06),
           ),
         );
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black12),
-        color: Colors.white,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              bar(w: 190, h: 14),
-              const Spacer(),
-              Container(
-                width: 26,
-                height: 26,
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.06),
-                  shape: BoxShape.circle,
+    return Shimmer(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.black12),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                block(w: 190, h: 14),
+                const Spacer(),
+                Container(
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.06),
+                    shape: BoxShape.circle,
+                  ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            block(w: 240, h: 12),
+            const SizedBox(height: 12),
+            Container(
+              height: 1,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(1),
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          bar(w: 240, h: 12),
-          const SizedBox(height: 12),
-          Divider(height: 1, color: Colors.grey.shade200),
-          const SizedBox(height: 12),
-          ...List.generate(3, (i) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(10),
+            ),
+            const SizedBox(height: 12),
+            ...List.generate(3, (i) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: i == 2 ? 0 : 10),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        bar(w: 220, h: 12),
-                        const SizedBox(height: 6),
-                        bar(w: 160, h: 12),
-                      ],
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          block(w: double.infinity, h: 12),
+                          const SizedBox(height: 6),
+                          block(w: 180, h: 12),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Container(
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(6),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }

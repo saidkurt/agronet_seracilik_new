@@ -96,29 +96,7 @@ class ProfileCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: accent.withOpacity(.10),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: accent.withOpacity(.18)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.verified_user_outlined, size: 14, color: accent.withOpacity(.9)),
-                    const SizedBox(width: 6),
-                    Text(
-                      role,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        color: accent.withOpacity(.95),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+         
             ],
           ),
 

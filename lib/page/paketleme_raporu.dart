@@ -1,4 +1,5 @@
 import 'package:agronet/api/paketleme_rapor_api.dart';
+import 'package:agronet/widget/shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -506,39 +507,41 @@ class _SkeletonList extends StatelessWidget {
           ),
         );
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-      itemCount: 8,
-      itemBuilder: (_, __) => Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.black12),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  bar(w: 180, h: 14),
-                  const SizedBox(height: 8),
-                  bar(w: 120, h: 12),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [bar(w: 90, h: 22), const SizedBox(width: 8), bar(w: 90, h: 22)],
-                  ),
-                ],
+    return Shimmer(
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        itemCount: 8,
+        itemBuilder: (_, __) => Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.black12),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    bar(w: 180, h: 14),
+                    const SizedBox(height: 8),
+                    bar(w: 120, h: 12),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [bar(w: 90, h: 22), const SizedBox(width: 8), bar(w: 90, h: 22)],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [bar(w: 40, h: 10), const SizedBox(height: 6), bar(w: 60, h: 24)],
-            ),
-          ],
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [bar(w: 40, h: 10), const SizedBox(height: 6), bar(w: 60, h: 24)],
+              ),
+            ],
+          ),
         ),
       ),
     );

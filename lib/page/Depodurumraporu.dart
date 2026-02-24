@@ -1,5 +1,6 @@
 import 'package:agronet/api/depo_durum_api.dart';
 import 'package:agronet/models/depo_durum_model.dart';
+import 'package:agronet/widget/shimmer.dart';
 import 'package:flutter/material.dart';
 
 class DepodurumRaporu extends StatefulWidget {
@@ -143,47 +144,51 @@ class _DepodurumRaporuState extends State<DepodurumRaporu> {
   }
 
   Widget _buildSkeletonList() {
-    Widget bar(double w, double h) => Container(
-          width: w,
-          height: h,
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.06),
-            borderRadius: BorderRadius.circular(8),
+    Widget bar(double w, double h) => Shimmer(
+      child: Container(
+            width: w,
+            height: h,
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.06),
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
-        );
+    );
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-      itemCount: 10,
-      itemBuilder: (_, __) => Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.grey.shade200),
-          color: Colors.white,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                bar(110, 14),
-                const Spacer(),
-                bar(70, 14),
-              ],
-            ),
-            const SizedBox(height: 10),
-            bar(240, 14),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                bar(110, 22),
-                const SizedBox(width: 8),
-                bar(70, 22),
-              ],
-            ),
-          ],
+    return Shimmer(
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+        itemCount: 10,
+        itemBuilder: (_, __) => Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.grey.shade200),
+            color: Colors.white,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  bar(110, 14),
+                  const Spacer(),
+                  bar(70, 14),
+                ],
+              ),
+              const SizedBox(height: 10),
+              bar(240, 14),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  bar(110, 22),
+                  const SizedBox(width: 8),
+                  bar(70, 22),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
