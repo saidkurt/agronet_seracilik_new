@@ -14,7 +14,6 @@ class PersonelMesaiApi {
 
     try {
       final http.Response response = await _client.get(uri);
-      print(response.body);
 
       if (response.statusCode != 200) {
         throw Exception(

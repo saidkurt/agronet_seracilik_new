@@ -1,12 +1,13 @@
 import 'package:agronet/models/login_user_model.dart';
 import 'package:agronet/widget/info_item.dart';
+import 'package:agronet/widget/mesaid_card.dart';
 import 'package:flutter/material.dart';
 
 class ProfileCard extends StatelessWidget {
   final LoginUserModel user;
   final String role;
 
-  const ProfileCard({required this.user, required this.role});
+  const ProfileCard({super.key, required this.user, required this.role});
 
   static const accent = Color(0xFF1E6F5C);
 
@@ -39,7 +40,7 @@ class ProfileCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // üst satır: avatar + isim/tip + rol chip
+          // ÜST: avatar + isim/tip + rol chip
           Row(
             children: [
               Container(
@@ -123,7 +124,7 @@ class ProfileCard extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // alt satır: personel/bileklik
+          // ALT BLOK: personel/bileklik + prim widget
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
@@ -131,23 +132,32 @@ class ProfileCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.black.withOpacity(.06)),
             ),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: InfoItem(
-                    icon: Icons.badge_outlined,
-                    label: "Personel",
-                    value: personel.isEmpty ? "-" : personel,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InfoItem(
+                        icon: Icons.badge_outlined,
+                        label: "Personel",
+                        value: personel.isEmpty ? "-" : personel,
+                      ),
+                    ),
+                    Container(width: 1, height: 20, color: Colors.black.withOpacity(.08)),
+                    Expanded(
+                      child: InfoItem(
+                        icon: Icons.watch_outlined,
+                        label: "Bileklik",
+                        value: bileklik.isEmpty ? "-" : bileklik,
+                      ),
+                    ),
+                  ],
                 ),
-                Container(width: 1, height: 20, color: Colors.black.withOpacity(.08)),
-                Expanded(
-                  child: InfoItem(
-                    icon: Icons.watch_outlined,
-                    label: "Bileklik",
-                    value: bileklik.isEmpty ? "-" : bileklik,
-                  ),
-                ),
+
+                if (bileklik.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  MesaiPrimPuanWidget(bileklikId: bileklik),
+                ],
               ],
             ),
           ),

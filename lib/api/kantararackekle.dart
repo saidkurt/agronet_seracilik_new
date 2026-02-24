@@ -69,7 +69,7 @@ class KantarApi {
   ///
   /// Model yoksa en temiz dönüş: List<Map<String,dynamic>>
   Future<List<Map<String, dynamic>>> kantariceri() async {
-    final Uri uri = Uri.parse('${App.outsideurl}/Kantar/Bilgi');
+    final Uri uri = Uri.parse('${App.localurl}/Kantar/Bilgi');
 
     try {
       final http.Response response = await _client.get(uri);

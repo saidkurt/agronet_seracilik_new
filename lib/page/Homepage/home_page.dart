@@ -1,6 +1,10 @@
-import 'package:agronet/page/DrawerPage/Depodurumraporu.dart';
-import 'package:agronet/page/DrawerPage/PaletlemeRaporu.dart';
-import 'package:agronet/page/DrawerPage/paketleme.dart';
+import 'package:agronet/page/Bitki_yerleri.dart';
+import 'package:agronet/page/Depodurumraporu.dart';
+import 'package:agronet/page/PaletlemeRaporu.dart';
+import 'package:agronet/page/hasat_raporu.dart';
+import 'package:agronet/page/paketleme.dart';
+import 'package:agronet/page/paketleme_raporu.dart';
+import 'package:agronet/page/personel_anlik_durum.dart';
 import 'package:agronet/widget/profile_header.dart';
 import 'package:flutter/material.dart';
 import 'package:agronet/models/login_user_model.dart';
@@ -38,11 +42,13 @@ class HomeMenuPage extends StatelessWidget {
         },
       ),
       _MenuItem(
-        title: "Ölçüm Giriş",
+        title: "Bitki Ölçüm Giriş",
         icon: Icons.straighten_rounded,
         visible: true,
-        onTap: () {},
-      ),
+       onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) =>  BitkiOlcumSahaSayfa(personelKodu: user.kullanicikodu ?? "",personelAdi: user.kullaniciadi ?? "",)));
+        },
+        ),
       _MenuItem(
         title: "Arıza Giriş",
         icon: Icons.report_gmailerrorred_rounded,
@@ -57,7 +63,7 @@ class HomeMenuPage extends StatelessWidget {
         icon: Icons.inventory_2_rounded,
         visible: user.depopaketleme,
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) =>  Paketleme(personelkodu: user.kullanicikodu ?? "")));
+          Navigator.push(context, MaterialPageRoute(builder: (_) =>  Paketleme(personelkodu: user.kullanicikodu ?? "",personelAdi: user.kullaniciadi ?? "",)));
         },
       ),
       _MenuItem(
@@ -70,19 +76,7 @@ class HomeMenuPage extends StatelessWidget {
     ];
 
     final raporItems = <_MenuItem>[
-      _MenuItem(
-        title: "Paketleme Raporları",
-        icon: Icons.receipt_long_rounded,
-        visible: user.deporaporlarinigorebilir || user.yonetimraporlarigorebilir,
-        onTap: () {},
-      ),
-      _MenuItem(
-        title: "Sera Raporları",
-        icon: Icons.spa_rounded,
-        visible: user.seraraporlarigorebilir || user.yonetimraporlarigorebilir,
-        onTap: () {},
-      ),
-         _MenuItem(
+       _MenuItem(
         title: "Paletleme Raporu",
         icon: Icons.qr_code_scanner_rounded,
         visible: user.deporaporlarinigorebilir || user.depopaketleme,
@@ -91,11 +85,39 @@ class HomeMenuPage extends StatelessWidget {
         },
       ),
       _MenuItem(
+        title: "Paketleme Raporları",
+        icon: Icons.receipt_long_rounded,
+        visible: user.deporaporlarinigorebilir || user.yonetimraporlarigorebilir,
+          onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) =>  PaketlemeRaporPage()));
+        },
+      ),
+        _MenuItem(
+        title: "Hasat Raporu",
+        icon: Icons.qr_code_scanner_rounded,
+        visible: user.deporaporlarinigorebilir || user.depopaketleme,
+             onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) =>  HasatRaporuDetayliPage()));
+        },
+      ),
+        
+      _MenuItem(
+        title: "Personel Anlık Durum",
+        icon: Icons.person_3_outlined,
+        visible: user.deporaporlarinigorebilir || user.depopaketleme,
+            onTap: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const PersonelAnlikDurumPage()),
+  );
+},
+      ),
+      _MenuItem(
         title: "Depo Durum Raporu",
         icon: Icons.warehouse_rounded,
         visible: user.deporaporlarinigorebilir,
             onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) =>  DepodurumRaporu(personelkodu: user.kullanicikodu ?? "",)));
+          Navigator.push(context, MaterialPageRoute(builder: (_) =>  DepodurumRaporu(personeladi: user.kullaniciadi ?? "",)));
         },
       ),
     ];
@@ -215,46 +237,56 @@ class _MenuCard extends StatelessWidget {
       onTap: item.onTap,
       borderRadius: BorderRadius.circular(18),
       child: Container(
-        width: 160,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
           color: const Color(0xFFF7F7F9),
           border: Border.all(color: Colors.black.withOpacity(.06)),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: accent.withOpacity(.10),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(item.icon, color: accent.withOpacity(.92)),
+            // üst satır: icon + ok
+            Row(
+              children: [
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: accent.withOpacity(.10),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(item.icon, color: accent.withOpacity(.92)),
+                ),
+                const Spacer(),
+                Icon(Icons.chevron_right_rounded, color: Colors.black.withOpacity(.35)),
+              ],
             ),
-            const SizedBox(width: 10),
+            const SizedBox(height: 10),
+
+            // başlık: geniş alan + 2 satır düzgün
             Expanded(
-              child: Text(
-                item.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.black.withOpacity(.86),
-                  height: 1.1,
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Text(
+                  item.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black.withOpacity(.86),
+                    height: 1.15,
+                  ),
                 ),
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: Colors.black.withOpacity(.35)),
           ],
         ),
       ),
     );
   }
 }
-
 class _MenuItem {
   final String title;
   final IconData icon;
