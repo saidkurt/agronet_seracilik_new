@@ -1,4 +1,5 @@
 import 'package:agronet/api/palet_detay_api.dart';
+import 'package:agronet/api/paletleme_post_api.dart';
 import 'package:agronet/api/paletleme_rapor.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -34,6 +35,9 @@ class _PaletlemeRaporPageState extends State<PaletlemeRaporPage> {
 
   final _df = DateFormat('dd.MM.yyyy');
   final _tf = DateFormat('HH:mm');
+
+  // ✅ Etiket basarken UI kilidi
+  String? _printingPalet;
 
   @override
   void initState() {
@@ -138,6 +142,42 @@ class _PaletlemeRaporPageState extends State<PaletlemeRaporPage> {
       );
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  // ✅ Etiket çıkar butonu
+  Future<void> _etiketCikar(String paletKodu) async {
+    final p = paletKodu.trim();
+    if (p.isEmpty) return;
+    if (_printingPalet != null) return;
+
+    setState(() {
+      _printingPalet = p;
+      _error = null;
+    });
+
+    try {
+      // ✅ cihaz adı sabit: Kiosk 1
+      final api = PaletlemeApi(); // etiket_tekrar_paletleme.dart
+      await api.paletEtiketiTekrar(
+        paletkodu: p,
+        cihazadi: "Kiosk 1",
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Etiket çıkarıldı ✅')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Etiket çıkarma hatası: $e')),
+      );
+
+      setState(() => _error = 'Etiket çıkarma hatası: $e');
+    } finally {
+      if (mounted) setState(() => _printingPalet = null);
     }
   }
 
@@ -251,7 +291,6 @@ class _PaletlemeRaporPageState extends State<PaletlemeRaporPage> {
                     ),
                   ),
                   const SizedBox(height: 10),
-
                   Padding(
                     padding: const EdgeInsets.fromLTRB(14, 2, 14, 10),
                     child: Row(
@@ -265,16 +304,13 @@ class _PaletlemeRaporPageState extends State<PaletlemeRaporPage> {
                       ],
                     ),
                   ),
-
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                       child: _PaletDetayCard(detay: detay),
                     ),
                   ),
-
                   Divider(height: 1, color: Colors.grey.shade200),
-
                   Padding(
                     padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
                     child: Row(
@@ -346,173 +382,165 @@ class _PaletlemeRaporPageState extends State<PaletlemeRaporPage> {
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // ✅ ÜST PANEL: tek kart
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Column(
-                children: [
-                  Row(
+          Column(
+            children: [
+              // ✅ ÜST PANEL: tek kart
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: _DateChip(
-                          label: 'İlk',
-                          value: _df.format(_ilkTarih),
-                          onTap: () => _pickDate(isIlk: true),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _DateChip(
-                          label: 'Son',
-                          value: _df.format(_sonTarih),
-                          onTap: () => _pickDate(isIlk: false),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        height: 44,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: accent,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _DateChip(
+                              label: 'İlk',
+                              value: _df.format(_ilkTarih),
+                              onTap: () => _pickDate(isIlk: true),
+                            ),
                           ),
-                          onPressed: _loading ? null : _getir,
-                          icon: _loading
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                )
-                              : const Icon(Icons.refresh),
-                          label: const Text('Getir', style: TextStyle(fontWeight: FontWeight.w900)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _DateChip(
+                              label: 'Son',
+                              value: _df.format(_sonTarih),
+                              onTap: () => _pickDate(isIlk: false),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            height: 44,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: accent,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                              onPressed: _loading ? null : _getir,
+                              icon: _loading
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    )
+                                  : const Icon(Icons.refresh),
+                              label: const Text('Getir', style: TextStyle(fontWeight: FontWeight.w900)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      // ✅ Ürün filtre chipleri
+                      SizedBox(
+                        height: 42,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            _UrunChip(
+                              text: "Tümü",
+                              selected: _selectedUrun == null,
+                              onTap: () => setState(() => _selectedUrun = null),
+                            ),
+                            const SizedBox(width: 8),
+                            ..._urunAdlari.map((u) => Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: _UrunChip(
+                                    text: u,
+                                    selected: _selectedUrun == u,
+                                    onTap: () => setState(() => _selectedUrun = u),
+                                  ),
+                                )),
+                          ],
                         ),
                       ),
+
+                      const SizedBox(height: 10),
+
+                      // ✅ KPI satırı
+                      Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(child: _KpiCard(title: 'Palet', value: _paletAdet.toString(), icon: Icons.inventory_2)),
+                              const SizedBox(width: 8),
+                              Expanded(child: _KpiCard(title: 'Kutu', value: _kutuToplam.toString(), icon: Icons.all_inbox)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(child: _KpiCard(title: 'Net', value: _netToplam.toString(), icon: Icons.scale)),
+                              const SizedBox(width: 8),
+                              Expanded(child: _KpiCard(title: 'Brüt', value: _brutToplam.toString(), icon: Icons.monitor_weight)),
+                            ],
+                          ),
+                        ],
+                      ),
+
+                      if (_error != null) ...[
+                        const SizedBox(height: 10),
+                        _ErrorBox(text: _error!),
+                      ],
                     ],
                   ),
-
-                  const SizedBox(height: 10),
-
-                  // ✅ Ürün filtre chipleri
-                  SizedBox(
-                    height: 42,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        _UrunChip(
-                          text: "Tümü",
-                          selected: _selectedUrun == null,
-                          onTap: () => setState(() => _selectedUrun = null),
-                        ),
-                        const SizedBox(width: 8),
-                        ..._urunAdlari.map((u) => Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: _UrunChip(
-                                text: u,
-                                selected: _selectedUrun == u,
-                                onTap: () => setState(() => _selectedUrun = u),
-                              ),
-                            )),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // ✅ KPI satırı
-               Column(
-  children: [
-    Row(
-      children: [
-        Expanded(child: _KpiCard(title: 'Palet', value: _paletAdet.toString(), icon: Icons.inventory_2)),
-        const SizedBox(width: 8),
-        Expanded(child: _KpiCard(title: 'Kutu', value: _kutuToplam.toString(), icon: Icons.all_inbox)),
-      ],
-    ),
-    const SizedBox(height: 8),
-    Row(
-      children: [
-        Expanded(child: _KpiCard(title: 'Net', value: _netToplam.toString(), icon: Icons.scale)),
-        const SizedBox(width: 8),
-        Expanded(child: _KpiCard(title: 'Brüt', value: _brutToplam.toString(), icon: Icons.monitor_weight)),
-      ],
-    ),
-  ],
-),
-
-                  if (_error != null) ...[
-                    const SizedBox(height: 10),
-                    _ErrorBox(text: _error!),
-                  ],
-                ],
+                ),
               ),
-            ),
-          ),
 
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              child: _loading
-                  ? ListView.builder(
-                      key: const ValueKey("loading"),
-                      padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
-                      itemCount: 8,
-                      itemBuilder: (_, __) => const _SkeletonCard(),
-                    )
-                  : RefreshIndicator(
-                      key: const ValueKey("list"),
-                      onRefresh: _getir,
-                      child: list.isEmpty
-                          ? ListView(
-                              children: const [
-                                SizedBox(height: 140),
-                                Center(child: Text('Kayıt yok')),
-                              ],
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
-                              itemCount: list.length,
-                              itemBuilder: (context, i) {
-                                final x = list[i];
-                                final palet = x.paletKodu ?? "";
-                                return _PaletCard(
-                                  item: x,
-                                  timeFormatter: _tf,
-                                  dateFormatter: _df,
-                                  onDelete: palet.isEmpty ? null : () => _paletSil(palet),
-                                  onOpen: palet.isEmpty
-                                      ? null
-                                      : () async {
-                                          setState(() => _loading = true);
-                                          try {
-                                            final detay = await PaletDetayApi()
-                                                .paletDetayGetir(paletkodu: palet.trim());
-                                            if (!mounted) return;
-                                            setState(() => _loading = false);
-                                            await _showPaletDetaySheet(detay);
-                                          } catch (e) {
-                                            if (!mounted) return;
-                                            setState(() => _loading = false);
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text('Detay alınamadı: $e')),
-                                            );
-                                          }
-                                        },
-                                );
-                              },
-                            ),
-                    ),
-            ),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  child: _loading
+                      ? ListView.builder(
+                          key: const ValueKey("loading"),
+                          padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
+                          itemCount: 8,
+                          itemBuilder: (_, __) => const _SkeletonCard(),
+                        )
+                      : RefreshIndicator(
+                          key: const ValueKey("list"),
+                          onRefresh: _getir,
+                          child: list.isEmpty
+                              ? ListView(
+                                  children: const [
+                                    SizedBox(height: 140),
+                                    Center(child: Text('Kayıt yok')),
+                                  ],
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
+                                  itemCount: list.length,
+                                  itemBuilder: (context, i) {
+                                    final x = list[i];
+                                    final palet = (x.paletKodu ?? '').trim();
+
+                                    final musteri = (x.musteri ?? '').trim();
+                                    final yuklenmedi = musteri.toLowerCase() == 'yüklenmedi';
+
+                                    return _PaletCard(
+                                      item: x,
+                                      timeFormatter: _tf,
+                                      dateFormatter: _df,
+                                      onDelete: palet.isEmpty ? null : () => _paletSil(palet),
+                               
+                                      onPrint:  palet.isEmpty ? null : () => _etiketCikar(palet),
+                                      printing:  _printingPalet != null && _printingPalet == palet,
+                                    );
+                                  },
+                                ),
+                        ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -600,8 +628,6 @@ class _KpiCard extends StatelessWidget {
                   style: const TextStyle(fontSize: 12, color: Colors.black54),
                 ),
                 const SizedBox(height: 3),
-
-                // ✅ değer tek satır, sığmazsa otomatik küçülür
                 SizedBox(
                   height: 20,
                   child: FittedBox(
@@ -611,10 +637,7 @@ class _KpiCard extends StatelessWidget {
                       value,
                       maxLines: 1,
                       softWrap: false,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                      ),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
                     ),
                   ),
                 ),
@@ -634,6 +657,8 @@ class _PaletCard extends StatelessWidget {
     required this.dateFormatter,
     this.onDelete,
     this.onOpen,
+    this.onPrint,
+    this.printing = false,
   });
 
   final PaletlemeRaporModel item;
@@ -641,6 +666,10 @@ class _PaletCard extends StatelessWidget {
   final DateFormat dateFormatter;
   final VoidCallback? onDelete;
   final VoidCallback? onOpen;
+
+  // ✅ Etiket çıkar butonu
+  final VoidCallback? onPrint;
+  final bool printing;
 
   @override
   Widget build(BuildContext context) {
@@ -676,10 +705,7 @@ class _PaletCard extends StatelessWidget {
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
                   ),
                 ),
-                Text(
-                  '$dateStr  $timeStr',
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
-                ),
+                Text('$dateStr  $timeStr', style: const TextStyle(fontSize: 12, color: Colors.black54)),
                 const SizedBox(width: 6),
                 IconButton(
                   tooltip: 'Sil',
@@ -704,34 +730,43 @@ class _PaletCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
+            // ✅ soldaki duracak, sağ taraf: yüklenmediyse kırmızı pill, değilse Etiket Çıkar
             Row(
               children: [
-                const Icon(Icons.person_outline, size: 16, color: Colors.black54),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    musteri.isEmpty ? "-" : musteri,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: yuklenmedi ? Colors.black87 : Colors.black54,
-                      fontWeight: yuklenmedi ? FontWeight.w700 : FontWeight.w400,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (yuklenmedi)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      color: Colors.orange.withOpacity(0.12),
-                      border: Border.all(color: Colors.orange.withOpacity(0.35)),
-                    ),
-                    child: const Text(
-                      'Yüklenmedi',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-                    ),
-                  ),
+     
+      
+                  SizedBox(
+      height: 34,
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _PaletlemeRaporPageState.accent,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+        ),
+        onPressed: onPrint,
+        icon: printing
+            ? const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              )
+            : const Icon(Icons.print, size: 16),
+        label: const Text(
+          "Etiket Çıkar",
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+        ),
+      ),
+    ),
+
+    const Spacer(),
+
+    // SAĞ: Yüklenmedi alanı
+    if (yuklenmedi)
+      const _RedPill(text: 'Yüklenmedi')
+    else
+      _GreenPill(text: (musteri.isEmpty ? '-' : musteri)),
               ],
             ),
 
@@ -759,6 +794,27 @@ class _PaletCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _RedPill extends StatelessWidget {
+  const _RedPill({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: Colors.red.withOpacity(0.10),
+        border: Border.all(color: Colors.red.withOpacity(0.45)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.red),
       ),
     );
   }
@@ -1038,7 +1094,6 @@ class _QrOrManualSheetState extends State<_QrOrManualSheet> {
               ),
             ),
             const SizedBox(height: 12),
-
             Row(
               children: const [
                 Icon(Icons.qr_code_scanner, color: _PaletlemeRaporPageState.accent),
@@ -1047,7 +1102,6 @@ class _QrOrManualSheetState extends State<_QrOrManualSheet> {
               ],
             ),
             const SizedBox(height: 10),
-
             TextField(
               controller: _ctrl,
               autofocus: true,
@@ -1061,9 +1115,7 @@ class _QrOrManualSheetState extends State<_QrOrManualSheet> {
                 fillColor: const Color(0xFFF6F7F9),
               ),
             ),
-
             const SizedBox(height: 12),
-
             Row(
               children: [
                 Expanded(
@@ -1151,6 +1203,33 @@ class _UrunChip extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GreenPill extends StatelessWidget {
+  const _GreenPill({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 190),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: _PaletlemeRaporPageState.accent.withOpacity(0.10),
+        border: Border.all(color: _PaletlemeRaporPageState.accent.withOpacity(0.25)),
+      ),
+      child: Text(
+        text,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+          color: _PaletlemeRaporPageState.accent,
         ),
       ),
     );

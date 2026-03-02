@@ -1,6 +1,7 @@
 import 'package:agronet/page/Bitki_yerleri.dart';
 import 'package:agronet/page/Depodurumraporu.dart';
 import 'package:agronet/page/PaletlemeRaporu.dart';
+import 'package:agronet/page/barkod_kontrol.dart';
 import 'package:agronet/page/hasat_raporu.dart';
 import 'package:agronet/page/paketleme.dart';
 import 'package:agronet/page/paketleme_raporu.dart';
@@ -64,6 +65,14 @@ class HomeMenuPage extends StatelessWidget {
         visible: user.depopaketleme,
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  Paketleme(personelkodu: user.kullanicikodu ?? "",personelAdi: user.kullaniciadi ?? "",)));
+        },
+      ),
+       _MenuItem(
+        title: "Barkod Kontrol",
+        icon: Icons.qr_code_scanner_rounded,
+        visible: user.depopaketleme,
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) =>  KoliBarkodPage()));
         },
       ),
       _MenuItem(

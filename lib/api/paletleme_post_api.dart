@@ -76,4 +76,38 @@ class PaletlemeApi {
       throw Exception('PaletlemeApi.paletGonder hata: $e');
     }
   }
+    Future<String> paletEtiketiTekrar({
+    required String paletkodu,
+    required String cihazadi,
+  }) async {
+    final Uri uri =
+        Uri.parse('${App.localurl}/Serapaket/PaletEtiketi');
+
+    try {
+      final http.Response response = await _client.post(
+        uri,
+        headers: const {
+          'Accept': 'application/json',
+          'Content-Type':
+              'application/x-www-form-urlencoded; charset=utf-8',
+        },
+        body: {
+          'cihazadi': cihazadi,
+          'paletkodu': paletkodu,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'PaletEtiketiTekrar başarısız. '
+          'Status: ${response.statusCode} Body: ${response.body}',
+        );
+      }
+
+      final decoded = jsonDecode(response.body);
+      return decoded;
+    } catch (e) {
+      throw Exception('paletEtiketiTekrar hata: $e');
+    }
+  }
 }
