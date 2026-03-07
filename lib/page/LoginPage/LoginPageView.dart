@@ -1,6 +1,6 @@
 import 'package:agronet/api/login_api.dart';
-import 'package:agronet/page/LoginPage/otp_dogrulama_page.dart';
 import 'package:agronet/page/Homepage/home_page.dart';
+import 'package:agronet/page/LoginPage/otp_dogrulama_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,6 +13,10 @@ class LoginPageView extends StatefulWidget {
 }
 
 class _LoginPageViewState extends State<LoginPageView> {
+  static const Color accent = Color(0xFF1E6F5C);
+  static const Color bg = Color(0xFFF6F7F9);
+  static const Color cardBg = Colors.white;
+
   final _formKey = GlobalKey<FormState>();
 
   final _telCtrl = TextEditingController();
@@ -37,22 +41,21 @@ class _LoginPageViewState extends State<LoginPageView> {
     super.dispose();
   }
 
-  void _snack(String msg) {
+  void _snack(String msg, {bool success = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
-      ..clearSnackBars()
+      ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(msg),
           behavior: SnackBarBehavior.floating,
+          backgroundColor: success ? accent : Colors.red.shade600,
         ),
       );
   }
 
-  /// "505 123 45 67" -> "5051234567"
   String _digitsOnly(String s) => s.replaceAll(RegExp(r'[^0-9]'), '');
 
-  /// "5051234567" -> "505 123 45 67"
   String _formatTr10(String digits) {
     final d = _digitsOnly(digits);
     if (d.isEmpty) return '';
@@ -68,32 +71,33 @@ class _LoginPageViewState extends State<LoginPageView> {
     return sb.toString();
   }
 
- bool _isValidTel(String digits) {
-  return RegExp(r'^\d{10}$').hasMatch(digits);
-}
+  bool _isValidTel(String digits) {
+    return RegExp(r'^\d{10}$').hasMatch(digits);
+  }
 
   Future<void> _login() async {
+    FocusScope.of(context).unfocus();
+
     final ok = _formKey.currentState?.validate() ?? false;
     if (!ok) return;
 
-    final telDigits = _digitsOnly(_telCtrl.text.trim()); // 5051234567
+    final telDigits = _digitsOnly(_telCtrl.text.trim());
     final sifre = _sifreCtrl.text.trim();
 
     setState(() => _isLoading = true);
 
     try {
-      // ✅ UI endpoint bilmez -> sadece API çağırır
-    final users = await _api.girisTel(
-  telefon: telDigits,
-  sifre: sifre,
-);
+      final users = await _api.girisTel(
+        telefon: telDigits,
+        sifre: sifre,
+      );
 
-if (users.isEmpty) {
-  _snack("Kullanıcı bulunamadı");
-  return;
-}
+      if (users.isEmpty) {
+        _snack("Kullanıcı bulunamadı");
+        return;
+      }
 
-final u = users.first;
+      final u = users.first;
 
       if (_rememberMe) {
         await _savePref(telDigits, sifre);
@@ -103,24 +107,25 @@ final u = users.first;
 
       if (!mounted) return;
 
-      // ✅ DrawerPage yönlendirmesi model ile
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) =>  HomeMenuPage(user: u)
+          builder: (_) => HomeMenuPage(user: u),
         ),
       );
     } catch (e) {
       if (!mounted) return;
       _snack("Bağlantı hatası: $e");
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _savePref(String telDigits, String sifre) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('TEL', telDigits); // digits sakla
+    await prefs.setString('TEL', telDigits);
     await prefs.setString('Sifre', sifre);
   }
 
@@ -138,21 +143,25 @@ final u = users.first;
     if (telDigits.isNotEmpty) {
       _telCtrl.text = _formatTr10(telDigits);
       _sifreCtrl.text = sifre;
-      if (mounted) setState(() => _rememberMe = true);
+      if (mounted) {
+        setState(() => _rememberMe = true);
+      }
     } else {
-      if (mounted) setState(() => _rememberMe = false);
+      if (mounted) {
+        setState(() => _rememberMe = false);
+      }
     }
   }
 
-  void _onRememberChanged(bool value) async {
+  Future<void> _onRememberChanged(bool value) async {
     setState(() => _rememberMe = value);
+
     if (!value) {
-      // kapatınca temizle
       await _clearPref();
       if (!mounted) return;
       setState(() {
-        _telCtrl.text = '';
-        _sifreCtrl.text = '';
+        _telCtrl.clear();
+        _sifreCtrl.clear();
       });
     }
   }
@@ -164,13 +173,30 @@ final u = users.first;
   }) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: Icon(icon),
+      prefixIcon: Icon(icon, color: accent),
       suffixIcon: suffix,
       filled: true,
-      fillColor: Colors.grey.shade100,
+      fillColor: Colors.grey.shade50,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+        borderSide: BorderSide(color: accent, width: 1.6),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.red.shade400),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.red.shade400, width: 1.4),
       ),
     );
   }
@@ -178,51 +204,112 @@ final u = users.first;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bg,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+              constraints: const BoxConstraints(maxWidth: 430),
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 18),
 
-                    // ✅ Logo
                     Center(
                       child: Image.asset(
                         "assets/agronet.png",
-                        height: 160,
+                        height: 130,
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
 
-                    // ✅ Köşeli kart
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: accent,
                         borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: Colors.grey.shade300),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(
+                            color: Color(0x14000000),
+                            blurRadius: 14,
+                            offset: Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.eco_outlined,
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            'Agronet’e Hoş Geldiniz',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 21,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'Telefon numaranız ve şifreniz ile giriş yaparak sisteme güvenli şekilde erişebilirsiniz.',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13.5,
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(22),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x12000000),
                             blurRadius: 12,
-                            color: Colors.black.withOpacity(0.06),
-                            offset: const Offset(0, 6),
-                          )
+                            offset: Offset(0, 4),
+                          ),
                         ],
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ✅ Telefon
+                          const Text(
+                            'Giriş Bilgileri',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Telefon numaranızı 10 hane olarak girin.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+
                           TextFormField(
                             controller: _telCtrl,
+                            enabled: !_isLoading,
                             keyboardType: TextInputType.phone,
                             textInputAction: TextInputAction.next,
                             inputFormatters: const [
@@ -230,128 +317,168 @@ final u = users.first;
                             ],
                             decoration: _dec(
                               hint: "Telefon (505 123 45 67)",
-                              icon: Icons.phone,
+                              icon: Icons.phone_android_rounded,
                             ),
                             validator: (v) {
                               final digits = _digitsOnly(v ?? '');
-                              if (digits.isEmpty) return "Telefon boş olamaz";
+                              if (digits.isEmpty) {
+                                return "Telefon boş olamaz";
+                              }
                               if (!_isValidTel(digits)) {
-                                return "Telefon 10 hane olmalı !";
+                                return "Telefon 10 hane olmalı";
                               }
                               return null;
                             },
                           ),
 
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 14),
 
-                          // ✅ Şifre
                           TextFormField(
                             controller: _sifreCtrl,
+                            enabled: !_isLoading,
                             obscureText: _obscure,
                             keyboardType: TextInputType.number,
                             textInputAction: TextInputAction.done,
-                            onFieldSubmitted: (_) => _isLoading ? null : _login(),
+                            onFieldSubmitted: (_) {
+                              if (!_isLoading) {
+                                _login();
+                              }
+                            },
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
                             decoration: _dec(
                               hint: "Şifre",
-                              icon: Icons.lock_outline,
+                              icon: Icons.lock_outline_rounded,
                               suffix: IconButton(
-                                onPressed: () => setState(() => _obscure = !_obscure),
+                                onPressed: _isLoading
+                                    ? null
+                                    : () {
+                                        setState(() => _obscure = !_obscure);
+                                      },
                                 icon: Icon(
-                                  _obscure ? Icons.visibility : Icons.visibility_off,
+                                  _obscure
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                  color: Colors.grey.shade700,
                                 ),
                               ),
                             ),
                             validator: (v) {
-                              if ((v ?? "").trim().isEmpty) return "Şifre boş olamaz";
+                              final s = (v ?? '').trim();
+                              if (s.isEmpty) {
+                                return "Şifre boş olamaz";
+                              }
+                              if (!RegExp(r'^\d+$').hasMatch(s)) {
+                                return "Şifre sadece rakamlardan oluşmalı";
+                              }
                               return null;
                             },
                           ),
 
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 14),
 
-                          // ✅ Beni Hatırla
-                          Row(
-                            children: [
-                              Checkbox(
-                                activeColor:Colors.green,
-                                value: _rememberMe,
-                                onChanged: (v) => _onRememberChanged(v ?? false),
-                              ),
-                              const Text("Beni Hatırla"),
-                            ],
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: Colors.black12),
+                            ),
+                            child: Row(
+                              children: [
+                                Checkbox(
+                                  value: _rememberMe,
+                                  activeColor: accent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  onChanged: _isLoading
+                                      ? null
+                                      : (v) => _onRememberChanged(v ?? false),
+                                ),
+                                const SizedBox(width: 4),
+                                const Expanded(
+                                  child: Text(
+                                    "Beni Hatırla",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
 
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 16),
 
-                          // ✅ Kırmızı giriş
                           SizedBox(
-                            height: 52,
                             width: double.infinity,
-                            child: ElevatedButton(
+                            height: 52,
+                            child: ElevatedButton.icon(
                               onPressed: _isLoading ? null : _login,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
+                                elevation: 0,
+                                backgroundColor: accent,
+                                foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              child: _isLoading
+                              icon: _isLoading
                                   ? const SizedBox(
-                                      width: 22,
-                                      height: 22,
+                                      width: 18,
+                                      height: 18,
                                       child: CircularProgressIndicator(
                                         color: Colors.white,
                                         strokeWidth: 2,
                                       ),
                                     )
-                                  : const Text(
-                                      "Giriş",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                                  : const Icon(Icons.login_rounded),
+                              label: Text(
+                                _isLoading ? "Giriş Yapılıyor..." : "Giriş Yap",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
                             ),
                           ),
 
                           const SizedBox(height: 12),
 
-                          // ✅ Şifremi Unuttum
-                          Align(
-                            alignment: Alignment.center,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(10),
-                              onTap: () {
-                               
-                                _snack("Şifre sıfırlama (OTP) sonraki adım ✅");
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                child: InkWell(
-                                  onTap: () {
-                                    
-  final tel = _telCtrl.text.trim(); // senin controller adı neyse onu yaz
+                          Center(
+                            child: TextButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () {
+                                      final tel = _telCtrl.text.trim();
 
-  if (tel.isEmpty) {
-    _snack("Telefon giriniz");
-    return;
-  }
+                                      if (tel.isEmpty) {
+                                        _snack("Telefon giriniz");
+                                        return;
+                                      }
 
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => OtpDogrulamaPage(telefon: tel),
-    ),
-  );
-                                  },
-                                  child: Text(
-                                    "Şifremi Unuttum",
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade700,
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                  ),
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => OtpDogrulamaPage(
+                                            telefon: tel,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                              child: Text(
+                                "Şifremi Unuttum",
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  color: Colors.grey.shade700,
+                                  decoration: TextDecoration.underline,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
@@ -372,7 +499,6 @@ final u = users.first;
   }
 }
 
-/// ✅ 10 hane TR GSM -> "505 123 45 67"
 class TrPhoneFormatter10 extends TextInputFormatter {
   const TrPhoneFormatter10({this.prefixMustBe505 = false});
 
@@ -384,12 +510,7 @@ class TrPhoneFormatter10 extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     final digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-
-    // max 10
-    var d = digits.length > 10 ? digits.substring(0, 10) : digits;
-
-    // İstersen kullanıcı yanlış başlasa bile yazmaya devam edebilsin diye burada bloklamıyoruz.
-    // Validasyon zaten form submit'te yakalayacak.
+    final d = digits.length > 10 ? digits.substring(0, 10) : digits;
 
     final sb = StringBuffer();
     for (int i = 0; i < d.length; i++) {

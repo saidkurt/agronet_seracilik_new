@@ -90,7 +90,6 @@ class SerapaketApi {
         );
       }
 
-      print(response.body);
 
       final decoded = jsonDecode(response.body);
       return _asString(decoded);
