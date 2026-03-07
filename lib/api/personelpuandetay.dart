@@ -20,7 +20,7 @@ class PersonelPuanDetayApi {
     required String tip,
     String? baseUrlOverride,
   }) async {
-    final base = baseUrlOverride ?? App.localurl;
+    final base = baseUrlOverride ?? App.outsideurl;
     final Uri uri = Uri.parse('$base/Sera/PerformansDetay/$bileklikId/$tip');
 
     try {

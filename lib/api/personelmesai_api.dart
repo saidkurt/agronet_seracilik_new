@@ -10,7 +10,7 @@ class PersonelMesaiApi {
   }) async {
     // 🔥 Direk insideurl kullanıyoruz
     final Uri uri =
-        Uri.parse("${App.localurl}/Mesai/MesaiDurumu/$bileklikid");
+        Uri.parse("${App.outsideurl}/Mesai/MesaiDurumu/$bileklikid");
 
     try {
       final http.Response response = await _client.get(uri);

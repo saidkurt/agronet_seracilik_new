@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../models/hasat_raporu_model.dart';
 
 class HasatApi {
-  static final String _baseUrl = App.localurl;
+  static final String _baseUrl = App.outsideurl;
 
   String _yyyymmdd(DateTime d) {
     final y = d.year.toString().padLeft(4, '0');

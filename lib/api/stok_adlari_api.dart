@@ -13,7 +13,7 @@ class StokAdlariApi {
   /// API genelde List döndürüyor (string veya map listesi olabilir).
   /// Şimdilik dynamic list dönüyorum; istersen model yaparız.
   Future<List<dynamic>> stokAdlari() async {
-    final Uri uri = Uri.parse('${App.localurl}/Serapaket/Stokadi');
+    final Uri uri = Uri.parse('${App.outsideurl}/Serapaket/Stokadi');
 
     try {
       final http.Response response = await _client.get(uri);

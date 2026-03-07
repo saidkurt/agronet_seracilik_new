@@ -16,7 +16,7 @@ class TutaApi {
     final String son = _formatDate(sonTarih);
 
     final Uri uri = Uri.parse(
-      "${App.localurl}/Tuta/Rapor/$sera/$ilk/$son",
+      "${App.outsideurl}/Tuta/Rapor/$sera/$ilk/$son",
     );
 
     try {
@@ -57,7 +57,7 @@ class TutaApi {
   Future<TutaIsimlerModel> isimleriGetir({
     required String sera,
   }) async {
-    final Uri uri = Uri.parse("${App.localurl}/Tuta/Isimler/$sera");
+    final Uri uri = Uri.parse("${App.outsideurl}/Tuta/Isimler/$sera");
 
     try {
       final http.Response response = await _client.get(uri);
@@ -98,7 +98,7 @@ class TutaApi {
     final String son = _formatDate(sonTarih);
 
     final Uri uri = Uri.parse(
-      "${App.localurl}/Tuta/Toplam/$ilk/$son",
+      "${App.outsideurl}/Tuta/Toplam/$ilk/$son",
     );
 
     try {

@@ -13,7 +13,7 @@ class KutuBilgiApi {
   /// Model yoksa en güvenlisi:
   /// List<Map<String,dynamic>> dönmek
   Future<List<Map<String, dynamic>>> qrBilgi(String barkod) async {
-    final Uri uri = Uri.parse('${App.localurl}/Kantar/Qr/$barkod');
+    final Uri uri = Uri.parse('${App.outsideurl}/Kantar/Qr/$barkod');
 
     try {
       final http.Response response = await _client.get(uri);

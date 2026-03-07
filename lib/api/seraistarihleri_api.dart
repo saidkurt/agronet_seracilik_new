@@ -20,7 +20,7 @@ class SeraIsTarihleriApi {
   }) async {
     final int year = yil ?? DateTime.now().year;
 
-    final base = Uri.parse(App.localurl);
+    final base = Uri.parse(App.outsideurl);
     
 
     final segments = [
