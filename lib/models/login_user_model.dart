@@ -3,6 +3,7 @@ class LoginUserModel {
   final String? sifre;
   final String? prosiskodu;
   final String? bileklikid;
+  final int ? tipid;
 
   final bool seraraporlarigorebilir;
   final bool kontrolcuraporlarigorebilir;
@@ -27,6 +28,7 @@ class LoginUserModel {
     required this.depopaketleme,
     required this.kullaniciadi,
     required this.tip,
+    required this.tipid,
   });
 
   static bool _b(dynamic v) {
@@ -54,6 +56,7 @@ class LoginUserModel {
 
       kullaniciadi: json["kullaniciadi"]?.toString(),
       tip: json["tip"]?.toString(),
+      tipid: json["tipid"],
     );
   }
 }

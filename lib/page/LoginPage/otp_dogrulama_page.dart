@@ -232,7 +232,7 @@ class _OtpDogrulamaPageState extends State<OtpDogrulamaPage> {
         foregroundColor: Colors.black87,
         centerTitle: true,
         title: const Text(
-          'OTP Doğrulama',
+          'Şifremi Unuttum',
           style: TextStyle(
             fontWeight: FontWeight.w700,
           ),
