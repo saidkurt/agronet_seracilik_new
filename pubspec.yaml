@@ -41,6 +41,9 @@ dependencies:
   shared_preferences: ^2.5.4
 
 
+  fl_chart: ^0.68.0
+
+
 
   # Crypto
   crypto: ^3.0.7 # :contentReference[oaicite:15]{index=15}
@@ -49,6 +52,7 @@ dependencies:
   syncfusion_flutter_charts: ^32.1.25 # :contentReference[oaicite:16]{index=16}
   mobile_scanner: ^7.1.4
   flutter_native_splash: ^2.4.7
+  flutter_localization: ^0.3.3
 
 dev_dependencies:
   flutter_test:

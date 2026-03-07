@@ -1,36 +1,49 @@
-
-
 import 'package:agronet/page/LoginPage/LoginPageView.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {
-  runApp(MyApp());  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('tr_TR', null);
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return OrientationBuilder(builder: (context, orientation) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            initialRoute: '/',
-            routes: {
-              '/login': (context) => LoginPageView(),
-            },
-            theme: ThemeData(
-              fontFamily: "Montserrat",
-              primarySwatch: Colors.blue,
-              visualDensity: VisualDensity.adaptivePlatformDensity,
-              unselectedWidgetColor: Colors.grey,
-            ),
-            home: LoginPageView(),
-          );
-        });
+        return OrientationBuilder(
+          builder: (context, orientation) {
+            return MaterialApp(
+              debugShowCheckedModeBanner: false,
+              locale: const Locale('tr', 'TR'),
+              supportedLocales: const [
+                Locale('tr', 'TR'),
+                Locale('en', 'US'),
+              ],
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              initialRoute: '/',
+              routes: {
+                '/login': (context) => const LoginPageView(),
+              },
+              theme: ThemeData(
+                fontFamily: "Montserrat",
+                primarySwatch: Colors.blue,
+                visualDensity: VisualDensity.adaptivePlatformDensity,
+                unselectedWidgetColor: Colors.grey,
+              ),
+              home: const LoginPageView(),
+            );
+          },
+        );
       },
     );
   }

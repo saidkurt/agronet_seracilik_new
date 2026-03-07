@@ -6,6 +6,8 @@ import 'package:agronet/page/hasat_raporu.dart';
 import 'package:agronet/page/paketleme.dart';
 import 'package:agronet/page/paketleme_raporu.dart';
 import 'package:agronet/page/personel_anlik_durum.dart';
+import 'package:agronet/page/tuta_giris.dart';
+import 'package:agronet/page/tuta_rapor.dart';
 import 'package:agronet/widget/profile_header.dart';
 import 'package:flutter/material.dart';
 import 'package:agronet/models/login_user_model.dart';
@@ -48,6 +50,14 @@ class HomeMenuPage extends StatelessWidget {
         visible: true,
        onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  BitkiOlcumSahaSayfa(personelKodu: user.kullanicikodu ?? "",personelAdi: user.kullaniciadi ?? "",)));
+        },
+        ),
+          _MenuItem(
+        title: "Tuta Ölçüm Giriş",
+      icon: Icons.bug_report_rounded,
+        visible: true,
+       onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) =>  TutaGirisPage()));
         },
         ),
       _MenuItem(
@@ -107,6 +117,14 @@ class HomeMenuPage extends StatelessWidget {
         visible: user.deporaporlarinigorebilir || user.depopaketleme,
              onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  HasatRaporuDetayliPage()));
+        },
+      ),
+         _MenuItem(
+        title: "Tuta Raporu",
+        icon: Icons.bug_report_outlined,
+        visible: user.deporaporlarinigorebilir || user.depopaketleme,
+             onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) =>  TutaRaporPage()));
         },
       ),
         
