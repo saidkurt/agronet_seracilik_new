@@ -9,7 +9,7 @@ class BitkiOlcumKaydetApi {
 
   /// POST: /Sera/OlcumKaydet
   Future<void> kaydet(BitkiOlcumKaydetModel dto) async {
-    final Uri uri = Uri.parse("${App.outsideurl}/Sera/OlcumKaydet");
+    final Uri uri = Uri.parse("${App.localurl}/Sera/OlcumKaydet");
 
     try {
       final res = await _client.post(

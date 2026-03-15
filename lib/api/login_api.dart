@@ -11,7 +11,7 @@ class LoginApi {
     required String telefon,
     required String sifre,
   }) async {
-    final uri = Uri.parse("${App.outsideurl}/Sistem/GirisTel/$telefon/$sifre/");
+    final uri = Uri.parse("${App.localurl}/Sistem/GirisTel/$telefon/$sifre/");
 
     final res = await http.get(uri, headers: {"Accept": "application/json"});
 

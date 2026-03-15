@@ -15,7 +15,7 @@ class SistemOtpApi {
   /// POST /Sistem/SifreUnuttum/OtpGonder
   /// body: { "telefon": "5445322545" }
   Future<OtpGonderResponse> otpGonder(String telefon) async {
-    final Uri uri = Uri.parse('${App.outsideurl}/Sistem/SifreUnuttum/OtpGonder');
+    final Uri uri = Uri.parse('${App.localurl}/Sistem/SifreUnuttum/OtpGonder');
 
     final http.Response response = await http.post(
       uri,
@@ -36,7 +36,7 @@ class SistemOtpApi {
     required String otpRef,
     required String kod,
   }) async {
-    final Uri uri = Uri.parse('${App.outsideurl}/Sistem/SifreUnuttum/OtpDogrula');
+    final Uri uri = Uri.parse('${App.localurl}/Sistem/SifreUnuttum/OtpDogrula');
 
     final http.Response response = await http.post(
       uri,
@@ -60,7 +60,7 @@ class SistemOtpApi {
     required String resetToken,
     required String yeniSifre,
   }) async {
-    final Uri uri = Uri.parse('${App.outsideurl}/Sistem/SifreUnuttum/YeniSifre');
+    final Uri uri = Uri.parse('${App.localurl}/Sistem/SifreUnuttum/YeniSifre');
 
     final http.Response response = await http.post(
       uri,

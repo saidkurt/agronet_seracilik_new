@@ -5,7 +5,7 @@ import 'package:agronet/models/depo_durum_model.dart';
 
 class DepoDurumApi {
   Future<List<DepoDurumModel>> depoDurumGetir(int depo) async {
-    final url = "${App.outsideurl}/Depo/Durum/$depo";
+    final url = "${App.localurl}/Depo/Durum/$depo";
     final res = await http.get(Uri.parse(url));
 
     if (res.statusCode != 200) {

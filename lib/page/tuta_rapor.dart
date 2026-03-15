@@ -1,6 +1,7 @@
 
 import 'package:agronet/api/tuta_rapor_api.dart';
 import 'package:agronet/models/tuta_rapor_model.dart';
+import 'package:agronet/page/tuta_rapor_liste.dart';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -189,7 +190,7 @@ class _TutaRaporPageState extends State<TutaRaporPage> {
         foregroundColor: textDark,
         title: const Text(
           'Tuta Sayım Raporu',
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: TextStyle(fontWeight: FontWeight.w700,),
         ),
       ),
       body: RefreshIndicator(
@@ -219,41 +220,81 @@ class _TutaRaporPageState extends State<TutaRaporPage> {
             ] else ...[
               _SeraChartCard(
                 title: 'Sera 1',
-                subtitle: '1.SERA',
+                subtitle: '1.SERA Liste Raporu',
                 isimler: _isimler1,
                 veriler: _rapor1,
                 selectedTutalar: _selectedTutalar.toList()..sort(),
+                onListeRaporTap: () =>  Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TutaListeRaporPage(
+                      sera: '1.SERA',
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               _SeraChartCard(
                 title: 'Sera 2',
-                subtitle: '2.SERA',
+                subtitle: '2.SERA Liste Raporu',
                 isimler: _isimler2,
                 veriler: _rapor2,
                 selectedTutalar: _selectedTutalar.toList()..sort(),
+                onListeRaporTap: () =>  Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TutaListeRaporPage(
+                      sera: '2.SERA',
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               _SeraChartCard(
                 title: 'Sera 3',
-                subtitle: '3.SERA',
+                subtitle: '3.SERA Liste Raporu',
                 isimler: _isimler3,
                 veriler: _rapor3,
                 selectedTutalar: _selectedTutalar.toList()..sort(),
+                onListeRaporTap: () =>  Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TutaListeRaporPage(
+                      sera: '3.SERA',
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               _SeraChartCard(
                 title: 'Sera 4',
-                subtitle: '4.SERA',
+                subtitle: '4.SERA Liste Raporu',
                 isimler: _isimler4,
                 veriler: _rapor4,
                 selectedTutalar: _selectedTutalar.toList()..sort(),
+                onListeRaporTap: () =>  Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TutaListeRaporPage(
+                      sera: '4.SERA',
+                    ),
+                  ),
+                ),
               ),
                   _SeraChartCard(
                 title: 'Sera 5',
-                subtitle: '5.SERA',
+                subtitle: '5.SERA Liste Raporu',
                 isimler: _isimler5,
                 veriler: _rapor5,
                 selectedTutalar: _selectedTutalar.toList()..sort(),
+                onListeRaporTap: () =>  Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TutaListeRaporPage(
+                      sera: '5.SERA',
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               _ToplamChartCard(
@@ -448,6 +489,7 @@ class _DateSelectBox extends StatelessWidget {
 class _SeraChartCard extends StatelessWidget {
   final String title;
   final String subtitle;
+  final VoidCallback onListeRaporTap;
   final TutaIsimlerModel isimler;
   final List<TutaRaporModel> veriler;
   final List<int> selectedTutalar;
@@ -458,6 +500,7 @@ class _SeraChartCard extends StatelessWidget {
     required this.isimler,
     required this.veriler,
     required this.selectedTutalar,
+    required this.onListeRaporTap,
   });
 
   static const List<Color> _lineColors = [
@@ -540,24 +583,42 @@ class _SeraChartCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F3F0),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFF1E6F5C),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
+          InkWell(
+  onTap: onListeRaporTap,
+  borderRadius: BorderRadius.circular(999),
+  child: Ink(
+    padding: const EdgeInsets.symmetric(
+      horizontal: 12,
+      vertical: 8,
+    ),
+    decoration: BoxDecoration(
+      color: const Color(0xFFE8F3F0),
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(
+        color: const Color(0xFFB7DDD3),
+      ),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          subtitle,
+          style: const TextStyle(
+            color: Color(0xFF1E6F5C),
+            fontWeight: FontWeight.w800,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(width: 6),
+        const Icon(
+          Icons.chevron_right_rounded,
+          size: 16,
+          color: Color(0xFF1E6F5C),
+        ),
+      ],
+    ),
+  ),
+),
             ],
           ),
           const SizedBox(height: 14),

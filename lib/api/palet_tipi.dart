@@ -13,7 +13,7 @@ class PaletTipApi {
   /// Model yoksa en stabil dönüş:
   /// List<Map<String, dynamic>>
   Future<List<Map<String, dynamic>>> paletTipleri() async {
-    final Uri uri = Uri.parse('${App.outsideurl}/Serapaket/Palet');
+    final Uri uri = Uri.parse('${App.localurl}/Serapaket/Palet');
 
     try {
       final http.Response response = await _client.get(uri);

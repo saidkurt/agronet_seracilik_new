@@ -12,7 +12,7 @@ class IsListesiApi {
   ///
   /// Model yoksa: List<Map<String,dynamic>> döndürmek en temiz yol.
   Future<List<Map<String, dynamic>>> seraIsListesi() async {
-    final Uri uri = Uri.parse('${App.outsideurl}/Sera/Islistesi');
+    final Uri uri = Uri.parse('${App.localurl}/Sera/Islistesi');
 
     try {
       final http.Response response = await _client.get(uri);

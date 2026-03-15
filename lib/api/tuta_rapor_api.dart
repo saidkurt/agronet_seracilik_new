@@ -1,8 +1,12 @@
+
+
+
 import 'dart:convert';
+
 import 'package:agronet/const/string.dart';
+import 'package:agronet/models/tuta_liste_rapor_model.dart' show TutaListeRaporResponse;
 import 'package:agronet/models/tuta_rapor_model.dart';
 import 'package:http/http.dart' as http;
-
 
 class TutaApi {
   final http.Client _client = http.Client();
@@ -16,7 +20,7 @@ class TutaApi {
     final String son = _formatDate(sonTarih);
 
     final Uri uri = Uri.parse(
-      "${App.outsideurl}/Tuta/Rapor/$sera/$ilk/$son",
+      "${App.localurl}/Tuta/Rapor/$sera/$ilk/$son",
     );
 
     try {
@@ -57,7 +61,7 @@ class TutaApi {
   Future<TutaIsimlerModel> isimleriGetir({
     required String sera,
   }) async {
-    final Uri uri = Uri.parse("${App.outsideurl}/Tuta/Isimler/$sera");
+    final Uri uri = Uri.parse("${App.localurl}/Tuta/Isimler/$sera");
 
     try {
       final http.Response response = await _client.get(uri);
@@ -98,7 +102,7 @@ class TutaApi {
     final String son = _formatDate(sonTarih);
 
     final Uri uri = Uri.parse(
-      "${App.outsideurl}/Tuta/Toplam/$ilk/$son",
+      "${App.localurl}/Tuta/Toplam/$ilk/$son",
     );
 
     try {
@@ -141,5 +145,33 @@ class TutaApi {
     final String m = date.month.toString().padLeft(2, '0');
     final String d = date.day.toString().padLeft(2, '0');
     return '$y-$m-$d';
+  }
+
+    Future<TutaListeRaporResponse> getListeRapor({
+    required String sera,
+    required DateTime ilkTarih,
+    required DateTime sonTarih,
+  }) async {
+    final ilk =
+        '${ilkTarih.year.toString().padLeft(4, '0')}-${ilkTarih.month.toString().padLeft(2, '0')}-${ilkTarih.day.toString().padLeft(2, '0')}';
+
+    final son =
+        '${sonTarih.year.toString().padLeft(4, '0')}-${sonTarih.month.toString().padLeft(2, '0')}-${sonTarih.day.toString().padLeft(2, '0')}';
+
+    final uri = Uri.parse(
+      '${App.localurl}/Tuta/ListeRapor/${Uri.encodeComponent(sera)}/$ilk/$son',
+    );
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final body = utf8.decode(response.bodyBytes);
+      final jsonMap = jsonDecode(body) as Map<String, dynamic>;
+      return TutaListeRaporResponse.fromJson(jsonMap);
+    }
+
+    throw Exception(
+      'Tuta liste raporu alınamadı. Kod: ${response.statusCode} - ${response.body}',
+    );
   }
 }

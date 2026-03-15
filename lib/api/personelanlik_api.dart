@@ -9,7 +9,7 @@ class PersonelAnlikApi {
 
   /// GET: /Personel/Bolum/{bolum}
   Future<List<PersonelAnlikDurum>> personelAnlikDurum(String bolum) async {
-    final String url = '${App.outsideurl}/Personel/Bolum/$bolum/';
+    final String url = '${App.localurl}/Personel/Bolum/$bolum/';
 
     try {
       final Response response = await _dio.get(url);

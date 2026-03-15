@@ -40,7 +40,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Bitki Ölçüm Giriş",
         icon: Icons.straighten_rounded,
-        visible: user.tipid == 8 || user.tipid == 9 || user.tipid == 13 || user.tipid == 15 || user.tipid == 17 || user.tipid == 30,
+        visible: true,
        onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  BitkiOlcumSahaSayfa(personelKodu: user.kullanicikodu ?? "",personelAdi: user.kullaniciadi ?? "",)));
         },
@@ -48,7 +48,7 @@ class HomeMenuPage extends StatelessWidget {
           _MenuItem(
         title: "Tuta Ölçüm Giriş",
       icon: Icons.bug_report_rounded,
-        visible: user.tipid == 8 || user.tipid == 9 || user.tipid == 13 || user.tipid == 15 || user.tipid == 17 || user.tipid == 30,
+        visible: true,
        onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  TutaGirisPage()));
         },
@@ -59,7 +59,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Paketleme",
         icon: Icons.inventory_2_rounded,
-        visible: user.prosiskodu == '0798' || user.tipid == 31 || user.tipid == 17 || user.tipid == 15 || user.tipid == 13 || user.tipid == 9,
+        visible: true,
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  Paketleme(personelkodu: user.kullanicikodu ?? "",personelAdi: user.kullaniciadi ?? "",)));
         },
@@ -67,7 +67,7 @@ class HomeMenuPage extends StatelessWidget {
        _MenuItem(
         title: "Barkod Kontrol",
         icon: Icons.qr_code_scanner_rounded,
-        visible: user.tipid == 5 || user.tipid == 8 || user.tipid == 9 || user.tipid == 13 || user.tipid == 15 || user.tipid == 17 || user.tipid == 22 || user.tipid == 23 || user.tipid == 24 || user.tipid == 25 || user.tipid == 26 || user.tipid == 29 || user.tipid == 30 || user.tipid == 31,
+        visible: true,
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  KoliBarkodPage()));
         },
@@ -78,7 +78,7 @@ class HomeMenuPage extends StatelessWidget {
        _MenuItem(
         title: "Paletleme Raporu",
         icon: Icons.qr_code_scanner_rounded,
-        visible:user.tipid == 8 || user.tipid == 9 || user.tipid == 13 || user.tipid == 15 || user.tipid == 17 || user.tipid == 30 || user.tipid == 31,
+        visible:true,
              onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  PaletlemeRaporPage()));
         },
@@ -86,15 +86,15 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Paketleme Raporları",
         icon: Icons.receipt_long_rounded,
-        visible: user.tipid == 8 || user.tipid == 9 || user.tipid == 13 || user.tipid == 15 || user.tipid == 17 || user.tipid == 30 || user.tipid == 31,
-          onTap: () {
+        visible: true,
+        onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  PaketlemeRaporPage()));
         },
       ),
         _MenuItem(
         title: "Hasat Raporu",
         icon: Icons.qr_code_scanner_rounded,
-        visible: user.tipid == 8 || user.tipid == 9 || user.tipid == 13 || user.tipid == 15 || user.tipid == 17 || user.tipid == 30 || user.tipid == 31,
+        visible: true,
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  HasatRaporuDetayliPage()));
         },
@@ -102,7 +102,7 @@ class HomeMenuPage extends StatelessWidget {
          _MenuItem(
         title: "Tuta Raporu",
         icon: Icons.bug_report_outlined,
-        visible: user.tipid ==8 || user.tipid ==9 || user.tipid ==13 || user.tipid ==14 || user.tipid ==15 || user.tipid ==17 || user.tipid ==30,
+        visible: true,
              onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  TutaRaporPage()));
         },
@@ -111,7 +111,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Personel Anlık Durum",
         icon: Icons.person_3_outlined,
-        visible: user.tipid ==8 || user.tipid ==9 || user.tipid ==13 || user.tipid ==15 || user.tipid ==17 || user.tipid ==30,
+        visible: true,
             onTap: () {
   Navigator.push(
     context,
@@ -122,7 +122,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Depo Durum Raporu",
         icon: Icons.warehouse_rounded,
-        visible:user.tipid == 8 || user.tipid == 9 || user.tipid == 13 || user.tipid == 15 || user.tipid == 17 || user.tipid == 30,
+        visible:true,
             onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  DepodurumRaporu(personeladi: user.kullaniciadi ?? "",)));
         },

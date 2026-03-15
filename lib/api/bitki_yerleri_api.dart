@@ -8,7 +8,7 @@ class BitkiSeraYerleriApi {
 
   Future<List<SeraYerModel>> getir() async {
 
-    final String baseUrl = "${App.outsideurl}/Sera/BitkiYerleri";
+    final String baseUrl = "${App.localurl}/Sera/BitkiYerleri";
     final Uri uri = Uri.parse(baseUrl);
 
     try {

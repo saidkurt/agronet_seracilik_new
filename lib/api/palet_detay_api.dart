@@ -9,7 +9,7 @@ class PaletDetayApi {
   Future<PaletlemeRaporModel> paletDetayGetir({
     required String paletkodu,
   }) async {
-    final uri = Uri.parse('${App.outsideurl}/Palet/Detay/$paletkodu');
+    final uri = Uri.parse('${App.localurl}/Palet/Detay/$paletkodu');
 
     try {
       final http.Response response = await http.get(uri);
