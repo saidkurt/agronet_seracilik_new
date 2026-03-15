@@ -177,7 +177,7 @@ class _TutaListeRaporPageState extends State<TutaListeRaporPage> {
         elevation: 0,
         backgroundColor: bgColor,
         foregroundColor: textColor,
-        centerTitle: true,
+         centerTitle: true,
         title: Text(
           widget.sera,
           style: const TextStyle(
@@ -386,7 +386,7 @@ class _TutaListeRaporPageState extends State<TutaListeRaporPage> {
             children: [
               Expanded(
                 child: _SummaryBox(
-                  title: 'Toplam Kayıt',
+                  title: 'Toplam Tuta',
                   value: '$toplam',
                   icon: Icons.list_alt_outlined,
                   bg: softGreen,
@@ -434,7 +434,7 @@ class _TutaListeRaporPageState extends State<TutaListeRaporPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Seçili Gün Toplam',
+                        'Seçili Gün Tuta',
                         style: TextStyle(
                           fontSize: 13,
                           color: subTextColor,
