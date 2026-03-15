@@ -359,11 +359,15 @@ class _TutaListeRaporPageState extends State<TutaListeRaporPage> {
     required Color textColor,
     required Color subTextColor,
   }) {
-    final rowCount = _data?.rapor.length ?? 0;
     final selectedDate = _selectedRow?.tarih != null
         ? _dateFmt.format(_selectedRow!.tarih!)
         : '-';
     final selectedToplam = _selectedRow?.toplam ?? 0;
+
+   final toplam = _data?.rapor.fold<int>(
+  0,
+  (sum, item) => sum + item.toplam,
+) ?? 0;
 
     return _SectionCard(
       child: Column(
@@ -382,8 +386,8 @@ class _TutaListeRaporPageState extends State<TutaListeRaporPage> {
             children: [
               Expanded(
                 child: _SummaryBox(
-                  title: 'Kayıt Sayısı',
-                  value: '$rowCount',
+                  title: 'Toplam Kayıt',
+                  value: '$toplam',
                   icon: Icons.list_alt_outlined,
                   bg: softGreen,
                   iconColor: primaryColor,
@@ -540,20 +544,6 @@ class _TutaListeRaporPageState extends State<TutaListeRaporPage> {
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _MiniInfoBox(
-                            label: 'Toplam',
-                            value: '${row.toplam}',
-                            icon: Icons.summarize_outlined,
-                          ),
-                        ),
-                    
-                    
                       ],
                     ),
                     if (row.ilac.trim().isNotEmpty) ...[
