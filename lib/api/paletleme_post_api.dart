@@ -33,7 +33,7 @@ class PaletlemeApi {
     required String cihazadi,
     required String stokkodu,
   }) async {
-    final Uri uri = Uri.parse('${App.localurl}/Serapaket/Paletleme');
+    final Uri uri = Uri.parse('${App.outsideurl}/Serapaket/Paletleme');
 
     final payload = <String, dynamic>{
       'personelkodu': personelkodu,
@@ -81,7 +81,7 @@ class PaletlemeApi {
     required String cihazadi,
   }) async {
     final Uri uri =
-        Uri.parse('${App.localurl}/Serapaket/PaletEtiketi');
+        Uri.parse('${App.outsideurl}/Serapaket/PaletEtiketi');
 
     try {
       final http.Response response = await _client.post(

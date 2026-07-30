@@ -16,7 +16,7 @@ class PersonelBilgileriApi {
     required String personelId,
   }) async {
     final Uri uri =
-        Uri.parse('${App.localurl}/PersonelBilgileri/PersonelId');
+        Uri.parse('${App.outsideurl}/PersonelBilgileri/PersonelId');
 
     try {
       final http.Response response = await _client.get(uri);

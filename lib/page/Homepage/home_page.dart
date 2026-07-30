@@ -3,6 +3,7 @@ import 'package:agronet/page/Depodurumraporu.dart';
 import 'package:agronet/page/PaletlemeRaporu.dart';
 import 'package:agronet/page/barkod_kontrol.dart';
 import 'package:agronet/page/hasat_raporu.dart';
+import 'package:agronet/page/iskontrol/konrol_home.dart';
 import 'package:agronet/page/paketleme.dart';
 import 'package:agronet/page/paketleme_raporu.dart';
 import 'package:agronet/page/personel_anlik_durum.dart';
@@ -38,13 +39,22 @@ class HomeMenuPage extends StatelessWidget {
     final operasyonItems = <_MenuItem>[
      
       _MenuItem(
-        title: "Bitki Ölçüm Giriş",
-        icon: Icons.straighten_rounded,
-        visible: true,
-       onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) =>  BitkiOlcumSahaSayfa(personelKodu: user.kullanicikodu ?? "",personelAdi: user.kullaniciadi ?? "",)));
-        },
+  title: "Kontrol",
+  icon: Icons.fact_check_rounded,
+  visible: true,
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => KontrolPage(
+          personelKodu: user.kullanicikodu ?? "",
+          personelAdi: user.kullaniciadi ?? "",
         ),
+      ),
+    );
+  },
+),
+  
           _MenuItem(
         title: "Tuta Ölçüm Giriş",
       icon: Icons.bug_report_rounded,

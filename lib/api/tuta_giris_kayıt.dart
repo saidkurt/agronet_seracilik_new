@@ -7,7 +7,7 @@ import '../models/tuta_giris_model.dart';
 class TutaGirisApi {
   const TutaGirisApi();
 
-  static final String _baseUrl = App.localurl;
+  static final String _baseUrl = App.outsideurl;
 
   Future<TutaGirisResponseModel> tutaGirisGetir(DateTime tarih) async {
     final tarihText = _formatDate(tarih);

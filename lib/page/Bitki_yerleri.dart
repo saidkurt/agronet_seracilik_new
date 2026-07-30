@@ -245,7 +245,7 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
     required String deger,
     required int bildirildi,
   }) async {
-    final uri = Uri.parse("${App.localurl}/Sera/OlcumKaydet");
+    final uri = Uri.parse("${App.outsideurl}/Sera/OlcumKaydet");
     final body = {
       "tarih": _yyyyMmDd(tarih),
       "sera": sera,

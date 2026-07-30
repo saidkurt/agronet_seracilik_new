@@ -7,7 +7,7 @@ class OlcumTipleriApi {
   const OlcumTipleriApi();
 
   Future<List<OlcumTipleriModel>> getir() async {
-    final String baseUrl = "${App.localurl}/Sera/OlcumTipleri";
+    final String baseUrl = "${App.outsideurl}/Sera/OlcumTipleri";
     final Uri uri = Uri.parse(baseUrl);
 
     try {

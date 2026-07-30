@@ -21,7 +21,7 @@ class SeraIciBarkodPostApi {
     required int isEmriId,
     required String barkod,
   }) async {
-    final Uri uri = Uri.parse('${App.localurl}/SeraBarkod/Kayit');
+    final Uri uri = Uri.parse('${App.outsideurl}/SeraBarkod/Kayit');
 
     final payload = <String, dynamic>{
       'mobilesemriid': isEmriId,
