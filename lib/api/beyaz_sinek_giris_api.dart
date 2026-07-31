@@ -3,21 +3,21 @@ import 'dart:convert';
 import 'package:agronet/const/string.dart';
 import 'package:http/http.dart' as http;
 
-import '../models/tuta_giris_model.dart';
+import '../models/beyaz_sinek_giris_model.dart';
 
-class TutaGirisApi {
-  const TutaGirisApi();
+class BeyazSinekGirisApi {
+  const BeyazSinekGirisApi();
 
   static final String _baseUrl = App.outsideurl;
 
-  Future<TutaGirisResponseModel> tutaGirisGetir({
+  Future<BeyazSinekGirisResponseModel> beyazSinekGirisGetir({
     required DateTime tarih,
     required String personelKodu,
   }) async {
     final tarihText = _formatDate(tarih);
 
     final uri = Uri.parse(
-      '$_baseUrl/Sera/TutaGiris/'
+      '$_baseUrl/Sera/BeyazSinekGiris/'
       '$tarihText/'
       '${Uri.encodeComponent(personelKodu)}',
     );
@@ -29,30 +29,30 @@ class TutaGirisApi {
 
       if (decoded is! Map<String, dynamic>) {
         throw const FormatException(
-          'Tuta giriş cevabı beklenen formatta değil.',
+          'Beyaz sinek giriş cevabı beklenen formatta değil.',
         );
       }
 
-      return TutaGirisResponseModel.fromJson(decoded);
+      return BeyazSinekGirisResponseModel.fromJson(decoded);
     }
 
     throw Exception(
-      'Tuta giriş verileri alınamadı. '
+      'Beyaz sinek giriş verileri alınamadı. '
       'Kod: ${response.statusCode} '
       'Mesaj: ${response.body}',
     );
   }
 
-  Future<SonucModel> tutaGirisKaydet({
+  Future<SonucModel> beyazSinekGirisKaydet({
     required DateTime tarih,
     required String personelKodu,
-    required List<TutaRowModel> rows,
+    required List<BeyazSinekRowModel> rows,
   }) async {
     final uri = Uri.parse(
-      '$_baseUrl/Sera/TutaGirisKaydet',
+      '$_baseUrl/Sera/BeyazSinekGirisKaydet',
     );
 
-    final requestModel = TutaKaydetRequestModel(
+    final requestModel = BeyazSinekKaydetRequestModel(
       tarih: tarih,
       personelKodu: personelKodu,
       rows: rows,
@@ -71,7 +71,7 @@ class TutaGirisApi {
 
       if (decoded is! Map<String, dynamic>) {
         throw const FormatException(
-          'Tuta kayıt cevabı beklenen formatta değil.',
+          'Beyaz sinek kayıt cevabı beklenen formatta değil.',
         );
       }
 
@@ -79,7 +79,7 @@ class TutaGirisApi {
     }
 
     throw Exception(
-      'Tuta giriş kaydı yapılamadı. '
+      'Beyaz sinek giriş kaydı yapılamadı. '
       'Kod: ${response.statusCode} '
       'Mesaj: ${response.body}',
     );

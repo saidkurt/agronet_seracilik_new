@@ -1,39 +1,39 @@
-class TutaGirisResponseModel {
+class BeyazSinekGirisResponseModel {
   final DateTime tarih;
-  final List<TutaRowModel> rows;
+  final List<BeyazSinekRowModel> rows;
 
-  const TutaGirisResponseModel({
+  const BeyazSinekGirisResponseModel({
     required this.tarih,
     required this.rows,
   });
 
-  factory TutaGirisResponseModel.fromJson(
+  factory BeyazSinekGirisResponseModel.fromJson(
     Map<String, dynamic> json,
   ) {
     final rawRows = json['rows'];
 
-    return TutaGirisResponseModel(
+    return BeyazSinekGirisResponseModel(
       tarih: _parseDateTime(json['tarih']),
       rows: rawRows is List
           ? rawRows
               .whereType<Map>()
               .map(
-                (item) => TutaRowModel.fromJson(
+                (item) => BeyazSinekRowModel.fromJson(
                   Map<String, dynamic>.from(item),
                 ),
               )
               .toList()
-          : <TutaRowModel>[],
+          : <BeyazSinekRowModel>[],
     );
   }
 }
 
-class TutaKaydetRequestModel {
+class BeyazSinekKaydetRequestModel {
   final DateTime tarih;
   final String personelKodu;
-  final List<TutaRowModel> rows;
+  final List<BeyazSinekRowModel> rows;
 
-  const TutaKaydetRequestModel({
+  const BeyazSinekKaydetRequestModel({
     required this.tarih,
     required this.personelKodu,
     required this.rows,
@@ -48,19 +48,21 @@ class TutaKaydetRequestModel {
   }
 }
 
-class TutaAlanModel {
+class BeyazSinekAlanModel {
   final int index;
   final String isim;
   final int deger;
+  final bool pasif;
 
-  const TutaAlanModel({
+  const BeyazSinekAlanModel({
     required this.index,
     required this.isim,
     required this.deger,
+    required this.pasif,
   });
 }
 
-class TutaRowModel {
+class BeyazSinekRowModel {
   final String sera;
 
   final String isim1;
@@ -114,7 +116,7 @@ class TutaRowModel {
   final int deger15;
   final int deger16;
 
-  const TutaRowModel({
+  const BeyazSinekRowModel({
     required this.sera,
     required this.isim1,
     required this.isim2,
@@ -166,10 +168,10 @@ class TutaRowModel {
     required this.deger16,
   });
 
-  factory TutaRowModel.fromJson(
+  factory BeyazSinekRowModel.fromJson(
     Map<String, dynamic> json,
   ) {
-    return TutaRowModel(
+    return BeyazSinekRowModel(
       sera: _stringValue(json['sera']),
       isim1: _stringValue(json['isim1']),
       isim2: _stringValue(json['isim2']),
@@ -276,7 +278,7 @@ class TutaRowModel {
     };
   }
 
-  TutaRowModel copyWith({
+  BeyazSinekRowModel copyWith({
     String? sera,
     String? isim1,
     String? isim2,
@@ -327,7 +329,7 @@ class TutaRowModel {
     int? deger15,
     int? deger16,
   }) {
-    return TutaRowModel(
+    return BeyazSinekRowModel(
       sera: sera ?? this.sera,
       isim1: isim1 ?? this.isim1,
       isim2: isim2 ?? this.isim2,
@@ -381,77 +383,35 @@ class TutaRowModel {
   }
 
   List<String> get isimler => [
-        isim1,
-        isim2,
-        isim3,
-        isim4,
-        isim5,
-        isim6,
-        isim7,
-        isim8,
-        isim9,
-        isim10,
-        isim11,
-        isim12,
-        isim13,
-        isim14,
-        isim15,
-        isim16,
+        isim1, isim2, isim3, isim4, isim5, isim6, isim7, isim8,
+        isim9, isim10, isim11, isim12, isim13, isim14, isim15, isim16,
       ];
 
   List<bool> get pasifler => [
-        pasif1,
-        pasif2,
-        pasif3,
-        pasif4,
-        pasif5,
-        pasif6,
-        pasif7,
-        pasif8,
-        pasif9,
-        pasif10,
-        pasif11,
-        pasif12,
-        pasif13,
-        pasif14,
-        pasif15,
-        pasif16,
+        pasif1, pasif2, pasif3, pasif4, pasif5, pasif6, pasif7, pasif8,
+        pasif9, pasif10, pasif11, pasif12, pasif13, pasif14, pasif15, pasif16,
       ];
 
   List<int> get degerler => [
-        deger1,
-        deger2,
-        deger3,
-        deger4,
-        deger5,
-        deger6,
-        deger7,
-        deger8,
-        deger9,
-        deger10,
-        deger11,
-        deger12,
-        deger13,
-        deger14,
-        deger15,
-        deger16,
+        deger1, deger2, deger3, deger4, deger5, deger6, deger7, deger8,
+        deger9, deger10, deger11, deger12, deger13, deger14, deger15, deger16,
       ];
 
-  List<TutaAlanModel> get aktifAlanlar {
-    final sonuc = <TutaAlanModel>[];
+  List<BeyazSinekAlanModel> get aktifAlanlar {
+    final sonuc = <BeyazSinekAlanModel>[];
 
     for (var i = 0; i < 16; i++) {
       final isim = isimler[i].trim();
+      final pasif = pasifler[i];
 
-      if (pasifler[i] || isim.isEmpty) {
-        continue;
-      }
+      if (pasif || isim.isEmpty) continue;
 
       sonuc.add(
-        TutaAlanModel(
+        BeyazSinekAlanModel(
           index: i,
           isim: isim,
           deger: degerler[i],
+          pasif: pasif,
         ),
       );
     }
@@ -469,9 +429,7 @@ class TutaRowModel {
   }
 
   int get doluAlanSayisi {
-    return aktifAlanlar
-        .where((alan) => alan.deger > 0)
-        .length;
+    return aktifAlanlar.where((alan) => alan.deger > 0).length;
   }
 }
 
@@ -484,9 +442,7 @@ class SonucModel {
     required this.mesaj,
   });
 
-  factory SonucModel.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory SonucModel.fromJson(Map<String, dynamic> json) {
     return SonucModel(
       durum: _boolValue(json['durum']),
       mesaj: _stringValue(json['mesaj']),
@@ -503,7 +459,6 @@ int _intValue(dynamic value) {
   if (value == null) return 0;
   if (value is int) return value;
   if (value is num) return value.toInt();
-
   return int.tryParse(value.toString()) ?? 0;
 }
 
@@ -511,28 +466,18 @@ bool _boolValue(dynamic value) {
   if (value is bool) return value;
   if (value is num) return value != 0;
 
-  final text =
-      value?.toString().trim().toLowerCase();
-
+  final text = value?.toString().trim().toLowerCase();
   return text == 'true' || text == '1';
 }
 
 DateTime _parseDateTime(dynamic value) {
   if (value == null) return DateTime.now();
-
-  return DateTime.tryParse(value.toString()) ??
-      DateTime.now();
+  return DateTime.tryParse(value.toString()) ?? DateTime.now();
 }
 
 String _formatDate(DateTime date) {
-  final yil =
-      date.year.toString().padLeft(4, '0');
-
-  final ay =
-      date.month.toString().padLeft(2, '0');
-
-  final gun =
-      date.day.toString().padLeft(2, '0');
-
+  final yil = date.year.toString().padLeft(4, '0');
+  final ay = date.month.toString().padLeft(2, '0');
+  final gun = date.day.toString().padLeft(2, '0');
   return '$yil-$ay-$gun';
 }

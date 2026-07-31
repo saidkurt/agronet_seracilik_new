@@ -2,6 +2,7 @@ import 'package:agronet/page/Bitki_yerleri.dart';
 import 'package:agronet/page/Depodurumraporu.dart';
 import 'package:agronet/page/PaletlemeRaporu.dart';
 import 'package:agronet/page/barkod_kontrol.dart';
+import 'package:agronet/page/beyaz_sinek_giris_page.dart';
 import 'package:agronet/page/hasat_raporu.dart';
 import 'package:agronet/page/iskontrol/konrol_home.dart';
 import 'package:agronet/page/paketleme.dart';
@@ -56,13 +57,28 @@ class HomeMenuPage extends StatelessWidget {
 ),
   
           _MenuItem(
-        title: "Tuta Ölçüm Giriş",
+        title: "Tuta Sayımı",
       icon: Icons.bug_report_rounded,
         visible: true,
        onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  TutaGirisPage(personelKodu: user.kullanicikodu ?? " ")));
         },
         ),
+        _MenuItem(
+  title: "Beyaz Sinek Sayımı",
+  icon: Icons.pest_control_rounded,
+  visible: true,
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BeyazSinekGirisPage(
+          personelKodu: user.kullanicikodu ?? "",
+        ),
+      ),
+    );
+  },
+),
     ];
 
     final depoItems = <_MenuItem>[

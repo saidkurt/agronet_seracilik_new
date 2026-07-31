@@ -51,10 +51,12 @@ class _TutaGirisPageState extends State<TutaGirisPage> {
   personelKodu: widget.personelKodu,
 );
 
-   setState(() {
-  _rows = result.rows;
-  _hasChange = false;
-});
+      if (!mounted) return;
+
+      setState(() {
+        _rows = result.rows;
+        _hasChange = false;
+      });
     } catch (e) {
       _snack('Veriler alınamadı: $e', error: true);
     } finally {
@@ -89,6 +91,7 @@ class _TutaGirisPageState extends State<TutaGirisPage> {
     try {
       final sonuc = await _api.tutaGirisKaydet(
         tarih: _selectedDate,
+        personelKodu: widget.personelKodu,
         rows: _rows,
       );
 
@@ -127,7 +130,7 @@ Future<void> _openEditSheet(int index) async {
     ),
   );
 
-  if (updated != null) {
+  if (updated != null && mounted) {
     setState(() {
       _rows[index] = updated;
       _hasChange = true;
@@ -457,7 +460,7 @@ Future<void> _openEditSheet(int index) async {
                   Expanded(
                     child: _buildMiniStat(
                       'Dolu Alan',
-                      '${item.doluAlanSayisi}/16',
+                      '${item.doluAlanSayisi}/${item.aktifAlanSayisi}',
                       Icons.view_module_rounded,
                     ),
                   ),
@@ -623,9 +626,10 @@ void didUpdateWidget(covariant _TutaEditSheet oldWidget) {
   int _parse(String text) => int.tryParse(text.trim()) ?? 0;
 
   void _clearAll() {
-    for (final c in _controllers) {
-      c.text = '0';
+    for (final alan in widget.row.aktifAlanlar) {
+      _controllers[alan.index].text = '0';
     }
+
     setState(() {});
   }
 
@@ -654,7 +658,7 @@ void didUpdateWidget(covariant _TutaEditSheet oldWidget) {
 
   @override
   Widget build(BuildContext context) {
-   final names = widget.row.isimler;
+    final aktifAlanlar = widget.row.aktifAlanlar;
 
     return Container(
       decoration: const BoxDecoration(
@@ -728,7 +732,7 @@ void didUpdateWidget(covariant _TutaEditSheet oldWidget) {
                   child: GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: 16,
+                    itemCount: aktifAlanlar.length,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
@@ -737,13 +741,16 @@ void didUpdateWidget(covariant _TutaEditSheet oldWidget) {
                       mainAxisSpacing: 12,
                     ),
                     itemBuilder: (context, index) {
-                      return  Column(
+                      final alan = aktifAlanlar[index];
+                      final controllerIndex = alan.index;
+
+                      return Column(
   crossAxisAlignment: CrossAxisAlignment.start,
   children: [
     Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 6),
       child: Text(
-        names[index].trim().isEmpty ? 'Değer ${index + 1}' : names[index],
+        alan.isim,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(
@@ -755,11 +762,21 @@ void didUpdateWidget(covariant _TutaEditSheet oldWidget) {
     ),
     Expanded(
       child: TextField(
-        controller: _controllers[index],
+        controller: _controllers[controllerIndex],
         keyboardType: TextInputType.number,
         inputFormatters: [
           FilteringTextInputFormatter.digitsOnly,
         ],
+        onTap: () {
+          final controller = _controllers[controllerIndex];
+
+          if (controller.text == '0') {
+            controller.selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: controller.text.length,
+            );
+          }
+        },
         decoration: InputDecoration(
           hintText: '0',
           filled: true,
