@@ -7,14 +7,10 @@ import 'package:flutter/services.dart';
 
 class KontrolDetayPage extends StatefulWidget {
   final int kontrolIsId;
-  final String secilenSira;
-  final int siraSayisi;
 
   const KontrolDetayPage({
     super.key,
     required this.kontrolIsId,
-    required this.secilenSira,
-    required this.siraSayisi,
   });
 
   @override
@@ -60,8 +56,6 @@ class _KontrolDetayPageState
     try {
       final sonuc = await KontrolApi.detayGetir(
         kontrolIsId: widget.kontrolIsId,
-        sira: widget.secilenSira,
-        siraSayisi: widget.siraSayisi,
       );
 
       if (!mounted) return;
@@ -156,19 +150,46 @@ class _KontrolDetayPageState
   }
 
   Future<void> _bitir() async {
+    if (_detay == null || _islemYapiliyor) {
+      return;
+    }
+
+    if (_detay!.kontrolDurum != 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Kontrolü bitirmek için kontrolün devam ediyor olması gerekir.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final puan = await _puanSor();
+
+    if (puan == null || !mounted) {
+      return;
+    }
+
     final onay = await _onaySor(
-      'Kontrol görevini tamamlamak istediğinizden emin misiniz?',
+      'Kontrol görevi $puan puan verilerek tamamlanacak. '
+      'Devam etmek istediğinizden emin misiniz?',
       baslik: 'Kontrolü bitir',
-      onayYazisi: 'Bitir',
+      onayYazisi: 'Bitir ve kaydet',
       tehlikeli: true,
     );
 
-    if (!onay) return;
+    if (!onay || !mounted) {
+      return;
+    }
 
     await _islemYap(
       () => KontrolApi.bitir(
-        widget.kontrolIsId,
+        kontrolIsId: widget.kontrolIsId,
+        puan: puan,
       ),
+      sayfayiKapat: true,
     );
   }
 
@@ -192,297 +213,228 @@ class _KontrolDetayPageState
   }
 
 
-Future<void> _puanlamaAc() async {
-  if (_detay == null || _islemYapiliyor) {
-    return;
-  }
+  Future<int?> _puanSor() async {
+    if (_detay == null || _islemYapiliyor) {
+      return null;
+    }
 
-  String girilenPuan = _detay!.puan > 0
-      ? _detay!.puan.toInt().toString()
-      : '';
+    String girilenPuan = '';
 
-  final puan = await showModalBottomSheet<double>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (sheetContext) {
-      return Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(
-            sheetContext,
-          ).viewInsets.bottom,
-        ),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(
-            20,
-            14,
-            20,
-            20,
+    return showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(
+              sheetContext,
+            ).viewInsets.bottom,
           ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(26),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(
+              20,
+              14,
+              20,
+              20,
             ),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 42,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.black12,
-                    borderRadius: BorderRadius.circular(
-                      99,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-
-                const Row(
-                  children: [
-                    Icon(
-                      Icons.star_rounded,
-                      color: Colors.amber,
-                      size: 30,
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Kontrol Puanı',
-                        style: TextStyle(
-                          fontSize: 21,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Asıl işe verilecek puanı girin.',
-                    style: TextStyle(
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                TextFormField(
-                  initialValue: girilenPuan,
-                  autofocus: true,
-                  keyboardType:
-                      TextInputType.number,
-                  textInputAction:
-                      TextInputAction.done,
-                  textAlign: TextAlign.center,
-                  maxLength: 2,
-                  inputFormatters:  [
-                    FilteringTextInputFormatter
-                        .digitsOnly,
-                    LengthLimitingTextInputFormatter(
-                      2,
-                    ),
-                  ],
-                  style: const TextStyle(
-                    fontSize: 42,
-                    fontWeight: FontWeight.w900,
-                  ),
-                  decoration: InputDecoration(
-                    counterText: '',
-                    hintText: '1 - 10',
-                    filled: true,
-                    fillColor:
-                        const Color(0xFFF5F6F8),
-                    contentPadding:
-                        const EdgeInsets.symmetric(
-                      vertical: 18,
-                      horizontal: 12,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(18),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(18),
-                      borderSide: BorderSide(
-                        color: Colors.black
-                            .withOpacity(.06),
-                      ),
-                    ),
-                    focusedBorder:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(18),
-                      borderSide:
-                          const BorderSide(
-                        color: Colors.green,
-                        width: 2,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(26),
+              ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.circular(
+                        99,
                       ),
                     ),
                   ),
-                  onChanged: (value) {
-                    girilenPuan = value.trim();
-                  },
-                  onFieldSubmitted: (value) {
-                    final sayi = int.tryParse(
-                      value.trim(),
-                    );
-
-                    if (sayi == null ||
-                        sayi < 1 ||
-                        sayi > 10) {
-                      ScaffoldMessenger.of(
-                        sheetContext,
-                      ).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Puan 1 ile 10 arasında olmalıdır.',
+                  const SizedBox(height: 18),
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.star_rounded,
+                        color: Colors.amber,
+                        size: 30,
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Kontrol Puanı',
+                          style: TextStyle(
+                            fontSize: 21,
+                            fontWeight: FontWeight.w900,
                           ),
-                          backgroundColor:
-                              Colors.red,
                         ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Kontrolü bitirmek için asıl işe verilecek puanı girin.',
+                      style: TextStyle(
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  TextFormField(
+                    autofocus: true,
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.done,
+                    textAlign: TextAlign.center,
+                    maxLength: 2,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(2),
+                    ],
+                    style: const TextStyle(
+                      fontSize: 42,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      hintText: '1 - 10',
+                      filled: true,
+                      fillColor: const Color(0xFFF5F6F8),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 18,
+                        horizontal: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide(
+                          color: Colors.black.withOpacity(.06),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: const BorderSide(
+                          color: Colors.green,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      girilenPuan = value.trim();
+                    },
+                    onFieldSubmitted: (value) {
+                      final sayi = int.tryParse(
+                        value.trim(),
                       );
 
-                      return;
-                    }
-
-                    Navigator.of(sheetContext).pop(
-                      sayi.toDouble(),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 14),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.of(
-                            sheetContext,
-                          ).pop();
-                        },
-                        style:
-                            OutlinedButton.styleFrom(
-                          minimumSize:
-                              const Size.fromHeight(
-                            54,
+                      if (sayi == null ||
+                          sayi < 1 ||
+                          sayi > 10) {
+                        ScaffoldMessenger.of(
+                          sheetContext,
+                        ).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Puan 1 ile 10 arasında olmalıdır.',
+                            ),
+                            backgroundColor: Colors.red,
                           ),
-                          shape:
-                              RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(
-                              15,
+                        );
+                        return;
+                      }
+
+                      Navigator.of(sheetContext).pop(sayi);
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(sheetContext).pop();
+                          },
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(54),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          child: const Text(
+                            'Vazgeç',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ),
-                        child: const Text(
-                          'Vazgeç',
-                          style: TextStyle(
-                            fontWeight:
-                                FontWeight.w800,
-                          ),
-                        ),
                       ),
-                    ),
-
-                    const SizedBox(width: 10),
-
-                    Expanded(
-                      flex: 2,
-                      child: FilledButton.icon(
-                        onPressed: () {
-                          final sayi = int.tryParse(
-                            girilenPuan,
-                          );
-
-                          if (sayi == null ||
-                              sayi < 1 ||
-                              sayi > 10) {
-                            ScaffoldMessenger.of(
-                              sheetContext,
-                            ).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Puan 1 ile 10 arasında olmalıdır.',
-                                ),
-                                backgroundColor:
-                                    Colors.red,
-                              ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 2,
+                        child: FilledButton.icon(
+                          onPressed: () {
+                            final sayi = int.tryParse(
+                              girilenPuan,
                             );
 
-                            return;
-                          }
+                            if (sayi == null ||
+                                sayi < 1 ||
+                                sayi > 10) {
+                              ScaffoldMessenger.of(
+                                sheetContext,
+                              ).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Puan 1 ile 10 arasında olmalıdır.',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
 
-                          Navigator.of(
-                            sheetContext,
-                          ).pop(
-                            sayi.toDouble(),
-                          );
-                        },
-                        icon: const Icon(
-                          Icons.save_rounded,
-                        ),
-                        label: const Text(
-                          'PUANI KAYDET',
-                          style: TextStyle(
-                            fontWeight:
-                                FontWeight.w900,
+                            Navigator.of(sheetContext).pop(sayi);
+                          },
+                          icon: const Icon(
+                            Icons.check_rounded,
                           ),
-                        ),
-                        style:
-                            FilledButton.styleFrom(
-                          backgroundColor:
-                              Colors.green,
-                          minimumSize:
-                              const Size.fromHeight(
-                            54,
+                          label: const Text(
+                            'DEVAM ET',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
-                          shape:
-                              RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(
-                              15,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            minimumSize: const Size.fromHeight(54),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      );
-    },
-  );
-
-  if (puan == null || !mounted) {
-    return;
+        );
+      },
+    );
   }
-
-  await _islemYap(
-    () => KontrolApi.puanKaydet(
-      kontrolIsId: widget.kontrolIsId,
-      puan: puan,
-    ),
-    sayfayiKapat: true,
-  );
-}
 
   Future<void> _islemYap(
     Future<String> Function() islem, {
@@ -963,7 +915,7 @@ Future<void> _puanlamaAc() async {
         aciklama =
             _detay!.puan > 0
                 ? 'Verilen puan: ${_detay!.puan.toInt()}'
-                : 'Şimdi asıl işe puan verebilirsiniz.';
+                : 'Kontrol tamamlandı.';
         break;
 
       default:
@@ -1133,30 +1085,11 @@ Future<void> _puanlamaAc() async {
         );
 
       case 3:
-        return Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: _anaButon(
-                yazi: _detay!.puan > 0
-                    ? 'PUANI DEĞİŞTİR'
-                    : 'PUAN VER',
-                ikon: Icons.star_rounded,
-                renk: Colors.green,
-                onPressed: _puanlamaAc,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _ikincilButon(
-                yazi: 'Tekrar',
-                ikon:
-                    Icons.replay_rounded,
-                renk: Colors.orange,
-                onPressed: _tekrarEt,
-              ),
-            ),
-          ],
+        return _ikincilButon(
+          yazi: 'Tekrar',
+          ikon: Icons.replay_rounded,
+          renk: Colors.orange,
+          onPressed: _tekrarEt,
         );
 
       default:

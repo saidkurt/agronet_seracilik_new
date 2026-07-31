@@ -9,20 +9,31 @@ class TutaGirisApi {
 
   static final String _baseUrl = App.outsideurl;
 
-  Future<TutaGirisResponseModel> tutaGirisGetir(DateTime tarih) async {
-    final tarihText = _formatDate(tarih);
+Future<TutaGirisResponseModel> tutaGirisGetir({
+  required DateTime tarih,
+  required String personelKodu,
+}) async {
+  final tarihText = _formatDate(tarih);
 
-    final uri = Uri.parse('$_baseUrl/Sera/TutaGiris/$tarihText');
+  final uri = Uri.parse(
+    '$_baseUrl/Sera/TutaGiris/'
+    '$tarihText/'
+    '${Uri.encodeComponent(personelKodu)}',
+  );
 
-    final response = await http.get(uri);
+  final response = await http.get(uri);
 
-    if (response.statusCode == 200) {
-      final jsonMap = jsonDecode(response.body) as Map<String, dynamic>;
-      return TutaGirisResponseModel.fromJson(jsonMap);
-    }
+  if (response.statusCode == 200) {
+    final jsonMap =
+        jsonDecode(response.body) as Map<String, dynamic>;
 
-    throw Exception('Tuta giriş verileri alınamadı. Kod: ${response.statusCode}');
+    return TutaGirisResponseModel.fromJson(jsonMap);
   }
+
+  throw Exception(
+    'Tuta giriş verileri alınamadı. Kod: ${response.statusCode}',
+  );
+}
 
   Future<SonucModel> tutaGirisKaydet({
     required DateTime tarih,

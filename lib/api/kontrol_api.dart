@@ -118,16 +118,15 @@ class KontrolApi {
   // GET: /Kontrol/Detay/{kontrolIsId}
   static Future<KontrolDetayModel> detayGetir({
     required int kontrolIsId,
-    required String sira,
-    required int siraSayisi,
   }) async {
+    if (kontrolIsId <= 0) {
+      throw Exception(
+        'Geçersiz kontrol işi.',
+      );
+    }
+
     final uri = Uri.parse(
       '$_base/Kontrol/Detay/$kontrolIsId',
-    ).replace(
-      queryParameters: {
-        'sira': sira,
-        'siraSayisi': siraSayisi.toString(),
-      },
     );
 
     final response = await http
@@ -175,25 +174,25 @@ class KontrolApi {
   }
 
   // POST: /Kontrol/Bitir
-  static Future<String> bitir(
-    int kontrolIsId,
-  ) async {
+  // Kontrol işi puanla birlikte tamamlanır.
+  static Future<String> bitir({
+    required int kontrolIsId,
+    required int puan,
+  }) async {
+    if (kontrolIsId <= 0) {
+      throw Exception(
+        'Geçersiz kontrol işi.',
+      );
+    }
+
+    if (puan < 1 || puan > 10) {
+      throw Exception(
+        'Puan 1 ile 10 arasında olmalıdır.',
+      );
+    }
+
     return _postIslem(
       '/Kontrol/Bitir',
-      {
-        'KontrolIsId': kontrolIsId,
-        'AraSebebi': '',
-      },
-    );
-  }
-
-  // POST: /Kontrol/PuanKaydet
-  static Future<String> puanKaydet({
-    required int kontrolIsId,
-    required double puan,
-  }) async {
-    return _postIslem(
-      '/Kontrol/PuanKaydet',
       {
         'KontrolIsId': kontrolIsId,
         'Puan': puan,

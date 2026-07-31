@@ -999,12 +999,8 @@ class _KontrolPageState extends State<KontrolPage> {
     context,
     MaterialPageRoute(
       builder: (_) => KontrolDetayPage(
-        kontrolIsId: kontrolIsi.id,
-        secilenSira:
-            kontrolIsi.koridor,
-        siraSayisi:
-            kontrolIsi.siraSayisi,
-      ),
+  kontrolIsId: kontrolIsi.id,
+)
     ),
   );
 

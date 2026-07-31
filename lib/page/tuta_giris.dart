@@ -5,7 +5,8 @@ import 'package:intl/intl.dart';
 import '../../models/tuta_giris_model.dart';
 
 class TutaGirisPage extends StatefulWidget {
-  const TutaGirisPage({super.key});
+  const TutaGirisPage({super.key, required this.personelKodu});
+  final String personelKodu;
 
   @override
   State<TutaGirisPage> createState() => _TutaGirisPageState();
@@ -45,7 +46,10 @@ class _TutaGirisPageState extends State<TutaGirisPage> {
     setState(() => _isLoading = true);
 
     try {
-      final result = await _api.tutaGirisGetir(_selectedDate);
+      final result = await _api.tutaGirisGetir(
+  tarih: _selectedDate,
+  personelKodu: widget.personelKodu,
+);
 
    setState(() {
   _rows = result.rows;

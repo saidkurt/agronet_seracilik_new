@@ -60,7 +60,7 @@ class HomeMenuPage extends StatelessWidget {
       icon: Icons.bug_report_rounded,
         visible: true,
        onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) =>  TutaGirisPage()));
+          Navigator.push(context, MaterialPageRoute(builder: (_) =>  TutaGirisPage(personelKodu: user.kullanicikodu ?? " ")));
         },
         ),
     ];
