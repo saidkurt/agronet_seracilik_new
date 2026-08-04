@@ -1,15 +1,14 @@
 import 'dart:convert';
+
 import 'package:agronet/api/bitki_olcum_tipleri_api.dart';
+import 'package:agronet/api/bitki_yerleri_api.dart';
+import 'package:agronet/const/string.dart';
+import 'package:agronet/models/bitki_sera_yerler.dart';
+import 'package:agronet/models/olcum_tipleri.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:agronet/const/string.dart';
-import 'package:agronet/api/bitki_yerleri_api.dart';
-import 'package:agronet/models/bitki_sera_yerler.dart';
-import 'package:agronet/models/olcum_tipleri.dart';
-
 class BitkiOlcumSahaSayfa extends StatefulWidget {
-  /// Sayfa açılırken gelecek: personel kodu (createuser olarak gönderilecek)
   final String personelKodu;
   final String personelAdi;
 
@@ -24,32 +23,31 @@ class BitkiOlcumSahaSayfa extends StatefulWidget {
 }
 
 class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
-  // Tema
   static const Color accent = Color(0xFF1E6F5C);
-
-  // Üst bilgiler
-  DateTime secilenTarih = DateTime.now();
-  String? seciliSera;
-  String? seciliYer;
-
-  // Zorunlular
-  final TextEditingController uzamaCtrl = TextEditingController();
-  final TextEditingController kalinlikCtrl = TextEditingController();
-
-  // Diğer ölçüm
-  OlcumTipleriModel? seciliTip;
-  final TextEditingController degerCtrl = TextEditingController();
-
-  // Data
-  late Future<_InitData> _initFuture;
-
-  // UI state
-  bool zorunluTamamlandi = false;
-  bool loadingZorunlu = false;
-  bool loadingEk = false;
 
   static const int idUzama = 35;
   static const int idKalinlik = 36;
+
+  DateTime secilenTarih = DateTime.now();
+
+  final TextEditingController bitkiKoduCtrl = TextEditingController();
+  final TextEditingController uzamaCtrl = TextEditingController();
+  final TextEditingController kalinlikCtrl = TextEditingController();
+  final TextEditingController degerCtrl = TextEditingController();
+
+  String? seciliSera;
+  String? seciliBitkiKodu;
+
+  OlcumTipleriModel? seciliTip;
+
+  late Future<_InitData> _initFuture;
+
+  bool bitkiBulundu = false;
+  bool bitkiAraniyor = false;
+  bool zorunluTamamlandi = false;
+  bool loadingZorunlu = false;
+  bool loadingEk = false;
+  bool loadingOlcumDeger = false;
 
   @override
   void initState() {
@@ -59,6 +57,7 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
 
   @override
   void dispose() {
+    bitkiKoduCtrl.dispose();
     uzamaCtrl.dispose();
     kalinlikCtrl.dispose();
     degerCtrl.dispose();
@@ -66,214 +65,252 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
   }
 
   Future<_InitData> _loadAll() async {
-    final yerler = await BitkiSeraYerleriApi().getir();
+    final yerler = await const BitkiSeraYerleriApi().getir();
     final tipler = await const OlcumTipleriApi().getir();
-    return _InitData(yerler: yerler, tipler: tipler);
+
+    return _InitData(
+      yerler: yerler,
+      tipler: tipler,
+    );
   }
 
-  bool get yerSeciliMi => (seciliSera != null && seciliYer != null);
-
   bool get zorunluHazir =>
-      yerSeciliMi &&
+      bitkiBulundu &&
+      seciliSera != null &&
+      seciliBitkiKodu != null &&
       uzamaCtrl.text.trim().isNotEmpty &&
       kalinlikCtrl.text.trim().isNotEmpty;
 
   bool get ekOlcumHazir =>
       zorunluTamamlandi &&
-      yerSeciliMi &&
+      bitkiBulundu &&
+      seciliSera != null &&
+      seciliBitkiKodu != null &&
       seciliTip != null &&
       degerCtrl.text.trim().isNotEmpty;
 
-  void _resetOnYerChanged() {
+  void _bitkiDegisti(String value) {
+    if (!bitkiBulundu) {
+      setState(() {});
+      return;
+    }
+
+    final girilen = value.trim().toUpperCase();
+    final secili = (seciliBitkiKodu ?? '').trim().toUpperCase();
+
+    if (girilen != secili) {
+      setState(() {
+        _bitkiSeciminiTemizle();
+      });
+    }
+  }
+
+  void _bitkiSeciminiTemizle() {
+    bitkiBulundu = false;
+    seciliSera = null;
+    seciliBitkiKodu = null;
     zorunluTamamlandi = false;
+    loadingOlcumDeger = false;
+
     uzamaCtrl.clear();
     kalinlikCtrl.clear();
     seciliTip = null;
     degerCtrl.clear();
   }
+  Future<void> _bitkiyiBul(_InitData init) async {
+    if (bitkiAraniyor) return;
 
-  // ----------------------------
-  // SERA + YER SEÇ (BOTTOMSHEET) - aramalı / daha güzel
-  // ----------------------------
-  void _seraYerSec(List<SeraYerModel> data) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      builder: (_) {
-        String q = "";
-        final ctrl = TextEditingController();
+    final girilenKod = bitkiKoduCtrl.text.trim();
 
-        List<_YerItem> flatten(String query) {
-          final list = <_YerItem>[];
-          for (final s in data) {
-            final seraAdi = (s.sera ?? "").trim();
-            for (final y in (s.yerler ?? const <String>[])) {
-              final yer = y.trim();
-              final haystack = "$seraAdi $yer".toLowerCase();
-              if (query.isEmpty || haystack.contains(query.toLowerCase())) {
-                list.add(_YerItem(sera: seraAdi, yer: yer));
-              }
-            }
-          }
-          return list;
+    if (girilenKod.isEmpty) {
+      _mesajGoster(
+        'Bitki kodunu girin.',
+        hata: true,
+      );
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      bitkiAraniyor = true;
+      _bitkiSeciminiTemizle();
+    });
+
+    String? bulunanSera;
+    String? bulunanKod;
+
+    final aranan = girilenKod.toUpperCase();
+
+    for (final seraKaydi in init.yerler) {
+      final sera = (seraKaydi.sera ?? '').trim();
+
+      for (final yer in seraKaydi.yerler ?? const <String>[]) {
+        final bitkiKodu = yer.trim();
+
+        if (bitkiKodu.toUpperCase() == aranan) {
+          bulunanSera = sera;
+          bulunanKod = bitkiKodu;
+          break;
         }
+      }
 
-        return StatefulBuilder(
-          builder: (context, setBS) {
-            final items = flatten(q);
+      if (bulunanKod != null) break;
+    }
 
-            return SafeArea(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 14,
-                  right: 14,
-                  top: 10,
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 14,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Handle
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+    if (bulunanKod == null || bulunanSera == null) {
+      if (!mounted) return;
 
-                    Row(
-                      children: const [
-                        Icon(Icons.place, color: accent),
-                        SizedBox(width: 8),
-                        Text(
-                          "Sera / Yer Seç",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
+      setState(() {
+        bitkiAraniyor = false;
+      });
 
-                    TextField(
-                      controller: ctrl,
-                      onChanged: (v) => setBS(() => q = v.trim()),
-                      decoration: InputDecoration(
-                        hintText: "Ara... (Örn: 1.SERA, Vana 3)",
-                        prefixIcon: const Icon(Icons.search),
-                        filled: true,
-                        fillColor: const Color(0xFFF6F7F9),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
+      _mesajGoster(
+        'Bu bitki kodu bulunamadı.',
+        hata: true,
+      );
+      return;
+    }
 
-                    Flexible(
-                      child: items.isEmpty
-                          ? Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 28),
-                              child: Column(
-                                children: const [
-                                  Icon(Icons.search_off, size: 42, color: Colors.grey),
-                                  SizedBox(height: 10),
-                                  Text("Sonuç bulunamadı"),
-                                ],
-                              ),
-                            )
-                          : ListView.separated(
-                              shrinkWrap: true,
-                              itemCount: items.length,
-                              separatorBuilder: (_, __) => const Divider(height: 1),
-                              itemBuilder: (context, i) {
-                                final it = items[i];
-                                final selected =
-                                    (seciliSera == it.sera) && (seciliYer == it.yer);
+    final String bitkiKodu = bulunanKod;
+    final String sera = bulunanSera;
 
-                                return ListTile(
-                                  contentPadding:
-                                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  title: Text(
-                                    it.yer,
-                                    style: TextStyle(
-                                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                                    ),
-                                  ),
-                                  subtitle: Text(it.sera),
-                                  trailing: selected
-                                      ? const Icon(Icons.check_circle, color: accent)
-                                      : const Icon(Icons.chevron_right),
-                                  onTap: () {
-                                    setState(() {
-                                      final degisti =
-                                          (seciliSera != it.sera) || (seciliYer != it.yer);
-                                      seciliSera = it.sera;
-                                      seciliYer = it.yer;
-                                      if (degisti) _resetOnYerChanged();
-                                    });
-                                    Navigator.pop(context);
-                                  },
-                                );
-                              },
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+    try {
+  final durum =
+      await const BitkiSeraYerleriApi().zorunluOlcumDurumuGetir(
+    bitkiKodu: bitkiKodu,
+    tarih: secilenTarih,
+  );
+
+  if (!mounted) return;
+
+  setState(() {
+    bitkiAraniyor = false;
+    bitkiBulundu = true;
+
+    seciliBitkiKodu = bitkiKodu;
+
+    seciliSera = (durum.sera ?? '').trim().isNotEmpty
+        ? durum.sera!.trim()
+        : sera;
+
+    bitkiKoduCtrl.text = bitkiKodu;
+    bitkiKoduCtrl.selection = TextSelection.collapsed(
+      offset: bitkiKoduCtrl.text.length,
+    );
+
+    uzamaCtrl.text = durum.bitkiUzamasi ?? '';
+    kalinlikCtrl.text = durum.tepeKalinligi ?? '';
+
+    zorunluTamamlandi = durum.tamamlandi;
+  });
+
+  if (durum.tamamlandi) {
+    _mesajGoster(
+      '$bitkiKodu için zorunlu ölçümler tamamlanmış.',
+    );
+  } else {
+    _mesajGoster(
+      '$bitkiKodu bulundu. Zorunlu ölçümleri tamamlayın.',
     );
   }
+} catch (e) {
+  if (!mounted) return;
 
-  // ----------------------------
-  // POST /Sera/OlcumKaydet
-  // ----------------------------
+  setState(() {
+    bitkiAraniyor = false;
+  });
+
+  _mesajGoster(
+    'Zorunlu ölçüm durumu alınamadı: $e',
+    hata: true,
+  );
+    }
+  }
+
+  Future<void> _tarihSec(_InitData init) async {
+    final secilen = await showDatePicker(
+      context: context,
+      initialDate: secilenTarih,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+
+    if (secilen == null) return;
+
+    final tarihDegisti =
+        secilen.year != secilenTarih.year ||
+        secilen.month != secilenTarih.month ||
+        secilen.day != secilenTarih.day;
+
+    if (!tarihDegisti) return;
+
+    final mevcutBitkiKodu = bitkiKoduCtrl.text.trim();
+
+    setState(() {
+      secilenTarih = secilen;
+      _bitkiSeciminiTemizle();
+    });
+
+    // Bitki kodu yazılıysa yeni seçilen tarihe göre tekrar kontrol et.
+    if (mevcutBitkiKodu.isNotEmpty) {
+      bitkiKoduCtrl.text = mevcutBitkiKodu;
+      await _bitkiyiBul(init);
+    }
+  }
+
   Future<void> _postTekOlcum({
     required DateTime tarih,
     required String sera,
-    required String vana,
+    required String bitkiKodu,
     required String tip,
     required String deger,
     required int bildirildi,
   }) async {
-    final uri = Uri.parse("${App.outsideurl}/Sera/OlcumKaydet");
-    final body = {
-      "tarih": _yyyyMmDd(tarih),
-      "sera": sera,
-      "vana": vana,
-      "createuser": widget.personelKodu,
-      "tip": tip,
-      "deger": deger,
-      "bildirildi": bildirildi,
+    final uri = Uri.parse('${App.outsideurl}/Sera/OlcumKaydet');
+
+    final body = <String, dynamic>{
+      'tarih': _yyyyMmDd(tarih),
+      'sera': sera,
+
+      // Backend ve veritabanında kolon adı "vana".
+      // Mobilde bu alana bitki kodu gönderiliyor.
+      'vana': bitkiKodu,
+
+      'createuser': widget.personelKodu,
+      'tip': tip,
+      'deger': deger,
+      'bildirildi': bildirildi,
     };
 
-    final res = await http.post(
+    final response = await http.post(
       uri,
-      headers: const {"Content-Type": "application/json"},
+      headers: const {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
       body: jsonEncode(body),
     );
 
-    if (res.statusCode != 200) {
-      throw Exception("Kayıt başarısız. Status: ${res.statusCode} Body: ${res.body}");
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Kayıt başarısız. Status: ${response.statusCode} '
+        'Body: ${response.body}',
+      );
     }
 
     dynamic decoded;
+
     try {
-      decoded = jsonDecode(res.body);
+      decoded = jsonDecode(response.body);
     } catch (_) {
       decoded = null;
     }
-    if (decoded is Map && decoded["success"] == false) {
-      throw Exception(decoded["message"] ?? "Kayıt başarısız");
+
+    if (decoded is Map && decoded['success'] == false) {
+      throw Exception(
+        decoded['message']?.toString() ?? 'Kayıt başarısız.',
+      );
     }
   }
 
@@ -281,6 +318,7 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
     if (!zorunluHazir || loadingZorunlu) return;
 
     setState(() => loadingZorunlu = true);
+
     try {
       final uzamaTip = init.tipById(idUzama);
       final kalinlikTip = init.tipById(idKalinlik);
@@ -288,8 +326,8 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
       await _postTekOlcum(
         tarih: secilenTarih,
         sera: seciliSera!,
-        vana: seciliYer!,
-        tip: uzamaTip?.isim ?? "Bitki Uzaması (cm)",
+        bitkiKodu: seciliBitkiKodu!,
+        tip: uzamaTip?.isim ?? 'Bitki Uzaması (cm)',
         deger: uzamaCtrl.text.trim(),
         bildirildi: uzamaTip?.bildir ?? 0,
       );
@@ -297,35 +335,91 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
       await _postTekOlcum(
         tarih: secilenTarih,
         sera: seciliSera!,
-        vana: seciliYer!,
-        tip: kalinlikTip?.isim ?? "Tepe Kalınlığı (mm)",
+        bitkiKodu: seciliBitkiKodu!,
+        tip: kalinlikTip?.isim ?? 'Tepe Kalınlığı (mm)',
         deger: kalinlikCtrl.text.trim(),
         bildirildi: kalinlikTip?.bildir ?? 0,
       );
 
-      setState(() => zorunluTamamlandi = true);
-
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Bitki Bilgileri Kaydedildi ✅"),
-          backgroundColor: accent,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        ),
-      );
+
+      setState(() {
+        zorunluTamamlandi = true;
+      });
+
+      _mesajGoster('Zorunlu ölçümler kaydedildi.');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Hata: $e"),
-          backgroundColor: Colors.red.shade700,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        ),
+      _mesajGoster(
+        'Hata: $e',
+        hata: true,
       );
     } finally {
-      if (mounted) setState(() => loadingZorunlu = false);
+      if (mounted) {
+        setState(() => loadingZorunlu = false);
+      }
+    }
+  }
+
+  Future<void> _seciliOlcumDegeriniGetir(
+    OlcumTipleriModel tip,
+  ) async {
+    final String? bitkiKodu = seciliBitkiKodu;
+    final String tipAdi = (tip.isim ?? '').trim();
+
+    if (bitkiKodu == null || bitkiKodu.trim().isEmpty) {
+      return;
+    }
+
+    if (tipAdi.isEmpty) {
+      setState(() {
+        degerCtrl.clear();
+      });
+      return;
+    }
+
+    setState(() {
+      loadingOlcumDeger = true;
+      degerCtrl.clear();
+    });
+
+    try {
+      final sonuc =
+          await const BitkiSeraYerleriApi().olcumDegerGetir(
+        bitkiKodu: bitkiKodu,
+        tip: tipAdi,
+        tarih: secilenTarih,
+      );
+
+      if (!mounted) return;
+
+      // Kullanıcı sorgu devam ederken başka ölçüm tipine geçtiyse
+      // eski sorgunun sonucunu ekrana yazma.
+      if (seciliTip != tip) return;
+
+      setState(() {
+        degerCtrl.text =
+            sonuc.bulundu ? (sonuc.deger ?? '') : '';
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      if (seciliTip == tip) {
+        setState(() {
+          degerCtrl.clear();
+        });
+      }
+
+      _mesajGoster(
+        'Ölçüm değeri alınamadı: $e',
+        hata: true,
+      );
+    } finally {
+      if (mounted && seciliTip == tip) {
+        setState(() {
+          loadingOlcumDeger = false;
+        });
+      }
     }
   }
 
@@ -333,239 +427,231 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
     if (!ekOlcumHazir || loadingEk) return;
 
     setState(() => loadingEk = true);
+
     try {
       await _postTekOlcum(
         tarih: secilenTarih,
         sera: seciliSera!,
-        vana: seciliYer!,
-        tip: seciliTip!.isim ?? "",
+        bitkiKodu: seciliBitkiKodu!,
+        tip: seciliTip!.isim ?? '',
         deger: degerCtrl.text.trim(),
         bildirildi: seciliTip!.bildir ?? 0,
       );
 
-      setState(() => degerCtrl.clear());
-
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Ölçüm Kaydedildi ✅"),
-          backgroundColor: accent,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        ),
-      );
+
+      setState(() {
+        degerCtrl.clear();
+      });
+
+      _mesajGoster('Ölçüm kaydedildi.');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Hata: $e"),
-          backgroundColor: Colors.red.shade700,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        ),
+      _mesajGoster(
+        'Hata: $e',
+        hata: true,
       );
     } finally {
-      if (mounted) setState(() => loadingEk = false);
+      if (mounted) {
+        setState(() => loadingEk = false);
+      }
     }
   }
 
-  // ----------------------------
-  // UI
-  // ----------------------------
+  void _yeniBitki() {
+    setState(() {
+      bitkiKoduCtrl.clear();
+      _bitkiSeciminiTemizle();
+    });
+
+    FocusScope.of(context).requestFocus(FocusNode());
+  }
+
+  void _mesajGoster(
+    String mesaj, {
+    bool hata = false,
+  }) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mesaj),
+        backgroundColor: hata ? Colors.red.shade700 : accent,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
       appBar: AppBar(
-        title: const Text("Bitki Ölçüm Girişi"),
+        title: const Text('Bitki Ölçüm Girişi'),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         foregroundColor: Colors.black87,
+        actions: [
+          if (bitkiBulundu)
+            IconButton(
+              tooltip: 'Yeni bitki',
+              onPressed: _yeniBitki,
+              icon: const Icon(Icons.refresh),
+            ),
+        ],
       ),
       body: FutureBuilder<_InitData>(
         future: _initFuture,
-        builder: (context, snap) {
-          if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
           }
-          final init = snap.data!;
+
+          if (snapshot.hasError) {
+            return _hataEkrani(snapshot.error.toString());
+          }
+
+          if (!snapshot.hasData) {
+            return _hataEkrani('Veriler alınamadı.');
+          }
+
+          final init = snapshot.data!;
 
           final uzamaLabel =
-              init.tipById(idUzama)?.isim ?? "Bitki Uzaması (cm)";
-          final kalinlikLabel =
-              init.tipById(idKalinlik)?.isim ?? "Tepe Kalınlığı (mm)";
+              init.tipById(idUzama)?.isim ?? 'Bitki Uzaması (cm)';
 
-          final tiplerDropdown = init.tipler
-              .where((x) => (x.manuelGiris ?? 0) == 1)
-              .where((x) => (x.id ?? 0) != idUzama && (x.id ?? 0) != idKalinlik)
+          final kalinlikLabel =
+              init.tipById(idKalinlik)?.isim ?? 'Tepe Kalınlığı (mm)';
+
+          final digerTipler = init.tipler
+              .where((tip) => (tip.manuelGiris ?? 0) == 1)
+              .where(
+                (tip) =>
+                    (tip.id ?? 0) != idUzama &&
+                    (tip.id ?? 0) != idKalinlik,
+              )
               .toList();
+              digerTipler.sort((a, b) {
+  int sira(String? isim) {
+    final m = RegExp(r'^(\d+)').firstMatch(isim ?? '');
+    return m == null ? 999 : int.parse(m.group(1)!);
+  }
+
+  int tip(String? isim) {
+    final text = (isim ?? '').toLowerCase();
+
+    if (text.contains('meyve sayısı')) return 0;
+    if (text.contains('meyve çapı')) return 1;
+
+    return 2;
+  }
+
+  final s = sira(a.isim).compareTo(sira(b.isim));
+  if (s != 0) return s;
+
+  return tip(a.isim).compareTo(tip(b.isim));
+});
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 18),
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
             children: [
-              _personelChip(),
-
+              _personelBilgisi(),
               const SizedBox(height: 12),
 
               _sectionCard(
-                title: "Seçimler",
-                icon: Icons.event_note,
-                child: Column(
-                  children: [
-                    _infoTile(
-                      title: "Tarih",
-                      value: _yyyyMmDd(secilenTarih),
-                      icon: Icons.calendar_month,
-                      onTap: () async {
-                        final t = await showDatePicker(
-                          context: context,
-                          initialDate: secilenTarih,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2100),
-                        );
-                        if (t != null) setState(() => secilenTarih = t);
-                      },
+                title: 'Ölçüm Tarihi',
+                icon: Icons.calendar_month,
+                child: InkWell(
+                  onTap: bitkiAraniyor ? null : () => _tarihSec(init),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 14,
                     ),
-                    const SizedBox(height: 10),
-                    _infoTile(
-                      title: "Sera",
-                      value: seciliSera ?? "Seç",
-                      icon: Icons.warehouse,
-                      onTap: () => _seraYerSec(init.yerler),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF6F7F9),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.grey.shade200,
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    _infoTile(
-                      title: "Yer",
-                      value: seciliYer ?? "Seç",
-                      icon: Icons.place,
-                      onTap: () => _seraYerSec(init.yerler),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.event,
+                          color: accent,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _ddMmYyyy(secilenTarih),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
 
               const SizedBox(height: 12),
 
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 260),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                child: (!yerSeciliMi || zorunluTamamlandi)
-                    ? const SizedBox.shrink(key: ValueKey("zorunlu_hidden"))
-                    : _sectionCard(
-                        key: const ValueKey("zorunlu_shown"),
-                        title: "Zorunlu Ölçümler",
-                        icon: Icons.playlist_add_check,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _filledNumberField(
-                              controller: uzamaCtrl,
-                              label: uzamaLabel,
-                              hint: "Değer girin",
-                              onChanged: (_) => setState(() {}),
-                            ),
-                            const SizedBox(height: 10),
-                            _filledNumberField(
-                              controller: kalinlikCtrl,
-                              label: kalinlikLabel,
-                              hint: "Değer girin",
-                              onChanged: (_) => setState(() {}),
-                            ),
-                            const SizedBox(height: 14),
-                            SizedBox(
-                              height: 50,
-                              child: ElevatedButton.icon(
-                                onPressed: (!zorunluHazir || loadingZorunlu)
-                                    ? null
-                                    : () => _kaydetZorunlular(init),
-                                icon: loadingZorunlu
-                                    ? const SizedBox(
-                                        height: 18,
-                                        width: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Icon(Icons.save),
-                                label: const Text(
-                                  "Zorunluları Kaydet",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: accent,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-              ),
-
-              const SizedBox(height: 12),
-
               _sectionCard(
-                title: "Diğer Ölçümler",
-                icon: Icons.tune,
-                muted: !zorunluTamamlandi,
+                title: 'Bitki Kodu',
+                icon: Icons.qr_code_scanner,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    DropdownButtonFormField<OlcumTipleriModel>(
-                      value: seciliTip,
-                      items: tiplerDropdown
-                          .map((t) => DropdownMenuItem(
-                                value: t,
-                                child: Text(
-                                  t.isim ?? "",
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ))
-                          .toList(),
-                      onChanged: (!zorunluTamamlandi || !yerSeciliMi)
-                          ? null
-                          : (v) {
-                              setState(() {
-                                seciliTip = v;
-                                degerCtrl.clear();
-                              });
-                            },
+                    TextField(
+                      controller: bitkiKoduCtrl,
+                      enabled: !bitkiAraniyor,
+                      textCapitalization: TextCapitalization.characters,
+                      textInputAction: TextInputAction.search,
+                      onChanged: _bitkiDegisti,
+                      onSubmitted: (_) => _bitkiyiBul(init),
                       decoration: _dec(
-                        label: "Ölçüm Tipi",
-                        hint: "Seçiniz",
-                        icon: Icons.list_alt,
+                        label: 'Bitki kodunu girin',
+                        hint: 'Örn: 110',
+                        icon: Icons.eco,
                       ),
-                      isExpanded: true,
                     ),
-                    const SizedBox(height: 10),
-
-                    _filledNumberField(
-                      controller: degerCtrl,
-                      label: "Değer",
-                      hint: "Değer girin",
-                      enabled: zorunluTamamlandi && yerSeciliMi && seciliTip != null,
-                      onChanged: (_) => setState(() {}),
-                    ),
-
-                    const SizedBox(height: 14),
-
+                    const SizedBox(height: 12),
                     SizedBox(
                       height: 50,
-                      child: ElevatedButton(
-                        onPressed: (!ekOlcumHazir || loadingEk)
+                      child: ElevatedButton.icon(
+                        onPressed: bitkiAraniyor
                             ? null
-                            : _kaydetEkOlcum,
+                            : () => _bitkiyiBul(init),
+                        icon: bitkiAraniyor
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.search),
+                        label: Text(
+                          bitkiAraniyor
+                              ? 'Aranıyor...'
+                              : 'Bitkiyi Getir',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: accent,
                           foregroundColor: Colors.white,
@@ -574,26 +660,242 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: loadingEk
-                            ? const SizedBox(
-                                height: 18,
-                                width: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text(
-                                "Ölçüm Kaydet",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
                       ),
                     ),
+                    if (bitkiBulundu) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: accent.withOpacity(.08),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.check_circle,
+                              color: accent,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                '${seciliBitkiKodu!} • ${seciliSera!}',
+                                style: const TextStyle(
+                                  color: accent,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
+              ),
+
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: !bitkiBulundu
+                    ? const SizedBox.shrink()
+                    : Column(
+                        key: ValueKey(seciliBitkiKodu),
+                        children: [
+                          const SizedBox(height: 12),
+
+                          if (!zorunluTamamlandi)
+                            _sectionCard(
+                              title: 'Zorunlu Ölçümler',
+                              icon: Icons.playlist_add_check,
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.stretch,
+                                children: [
+                                  _filledNumberField(
+                                    controller: uzamaCtrl,
+                                    label: uzamaLabel,
+                                    hint: 'Değer girin',
+                                    onChanged: (_) => setState(() {}),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  _filledNumberField(
+                                    controller: kalinlikCtrl,
+                                    label: kalinlikLabel,
+                                    hint: 'Değer girin',
+                                    onChanged: (_) => setState(() {}),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  SizedBox(
+                                    height: 50,
+                                    child: ElevatedButton.icon(
+                                      onPressed:
+                                          !zorunluHazir || loadingZorunlu
+                                              ? null
+                                              : () =>
+                                                  _kaydetZorunlular(init),
+                                      icon: loadingZorunlu
+                                          ? const SizedBox(
+                                              width: 18,
+                                              height: 18,
+                                              child:
+                                                  CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : const Icon(Icons.save),
+                                      label: const Text(
+                                        'Zorunluları Kaydet',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: accent,
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          _sectionCard(
+                            title: 'Diğer Ölçümler',
+                            icon: Icons.tune,
+                            muted: !zorunluTamamlandi,
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.stretch,
+                              children: [
+                                DropdownButtonFormField<
+                                    OlcumTipleriModel>(
+                                  value: seciliTip,
+                                  isExpanded: true,
+                                  items: digerTipler
+                                      .map(
+                                        (tip) => DropdownMenuItem(
+                                          value: tip,
+                                          child: Text(
+                                            tip.isim ?? '',
+                                            overflow:
+                                                TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: !zorunluTamamlandi ||
+                                          loadingOlcumDeger
+                                      ? null
+                                      : (tip) async {
+                                          setState(() {
+                                            seciliTip = tip;
+                                            degerCtrl.clear();
+                                          });
+
+                                          if (tip != null) {
+                                            await _seciliOlcumDegeriniGetir(
+                                              tip,
+                                            );
+                                          }
+                                        },
+                                  decoration: _dec(
+                                    label: 'Ölçüm tipi',
+                                    hint: 'Seçiniz',
+                                    icon: Icons.list_alt,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                if (loadingOlcumDeger)
+                                  Container(
+                                    height: 56,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF6F7F9),
+                                      borderRadius:
+                                          BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: Colors.grey.shade200,
+                                      ),
+                                    ),
+                                    child: const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child:
+                                              CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          'Kayıtlı değer getiriliyor...',
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                else
+                                  _filledNumberField(
+                                    controller: degerCtrl,
+                                    label: 'Değer',
+                                    hint: 'Değer girin',
+                                    enabled: zorunluTamamlandi &&
+                                        seciliTip != null,
+                                    onChanged: (_) => setState(() {}),
+                                  ),
+                                const SizedBox(height: 14),
+                                SizedBox(
+                                  height: 50,
+                                  child: ElevatedButton(
+                                    onPressed:
+                                        !ekOlcumHazir ||
+                                                loadingEk ||
+                                                loadingOlcumDeger
+                                            ? null
+                                            : _kaydetEkOlcum,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: accent,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    child: loadingEk
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child:
+                                                CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Text(
+                                            'Ölçüm Kaydet',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight:
+                                                  FontWeight.w700,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ],
           );
@@ -602,12 +904,44 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
     );
   }
 
-  // ----------------------------
-  // UI Components
-  // ----------------------------
-  Widget _personelChip() {
+  Widget _hataEkrani(String hata) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 48,
+              color: Colors.red,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              hata,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _initFuture = _loadAll();
+                });
+              },
+              child: const Text('Tekrar Dene'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _personelBilgisi() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 10,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -621,56 +955,47 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
               color: accent.withOpacity(.10),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.badge, color: accent, size: 18),
+            child: const Icon(
+              Icons.badge,
+              color: accent,
+              size: 18,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              "Personel: ${widget.personelAdi}",
-              style: const TextStyle(fontWeight: FontWeight.w700),
+              'Personel: ${widget.personelAdi}',
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-          if (seciliSera != null && seciliYer != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: accent.withOpacity(.10),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                "${seciliSera!} • ${seciliYer!}",
-                style: const TextStyle(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
         ],
       ),
     );
   }
 
   Widget _sectionCard({
-    Key? key,
     required String title,
     required IconData icon,
     required Widget child,
     bool muted = false,
   }) {
     return Card(
-      key: key,
       elevation: 0,
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(
+          color: Colors.grey.shade200,
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+        padding: const EdgeInsets.all(14),
         child: DefaultTextStyle(
-          style: TextStyle(color: muted ? Colors.grey : Colors.black87),
+          style: TextStyle(
+            color: muted ? Colors.grey : Colors.black87,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -683,15 +1008,22 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
                       color: accent.withOpacity(.10),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(icon, color: accent, size: 18),
+                    child: Icon(
+                      icon,
+                      color: accent,
+                      size: 18,
+                    ),
                   ),
                   const SizedBox(width: 10),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: muted ? Colors.grey : Colors.black87,
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color:
+                            muted ? Colors.grey : Colors.black87,
+                      ),
                     ),
                   ),
                 ],
@@ -700,57 +1032,6 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
               child,
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _infoTile({
-    required String title,
-    required String value,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF6F7F9),
-          borderRadius: BorderRadius.circular(16),
-     
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-
-              ),
-              child: Icon(icon, color: accent, size: 18),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-            Flexible(
-              child: Text(
-                value,
-                textAlign: TextAlign.right,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-            const SizedBox(width: 6),
-            const Icon(Icons.chevron_right),
-          ],
         ),
       ),
     );
@@ -773,13 +1054,21 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderSide: BorderSide(
+          color: Colors.grey.shade200,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: accent, width: 1.6),
+        borderSide: const BorderSide(
+          color: accent,
+          width: 1.6,
+        ),
       ),
-      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      contentPadding: const EdgeInsets.symmetric(
+        vertical: 14,
+        horizontal: 12,
+      ),
     );
   }
 
@@ -793,15 +1082,34 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
     return TextField(
       controller: controller,
       enabled: enabled,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      decoration: _dec(label: label, hint: hint, icon: Icons.numbers),
+      keyboardType: const TextInputType.numberWithOptions(
+        decimal: true,
+      ),
+      decoration: _dec(
+        label: label,
+        hint: hint,
+        icon: Icons.numbers,
+      ),
       onChanged: onChanged,
     );
   }
 
-  String _yyyyMmDd(DateTime d) {
-    String two(int n) => n.toString().padLeft(2, '0');
-    return "${d.year}-${two(d.month)}-${two(d.day)}";
+  String _ddMmYyyy(DateTime tarih) {
+    String ikiHane(int deger) =>
+        deger.toString().padLeft(2, '0');
+
+    return '${ikiHane(tarih.day)}.'
+        '${ikiHane(tarih.month)}.'
+        '${tarih.year}';
+  }
+
+  String _yyyyMmDd(DateTime tarih) {
+    String ikiHane(int deger) =>
+        deger.toString().padLeft(2, '0');
+
+    return '${tarih.year}-'
+        '${ikiHane(tarih.month)}-'
+        '${ikiHane(tarih.day)}';
   }
 }
 
@@ -809,18 +1117,18 @@ class _InitData {
   final List<SeraYerModel> yerler;
   final List<OlcumTipleriModel> tipler;
 
-  _InitData({required this.yerler, required this.tipler});
+  _InitData({
+    required this.yerler,
+    required this.tipler,
+  });
 
   OlcumTipleriModel? tipById(int id) {
-    for (final t in tipler) {
-      if ((t.id ?? 0) == id) return t;
+    for (final tip in tipler) {
+      if ((tip.id ?? 0) == id) {
+        return tip;
+      }
     }
+
     return null;
   }
-}
-
-class _YerItem {
-  final String sera;
-  final String yer;
-  _YerItem({required this.sera, required this.yer});
 }

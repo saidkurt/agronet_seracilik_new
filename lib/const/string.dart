@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class App {
   static final String appbarString = 'Agronet Seracılık A.Ş';
-  static final String outsideurl = 'http://88.248.170.183:2626';
-  static final String insideurl = 'http://192.0.0.251:2626';
+  static final String outsideurl= 'http://88.248.170.183:2626';
+  static final String insideurl  = 'http://192.0.0.251:2626';
   static final String localurl = 'http://192.0.0.199:8085';
   Map<String, String> get drawerPageString => {
         "kutuekleDrawerTitle": "Kutu Ekle",

@@ -69,17 +69,7 @@ flutter:
   assets:
     - assets/agronet.png
     - assets/1234.png
-    - assets/1212.jpg
-    - assets/1.jpg
-    - assets/2.jpg
-    - assets/3.jpg
-    - assets/4.jpg
-    - assets/5.jpg
-    - assets/agronet.png
-    - assets/IMG-0155.jpg
-    - assets/IMG-0156.jpg
-    - assets/IMG-0157.jpg
-    - assets/qr.jpg
+
 
   fonts:
     - family: Montserrat

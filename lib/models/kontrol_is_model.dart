@@ -1,9 +1,17 @@
 class KontrolIsModel {
   final int id;
+
+  // Bağlı asıl iş bilgileri
+  final int asilIsId;
+  final String asilKoridor;
+
   final String isAdi;
   final String personel;
   final String tunel;
+
+  // Kontrol işinin tekil sırası: A, B, C...
   final String koridor;
+
   final int siraSayisi;
   final DateTime? tarih;
 
@@ -16,6 +24,8 @@ class KontrolIsModel {
 
   const KontrolIsModel({
     required this.id,
+    required this.asilIsId,
+    required this.asilKoridor,
     required this.isAdi,
     required this.personel,
     required this.tunel,
@@ -31,28 +41,53 @@ class KontrolIsModel {
     Map<String, dynamic> json,
   ) {
     final tarihText =
-        (json['Tarih'] ?? '').toString();
+        (json['Tarih'] ?? json['tarih'] ?? '').toString();
 
     return KontrolIsModel(
       id: int.tryParse(
-            (json['Id'] ?? 0).toString(),
+            (json['Id'] ?? json['id'] ?? 0).toString(),
           ) ??
           0,
 
+      asilIsId: int.tryParse(
+            (json['AsilIsId'] ??
+                    json['asilIsId'] ??
+                    0)
+                .toString(),
+          ) ??
+          0,
+
+      asilKoridor:
+          (json['AsilKoridor'] ??
+                  json['asilKoridor'] ??
+                  '')
+              .toString(),
+
       isAdi:
-          (json['IsAdi'] ?? '').toString(),
+          (json['IsAdi'] ?? json['isAdi'] ?? '')
+              .toString(),
 
       personel:
-          (json['Personel'] ?? '').toString(),
+          (json['Personel'] ??
+                  json['personel'] ??
+                  '')
+              .toString(),
 
       tunel:
-          (json['Tunel'] ?? '').toString(),
+          (json['Tunel'] ?? json['tunel'] ?? '')
+              .toString(),
 
       koridor:
-          (json['Koridor'] ?? '').toString(),
+          (json['Koridor'] ??
+                  json['koridor'] ??
+                  '')
+              .toString(),
 
       siraSayisi: int.tryParse(
-            (json['SiraSayisi'] ?? 1).toString(),
+            (json['SiraSayisi'] ??
+                    json['siraSayisi'] ??
+                    1)
+                .toString(),
           ) ??
           1,
 
@@ -61,18 +96,22 @@ class KontrolIsModel {
           : DateTime.tryParse(tarihText),
 
       kontrolDurum: int.tryParse(
-            (json['KontrolDurum'] ?? 0)
+            (json['KontrolDurum'] ??
+                    json['kontrolDurum'] ??
+                    0)
                 .toString(),
           ) ??
           0,
 
       kontrolDurumAdi:
           (json['KontrolDurumAdi'] ??
+                  json['kontrolDurumAdi'] ??
                   'Bekliyor')
               .toString(),
 
       puan: int.tryParse(
-            (json['Puan'] ?? 0).toString(),
+            (json['Puan'] ?? json['puan'] ?? 0)
+                .toString(),
           ) ??
           0,
     );

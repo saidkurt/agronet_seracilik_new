@@ -64,6 +64,14 @@ class HomeMenuPage extends StatelessWidget {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  TutaGirisPage(personelKodu: user.kullanicikodu ?? " ")));
         },
         ),
+          _MenuItem(
+        title: "Bitki Ölçüm Giriş",
+      icon: Icons.bug_report_rounded,
+        visible: true,
+       onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) =>  BitkiOlcumSahaSayfa(personelKodu: user.kullanicikodu ?? " ",personelAdi: user.kullaniciadi ?? "",)));
+        },
+        ),
         _MenuItem(
   title: "Beyaz Sinek Sayımı",
   icon: Icons.pest_control_rounded,

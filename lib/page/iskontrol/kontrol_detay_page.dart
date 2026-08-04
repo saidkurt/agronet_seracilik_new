@@ -7,10 +7,12 @@ import 'package:flutter/services.dart';
 
 class KontrolDetayPage extends StatefulWidget {
   final int kontrolIsId;
+  final String kontrolEdenPersonelKodu;
 
   const KontrolDetayPage({
     super.key,
     required this.kontrolIsId,
+    required this.kontrolEdenPersonelKodu,
   });
 
   @override
@@ -144,9 +146,10 @@ class _KontrolDetayPageState
   Future<void> _durumDegistir() async {
     await _islemYap(
       () => KontrolApi.durumDegistir(
-        widget.kontrolIsId,
-      ),
-    );
+  kontrolIsId: widget.kontrolIsId,
+  kontrolEdenPersonelKodu:
+      widget.kontrolEdenPersonelKodu,
+      ));
   }
 
   Future<void> _bitir() async {
@@ -185,12 +188,14 @@ class _KontrolDetayPageState
     }
 
     await _islemYap(
-      () => KontrolApi.bitir(
-        kontrolIsId: widget.kontrolIsId,
-        puan: puan,
-      ),
-      sayfayiKapat: true,
-    );
+  () => KontrolApi.bitir(
+    kontrolIsId: widget.kontrolIsId,
+    kontrolEdenPersonelKodu:
+        widget.kontrolEdenPersonelKodu,
+    puan: puan,
+  ),
+  sayfayiKapat: true,
+);
   }
 
   Future<void> _tekrarEt() async {
@@ -206,7 +211,8 @@ class _KontrolDetayPageState
 
     await _islemYap(
       () => KontrolApi.tekrarEt(
-        widget.kontrolIsId,
+        kontrolIsId: widget.kontrolIsId,
+        kontrolEdenPersonelKodu: widget.kontrolEdenPersonelKodu,
       ),
       sayfayiKapat: true,
     );
@@ -1059,39 +1065,15 @@ class _KontrolDetayPageState
         );
 
       case 2:
-        return Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: _anaButon(
-                yazi: 'DEVAM ET',
-                ikon:
-                    Icons.play_arrow_rounded,
-                renk: Colors.green,
-                onPressed: _durumDegistir,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _ikincilButon(
-                yazi: 'Tekrar',
-                ikon:
-                    Icons.replay_rounded,
-                renk: Colors.orange,
-                onPressed: _tekrarEt,
-              ),
-            ),
-          ],
-        );
+  return _anaButon(
+    yazi: 'DEVAM ET',
+    ikon: Icons.play_arrow_rounded,
+    renk: Colors.green,
+    onPressed: _durumDegistir,
+  );
 
-      case 3:
-        return _ikincilButon(
-          yazi: 'Tekrar',
-          ikon: Icons.replay_rounded,
-          renk: Colors.orange,
-          onPressed: _tekrarEt,
-        );
-
+     case 3:
+  return const SizedBox.shrink();
       default:
         return const SizedBox.shrink();
     }

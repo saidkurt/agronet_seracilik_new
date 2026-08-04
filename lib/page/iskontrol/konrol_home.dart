@@ -27,10 +27,6 @@ class _KontrolPageState extends State<KontrolPage> {
 
   KontrolPersonelModel? _seciliPersonel;
 
-  // Geçici olarak sabit.
-  // Daha sonra widget.personelKodu kullanılabilir.
-  static const String _kontrolEdenKodu = '0713';
-
   @override
   void initState() {
     super.initState();
@@ -47,7 +43,7 @@ class _KontrolPageState extends State<KontrolPage> {
 
     try {
       final sonuc = await KontrolApi.personelleriGetir(
-        _kontrolEdenKodu,
+        widget.personelKodu,
       );
 
       if (!mounted) return;
@@ -82,7 +78,7 @@ class _KontrolPageState extends State<KontrolPage> {
 
     try {
       final sonuc = await KontrolApi.kontrolIsleriniGetir(
-        kontrolEdenPersonelKodu: _kontrolEdenKodu,
+        kontrolEdenPersonelKodu: widget.personelKodu,
         kontrolEdilenPersonelKodu: personel.personelKodu,
       );
 
@@ -107,74 +103,68 @@ class _KontrolPageState extends State<KontrolPage> {
   }
 
   Future<void> _tumKontrolEkraniniYenile() async {
-  final seciliPersonel = _seciliPersonel;
+    final seciliPersonel = _seciliPersonel;
 
-  if (seciliPersonel == null) {
-    await _personelleriGetir();
-    return;
-  }
+    if (seciliPersonel == null) {
+      await _personelleriGetir();
+      return;
+    }
 
-  if (!mounted) return;
+    setState(() {
+      _yukleniyor = true;
+      _hataMesaji = null;
+    });
 
-  setState(() {
-    _yukleniyor = true;
-    _hataMesaji = null;
-  });
+    try {
+      final sonuclar = await Future.wait([
+        KontrolApi.personelleriGetir(
+          widget.personelKodu,
+        ),
+        KontrolApi.kontrolIsleriniGetir(
+          kontrolEdenPersonelKodu:
+              widget.personelKodu,
+          kontrolEdilenPersonelKodu:
+              seciliPersonel.personelKodu,
+        ),
+      ]);
 
-  try {
-    final sonuclar = await Future.wait([
-      KontrolApi.personelleriGetir(
-        _kontrolEdenKodu,
-      ),
-      KontrolApi.kontrolIsleriniGetir(
-        kontrolEdenPersonelKodu:
-            _kontrolEdenKodu,
-        kontrolEdilenPersonelKodu:
-            seciliPersonel.personelKodu,
-      ),
-    ]);
+      if (!mounted) return;
 
-    if (!mounted) return;
+      final yeniPersoneller =
+          sonuclar[0] as List<KontrolPersonelModel>;
+      final yeniKontrolIsleri =
+          sonuclar[1] as List<KontrolIsModel>;
 
-    final yeniPersoneller =
-        sonuclar[0] as List<KontrolPersonelModel>;
+      KontrolPersonelModel? guncelSecili;
 
-    final yeniKontrolIsleri =
-        sonuclar[1] as List<KontrolIsModel>;
+      for (final personel in yeniPersoneller) {
+        if (personel.personelKodu ==
+            seciliPersonel.personelKodu) {
+          guncelSecili = personel;
+          break;
+        }
+      }
 
-    KontrolPersonelModel? guncelSeciliPersonel;
+      setState(() {
+        _personeller = yeniPersoneller;
+        _kontrolIsleri = yeniKontrolIsleri;
+        _seciliPersonel =
+            guncelSecili ?? seciliPersonel;
+      });
+    } catch (e) {
+      if (!mounted) return;
 
-    for (final personel in yeniPersoneller) {
-      if (personel.personelKodu ==
-          seciliPersonel.personelKodu) {
-        guncelSeciliPersonel = personel;
-        break;
+      setState(() {
+        _hataMesaji = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _yukleniyor = false;
+        });
       }
     }
-
-    setState(() {
-      _personeller = yeniPersoneller;
-      _kontrolIsleri = yeniKontrolIsleri;
-
-      // Personel listede hâlâ varsa güncel adetli halini kullan.
-      // Listeden çıkmışsa mevcut seçimi koru.
-      _seciliPersonel =
-          guncelSeciliPersonel ?? seciliPersonel;
-    });
-  } catch (e) {
-    if (!mounted) return;
-
-    setState(() {
-      _hataMesaji = e.toString();
-    });
-  } finally {
-    if (mounted) {
-      setState(() {
-        _yukleniyor = false;
-      });
-    }
   }
-}
 
   void _personelListesineDon() {
     setState(() {
@@ -193,15 +183,17 @@ class _KontrolPageState extends State<KontrolPage> {
     return true;
   }
 
-  Map<String, List<KontrolPersonelModel>> _personelleriGrupla() {
-    final gruplar = <String, List<KontrolPersonelModel>>{};
+  Map<String, List<KontrolPersonelModel>>
+      _personelleriGrupla() {
+    final gruplar =
+        <String, List<KontrolPersonelModel>>{};
 
     for (final personel in _personeller) {
-      String grup = personel.grup.trim().toUpperCase();
+      String grup =
+          personel.grup.trim().toUpperCase();
 
       if (grup.isEmpty) {
         final ad = personel.personelAdi.trim();
-
         grup = ad.isEmpty
             ? '#'
             : ad.substring(0, 1).toUpperCase();
@@ -211,7 +203,8 @@ class _KontrolPageState extends State<KontrolPage> {
       gruplar[grup]!.add(personel);
     }
 
-    final anahtarlar = gruplar.keys.toList()..sort();
+    final anahtarlar = gruplar.keys.toList()
+      ..sort();
 
     return {
       for (final anahtar in anahtarlar)
@@ -219,78 +212,40 @@ class _KontrolPageState extends State<KontrolPage> {
     };
   }
 
-  Map<String, List<KontrolIsModel>> _isleriTuneleGoreGrupla() {
-    final gruplar = <String, List<KontrolIsModel>>{};
+  Map<int, List<KontrolIsModel>>
+      _isleriAsilIseGoreGrupla() {
+    final gruplar =
+        <int, List<KontrolIsModel>>{};
 
     for (final kontrolIsi in _kontrolIsleri) {
-      final tunel = kontrolIsi.tunel.trim().isEmpty
-          ? 'Tünel belirtilmemiş'
-          : kontrolIsi.tunel.trim();
+      // Eski API cevabında AsilIsId yoksa kayıtların
+      // yanlış birleşmemesi için kontrol işi ID'si kullanılır.
+      final anahtar = kontrolIsi.asilIsId > 0
+          ? kontrolIsi.asilIsId
+          : kontrolIsi.id;
 
-      gruplar.putIfAbsent(tunel, () => []);
-      gruplar[tunel]!.add(kontrolIsi);
+      gruplar.putIfAbsent(anahtar, () => []);
+      gruplar[anahtar]!.add(kontrolIsi);
     }
 
-    final anahtarlar = gruplar.keys.toList()..sort();
+    final sirali = gruplar.entries.toList()
+      ..sort((a, b) {
+        final aTarih = a.value.first.tarih;
+        final bTarih = b.value.first.tarih;
+
+        if (aTarih == null && bTarih == null) {
+          return 0;
+        }
+        if (aTarih == null) return 1;
+        if (bTarih == null) return -1;
+
+        return bTarih.compareTo(aTarih);
+      });
 
     return {
-      for (final anahtar in anahtarlar)
-        anahtar: gruplar[anahtar]!,
+      for (final entry in sirali)
+        entry.key: entry.value,
     };
-  }
-
-  _KontrolKartDurumu _kartDurumu(
-    KontrolIsModel kontrolIsi,
-  ) {
-    // Kontrol işi bitmiş ancak asıl işe puan verilmemiş.
-    if (kontrolIsi.kontrolDurum == 3 &&
-        kontrolIsi.puan <= 0) {
-      return _KontrolKartDurumu(
-        renk: Colors.red.shade700,
-        arkaPlan: Colors.red.withOpacity(.07),
-        ikon: Icons.priority_high_rounded,
-        metin: 'Puan bekliyor',
-      );
-    }
-
-    // Kontrol işi bitmiş ve asıl iş puanlanmış.
-    if (kontrolIsi.kontrolDurum == 3 &&
-        kontrolIsi.puan > 0) {
-      return _KontrolKartDurumu(
-        renk: Colors.green.shade700,
-        arkaPlan: Colors.green.withOpacity(.07),
-        ikon: Icons.check_circle_rounded,
-        metin: 'Puanlandı: ${kontrolIsi.puan.toInt()}',
-      );
-    }
-
-    // Kontrol işi devam ediyor.
-    if (kontrolIsi.kontrolDurum == 1) {
-      return _KontrolKartDurumu(
-        renk: Colors.blue.shade700,
-        arkaPlan: Colors.blue.withOpacity(.07),
-        ikon: Icons.play_circle_fill_rounded,
-        metin: 'Kontrol devam ediyor',
-      );
-    }
-
-    // Kontrol işine ara verilmiş.
-    if (kontrolIsi.kontrolDurum == 2) {
-      return _KontrolKartDurumu(
-        renk: Colors.orange.shade800,
-        arkaPlan: Colors.orange.withOpacity(.08),
-        ikon: Icons.pause_circle_filled_rounded,
-        metin: 'Ara verildi',
-      );
-    }
-
-    // Kontrol henüz başlamamış.
-    return _KontrolKartDurumu(
-      renk: Colors.grey.shade700,
-      arkaPlan: const Color(0xFFF7F7F9),
-      ikon: Icons.schedule_rounded,
-      metin: 'Kontrol bekliyor',
-    );
   }
 
   @override
@@ -298,11 +253,13 @@ class _KontrolPageState extends State<KontrolPage> {
     return WillPopScope(
       onWillPop: _geriTusunaBasildi,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF6F7F9),
+        backgroundColor:
+            const Color(0xFFF5F6F8),
         appBar: AppBar(
           leading: _seciliPersonel != null
               ? IconButton(
-                  onPressed: _personelListesineDon,
+                  onPressed:
+                      _personelListesineDon,
                   icon: const Icon(
                     Icons.arrow_back_rounded,
                   ),
@@ -311,9 +268,11 @@ class _KontrolPageState extends State<KontrolPage> {
           title: Text(
             _seciliPersonel == null
                 ? 'Kontrol'
-                : _seciliPersonel!.personelAdi,
+                : _seciliPersonel!
+                    .personelAdi,
             maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            overflow:
+                TextOverflow.ellipsis,
             style: const TextStyle(
               fontWeight: FontWeight.w800,
             ),
@@ -328,7 +287,8 @@ class _KontrolPageState extends State<KontrolPage> {
               onPressed: _yukleniyor
                   ? null
                   : () {
-                      if (_seciliPersonel == null) {
+                      if (_seciliPersonel ==
+                          null) {
                         _personelleriGetir();
                       } else {
                         _kontrolIsleriniGetir(
@@ -378,10 +338,11 @@ class _KontrolPageState extends State<KontrolPage> {
 
   Widget _hataGorunumu() {
     return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(20),
+      physics:
+          const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(24),
       children: [
-        const SizedBox(height: 100),
+        const SizedBox(height: 110),
         const Icon(
           Icons.cloud_off_rounded,
           size: 64,
@@ -400,26 +361,8 @@ class _KontrolPageState extends State<KontrolPage> {
         Text(
           _hataMesaji!,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.black.withOpacity(.60),
-          ),
-        ),
-        const SizedBox(height: 20),
-        Center(
-          child: FilledButton.icon(
-            onPressed: () {
-              if (_seciliPersonel == null) {
-                _personelleriGetir();
-              } else {
-                _kontrolIsleriniGetir(
-                  _seciliPersonel!,
-                );
-              }
-            },
-            icon: const Icon(
-              Icons.refresh_rounded,
-            ),
-            label: const Text('Tekrar dene'),
+          style: const TextStyle(
+            color: Colors.black54,
           ),
         ),
       ],
@@ -429,30 +372,23 @@ class _KontrolPageState extends State<KontrolPage> {
   Widget _personelListesiGorunumu() {
     if (_personeller.isEmpty) {
       return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
+        physics:
+            const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(20),
-        children: [
-          const SizedBox(height: 120),
+        children: const [
+          SizedBox(height: 130),
           Icon(
             Icons.fact_check_outlined,
             size: 70,
-            color: Colors.black.withOpacity(.25),
+            color: Colors.black26,
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'Bekleyen kontrol bulunamadı',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Kontrol personeli: ${widget.personelAdi}',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.black.withOpacity(.55),
             ),
           ),
         ],
@@ -462,8 +398,10 @@ class _KontrolPageState extends State<KontrolPage> {
     final gruplar = _personelleriGrupla();
 
     return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(
+      physics:
+          const AlwaysScrollableScrollPhysics(),
+      padding:
+          const EdgeInsets.fromLTRB(
         12,
         12,
         12,
@@ -471,7 +409,7 @@ class _KontrolPageState extends State<KontrolPage> {
       ),
       children: [
         _personelOzetKarti(),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         for (final grup in gruplar.entries)
           _personelGrupKarti(
             grup: grup.key,
@@ -482,90 +420,82 @@ class _KontrolPageState extends State<KontrolPage> {
   }
 
   Widget _personelOzetKarti() {
-    final toplamKontrol = _personeller.fold<int>(
-      0,
-      (toplam, personel) {
-        return toplam + personel.adet;
-      },
-    );
+  final tamamlananIs = _personeller.fold<int>(
+    0,
+    (toplam, personel) => toplam + personel.adet,
+  );
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.black.withOpacity(.06),
+  return _beyazKart(
+    child: Row(
+      children: [
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: Colors.green.withOpacity(.10),
+            borderRadius: BorderRadius.circular(13),
+          ),
+          child: const Icon(
+            Icons.analytics_outlined,
+            color: Colors.green,
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(.10),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.person_search_rounded,
-              color: Colors.green,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.personelAdi,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${_personeller.length} Personel',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  '${_personeller.length} personel • '
-                  '$toplamKontrol kontrol',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.black.withOpacity(.55),
-                  ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Bu Hafta',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.black45,
+                  fontWeight: FontWeight.w700,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '$tamamlananIs İş Tamamlandı',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _personelGrupKarti({
     required String grup,
-    required List<KontrolPersonelModel> personeller,
+    required List<KontrolPersonelModel>
+        personeller,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.black.withOpacity(.06),
-        ),
-      ),
+    return _beyazKart(
+      margin:
+          const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.zero,
       child: ExpansionTile(
         initiallyExpanded: true,
         shape: const Border(),
         collapsedShape: const Border(),
-        tilePadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 2,
+        tilePadding:
+            const EdgeInsets.symmetric(
+          horizontal: 15,
         ),
-        childrenPadding: const EdgeInsets.fromLTRB(
+        childrenPadding:
+            const EdgeInsets.fromLTRB(
           10,
           0,
           10,
@@ -574,7 +504,6 @@ class _KontrolPageState extends State<KontrolPage> {
         title: Text(
           '$grup (${personeller.length})',
           style: const TextStyle(
-            fontSize: 17,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -589,86 +518,75 @@ class _KontrolPageState extends State<KontrolPage> {
     KontrolPersonelModel personel,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding:
+          const EdgeInsets.only(top: 7),
       child: Material(
-        color: const Color(0xFFF7F7F9),
-        borderRadius: BorderRadius.circular(15),
+        color: const Color(0xFFF6F7F9),
+        borderRadius:
+            BorderRadius.circular(13),
         child: InkWell(
-          borderRadius: BorderRadius.circular(15),
-          onTap: () => _kontrolIsleriniGetir(
+          borderRadius:
+              BorderRadius.circular(13),
+          onTap: () =>
+              _kontrolIsleriniGetir(
             personel,
           ),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding:
+                const EdgeInsets.all(13),
             child: Row(
               children: [
                 CircleAvatar(
-                  radius: 22,
+                  radius: 20,
                   backgroundColor:
-                      Colors.green.withOpacity(.12),
+                      Colors.green
+                          .withOpacity(.12),
                   child: Text(
                     _basHarfler(
                       personel.personelAdi,
                     ),
                     style: const TextStyle(
                       color: Colors.green,
-                      fontWeight: FontWeight.w900,
+                      fontWeight:
+                          FontWeight.w900,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 11),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        personel.personelAdi,
-                        maxLines: 2,
-                        overflow:
-                            TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Personel kodu: '
-                        '${personel.personelKodu}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color:
-                              Colors.black.withOpacity(.50),
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    personel.personelAdi,
+                    style: const TextStyle(
+                      fontWeight:
+                          FontWeight.w800,
+                    ),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        Colors.green.withOpacity(.10),
-                    borderRadius:
-                        BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${personel.adet} adet',
+                if (personel.aktifKontrolDurumu == 1)
+                  _personelDurumEtiketi(
+                    'Devam Ediyor',
+                    Colors.blue,
+                    Icons.play_arrow_rounded,
+                  )
+                else if (personel.aktifKontrolDurumu == 2)
+                  _personelDurumEtiketi(
+                    'Ara Verildi',
+                    Colors.orange,
+                    Icons.pause_rounded,
+                  )
+                else
+                  Text(
+                    '${personel.adet} iş',
                     style: const TextStyle(
                       color: Colors.green,
-                      fontWeight: FontWeight.w800,
+                      fontWeight:
+                          FontWeight.w900,
                     ),
                   ),
-                ),
                 const SizedBox(width: 4),
-                Icon(
+                const Icon(
                   Icons.chevron_right_rounded,
-                  color:
-                      Colors.black.withOpacity(.35),
+                  color: Colors.black38,
                 ),
               ],
             ),
@@ -681,17 +599,18 @@ class _KontrolPageState extends State<KontrolPage> {
   Widget _kontrolIsleriGorunumu() {
     if (_kontrolIsleri.isEmpty) {
       return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
+        physics:
+            const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(20),
-        children: [
-          const SizedBox(height: 120),
+        children: const [
+          SizedBox(height: 130),
           Icon(
             Icons.assignment_turned_in_outlined,
             size: 70,
-            color: Colors.black.withOpacity(.25),
+            color: Colors.black26,
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'Kontrol işi bulunamadı',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -699,131 +618,398 @@ class _KontrolPageState extends State<KontrolPage> {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            _seciliPersonel?.personelAdi ?? '',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.black.withOpacity(.55),
-            ),
-          ),
         ],
       );
     }
 
-    final gruplar = _isleriTuneleGoreGrupla();
+    final gruplar =
+        _isleriAsilIseGoreGrupla();
 
     return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(
+      physics:
+          const AlwaysScrollableScrollPhysics(),
+      padding:
+          const EdgeInsets.fromLTRB(
         12,
         12,
         12,
         24,
       ),
       children: [
-        _kontrolDurumOzeti(),
-        const SizedBox(height: 12),
-        for (final grup in gruplar.entries)
-          _tunelGrubu(
-            tunel: grup.key,
-            isler: grup.value,
-          ),
+        _kontrolOzetKarti(gruplar.length),
+        const SizedBox(height: 10),
+        for (final grup in gruplar.values)
+          _asilIsKarti(grup),
       ],
     );
   }
 
-  Widget _kontrolDurumOzeti() {
-    final bekleyen = _kontrolIsleri.where(
-      (x) => x.kontrolDurum == 0,
-    ).length;
-
-    final devamEden = _kontrolIsleri.where(
-      (x) =>
-          x.kontrolDurum == 1 ||
-          x.kontrolDurum == 2,
-    ).length;
-
-    final puanBekleyen = _kontrolIsleri.where(
-      (x) =>
-          x.kontrolDurum == 3 &&
-          x.puan <= 0,
-    ).length;
-
-    final tamamlanan = _kontrolIsleri.where(
-      (x) =>
-          x.kontrolDurum == 3 &&
-          x.puan > 0,
-    ).length;
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.black.withOpacity(.06),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+  Widget _kontrolOzetKarti(
+    int asilIsSayisi,
+  ) {
+    return _beyazKart(
+      child: Row(
         children: [
-          Text(
-            _seciliPersonel?.personelAdi ?? '',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color:
+                  Colors.green.withOpacity(.10),
+              borderRadius:
+                  BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.fact_check_rounded,
+              color: Colors.green,
             ),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _ozetEtiketi(
-                metin: '$bekleyen bekliyor',
-                renk: Colors.grey.shade700,
-                ikon: Icons.schedule_rounded,
-              ),
-              _ozetEtiketi(
-                metin: '$devamEden devam ediyor',
-                renk: Colors.blue.shade700,
-                ikon:
-                    Icons.play_circle_fill_rounded,
-              ),
-              _ozetEtiketi(
-                metin: '$puanBekleyen puan bekliyor',
-                renk: Colors.red.shade700,
-                ikon: Icons.priority_high_rounded,
-              ),
-              _ozetEtiketi(
-                metin: '$tamamlanan tamamlandı',
-                renk: Colors.green.shade700,
-                ikon: Icons.check_circle_rounded,
-              ),
-            ],
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _seciliPersonel
+                          ?.personelAdi ??
+                      '',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight:
+                        FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$asilIsSayisi asıl iş • '
+                  '${_kontrolIsleri.length} kontrol sırası',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _ozetEtiketi({
-    required String metin,
-    required Color renk,
-    required IconData ikon,
-  }) {
+  Widget _asilIsKarti(
+    List<KontrolIsModel> isler,
+  ) {
+    final ilk = isler.first;
+
+    final bekleyen = isler
+        .where((x) => x.kontrolDurum == 0)
+        .length;
+    final devam = isler
+        .where((x) =>
+            x.kontrolDurum == 1 ||
+            x.kontrolDurum == 2)
+        .length;
+    final puanBekleyen = isler
+        .where((x) =>
+            x.kontrolDurum == 3 &&
+            x.puan <= 0)
+        .length;
+
+    final Color durumRengi =
+        puanBekleyen > 0
+            ? Colors.red.shade700
+            : devam > 0
+                ? Colors.blue.shade700
+                : Colors.grey.shade700;
+
+    final siralar = [...isler]
+      ..sort((a, b) =>
+          a.koridor.compareTo(b.koridor));
+
+    return _beyazKart(
+      margin:
+          const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.zero,
+      child: ExpansionTile(
+        initiallyExpanded: false,
+        shape: const Border(),
+        collapsedShape: const Border(),
+        tilePadding:
+            const EdgeInsets.fromLTRB(
+          14,
+          5,
+          12,
+          5,
+        ),
+        childrenPadding:
+            const EdgeInsets.fromLTRB(
+          12,
+          0,
+          12,
+          12,
+        ),
+        leading: Container(
+          width: 42,
+          height: 42,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color:
+                durumRengi.withOpacity(.10),
+            borderRadius:
+                BorderRadius.circular(12),
+          ),
+          child: Text(
+            ilk.asilKoridor.trim().isEmpty
+                ? '${isler.length}'
+                : ilk.asilKoridor
+                    .trim()
+                    .toUpperCase(),
+            style: TextStyle(
+              color: durumRengi,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        title: Text(
+          ilk.isAdi,
+          maxLines: 1,
+          overflow:
+              TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+     subtitle: Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Text(
+      '${ilk.tunel} • '
+      '${isler.length} sıra'
+      '${devam > 0 ? ' • $devam devam' : ''}'
+      '${puanBekleyen > 0 ? ' • $puanBekleyen puan' : ''}',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: 12,
+        color: durumRengi,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+    if (ilk.tarih != null) ...[
+      const SizedBox(height: 3),
+      Text(
+        'İş tarihi: ${_tarihSaatYaz(ilk.tarih!)}',
+        style: const TextStyle(
+          fontSize: 11,
+          color: Colors.black54,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ],
+  ],
+),
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final kontrolIsi
+                  in siralar)
+                _siraButonu(kontrolIsi),
+            ],
+          ),
+          if (bekleyen == isler.length)
+            Padding(
+              padding:
+                  const EdgeInsets.only(
+                top: 9,
+              ),
+              child: Text(
+                'Kontrole başlamak için bir sıra seçin.',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color:
+                      Colors.black.withOpacity(.45),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _siraButonu(
+    KontrolIsModel kontrolIsi,
+  ) {
+    final durum = _kartDurumu(kontrolIsi);
+
+    return Material(
+      color: durum.arkaPlan,
+      borderRadius:
+          BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius:
+            BorderRadius.circular(12),
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  KontrolDetayPage(
+                kontrolIsId:
+                    kontrolIsi.id,
+                kontrolEdenPersonelKodu:
+                    widget.personelKodu,
+              ),
+            ),
+          );
+
+          if (!mounted) return;
+          await _tumKontrolEkraniniYenile();
+        },
+        child: Container(
+          width: 96,
+          padding:
+              const EdgeInsets.symmetric(
+            horizontal: 9,
+            vertical: 10,
+          ),
+          decoration: BoxDecoration(
+            borderRadius:
+                BorderRadius.circular(12),
+            border: Border.all(
+              color:
+                  durum.renk.withOpacity(.25),
+            ),
+          ),
+          child: Column(
+            children: [
+              Text(
+                kontrolIsi.koridor
+                        .trim()
+                        .isEmpty
+                    ? '-'
+                    : kontrolIsi.koridor
+                        .trim()
+                        .toUpperCase(),
+                style: TextStyle(
+                  fontSize: 20,
+                  color: durum.renk,
+                  fontWeight:
+                      FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Icon(
+                durum.ikon,
+                size: 16,
+                color: durum.renk,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _kisaDurumMetni(
+                  kontrolIsi,
+                ),
+                maxLines: 1,
+                overflow:
+                    TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  color: durum.renk,
+                  fontWeight:
+                      FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  _KontrolKartDurumu _kartDurumu(
+    KontrolIsModel kontrolIsi,
+  ) {
+    if (kontrolIsi.kontrolDurum == 3 &&
+        kontrolIsi.puan <= 0) {
+      return _KontrolKartDurumu(
+        renk: Colors.red.shade700,
+        arkaPlan:
+            Colors.red.withOpacity(.06),
+        ikon:
+            Icons.priority_high_rounded,
+      );
+    }
+
+    if (kontrolIsi.kontrolDurum == 1) {
+      return _KontrolKartDurumu(
+        renk: Colors.blue.shade700,
+        arkaPlan:
+            Colors.blue.withOpacity(.06),
+        ikon:
+            Icons.play_arrow_rounded,
+      );
+    }
+
+    if (kontrolIsi.kontrolDurum == 2) {
+      return _KontrolKartDurumu(
+        renk: Colors.orange.shade800,
+        arkaPlan:
+            Colors.orange.withOpacity(.07),
+        ikon: Icons.pause_rounded,
+      );
+    }
+
+    if (kontrolIsi.kontrolDurum == 3 &&
+        kontrolIsi.puan > 0) {
+      return _KontrolKartDurumu(
+        renk: Colors.green.shade700,
+        arkaPlan:
+            Colors.green.withOpacity(.06),
+        ikon: Icons.check_rounded,
+      );
+    }
+
+    return _KontrolKartDurumu(
+      renk: Colors.grey.shade700,
+      arkaPlan:
+          const Color(0xFFF7F7F9),
+      ikon: Icons.schedule_rounded,
+    );
+  }
+
+  String _kisaDurumMetni(
+    KontrolIsModel kontrolIsi,
+  ) {
+    switch (kontrolIsi.kontrolDurum) {
+      case 1:
+        return 'Devam';
+      case 2:
+        return 'Ara';
+      case 3:
+        return kontrolIsi.puan > 0
+            ? 'Puanlı'
+            : 'Puan';
+      default:
+        return 'Bekliyor';
+    }
+  }
+
+  Widget _personelDurumEtiketi(
+    String yazi,
+    Color renk,
+    IconData ikon,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 7,
+        horizontal: 8,
+        vertical: 6,
       ),
       decoration: BoxDecoration(
         color: renk.withOpacity(.10),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: renk.withOpacity(.15),
         ),
@@ -836,12 +1022,12 @@ class _KontrolPageState extends State<KontrolPage> {
             size: 15,
             color: renk,
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: 4),
           Text(
-            metin,
+            yazi,
             style: TextStyle(
-              fontSize: 11.5,
               color: renk,
+              fontSize: 11,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -850,345 +1036,26 @@ class _KontrolPageState extends State<KontrolPage> {
     );
   }
 
-  Widget _tunelGrubu({
-    required String tunel,
-    required List<KontrolIsModel> isler,
+  Widget _beyazKart({
+    required Widget child,
+    EdgeInsetsGeometry padding =
+        const EdgeInsets.all(14),
+    EdgeInsetsGeometry? margin,
   }) {
-    final int toplamSira = isler.length;
-
-    final int devamEdenSayisi = isler.where(
-      (x) =>
-          x.kontrolDurum == 1 ||
-          x.kontrolDurum == 2,
-    ).length;
-
-    final int puanBekleyenSayisi = isler.where(
-      (x) =>
-          x.kontrolDurum == 3 &&
-          x.puan <= 0,
-    ).length;
-
-    final int tamamlananSayisi = isler.where(
-      (x) =>
-          x.kontrolDurum == 3 &&
-          x.puan > 0,
-    ).length;
-
-    final Color tunelRengi =
-        puanBekleyenSayisi > 0
-            ? Colors.red.shade700
-            : devamEdenSayisi > 0
-                ? Colors.blue.shade700
-                : tamamlananSayisi == toplamSira
-                    ? Colors.green.shade700
-                    : Colors.grey.shade700;
-
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: margin,
+      padding: padding,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius:
+            BorderRadius.circular(16),
         border: Border.all(
-          color: tunelRengi.withOpacity(.18),
+          color:
+              Colors.black.withOpacity(.055),
         ),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        initiallyExpanded: false,
-        shape: const Border(),
-        collapsedShape: const Border(),
-        tilePadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 4,
-        ),
-        childrenPadding:
-            const EdgeInsets.fromLTRB(
-          12,
-          0,
-          12,
-          12,
-        ),
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: tunelRengi.withOpacity(.12),
-            borderRadius: BorderRadius.circular(11),
-          ),
-          child: Icon(
-            Icons.grid_view_rounded,
-            size: 20,
-            color: tunelRengi,
-          ),
-        ),
-        title: Text(
-          tunel,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Text(
-              '$toplamSira sıra',
-              style: TextStyle(
-                fontSize: 13,
-                color:
-                    Colors.black.withOpacity(.55),
-              ),
-            ),
-            if (devamEdenSayisi > 0 ||
-                puanBekleyenSayisi > 0)
-              Padding(
-                padding:
-                    const EdgeInsets.only(top: 3),
-                child: Wrap(
-                  spacing: 10,
-                  runSpacing: 3,
-                  children: [
-                    if (devamEdenSayisi > 0)
-                      Text(
-                        '$devamEdenSayisi devam eden',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: Colors.blue.shade700,
-                          fontWeight:
-                              FontWeight.w700,
-                        ),
-                      ),
-                    if (puanBekleyenSayisi > 0)
-                      Text(
-                        '$puanBekleyenSayisi puan bekliyor',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: Colors.red.shade700,
-                          fontWeight:
-                              FontWeight.w800,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-        children: [
-          for (final kontrolIsi in isler)
-            _kontrolIsKarti(kontrolIsi),
-        ],
-      ),
+      child: child,
     );
-  }
-
-  Widget _kontrolIsKarti(
-    KontrolIsModel kontrolIsi,
-  ) {
-    final durum = _kartDurumu(kontrolIsi);
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Material(
-        color: durum.arkaPlan,
-        borderRadius: BorderRadius.circular(15),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(15),
-       onTap: () async {
-  await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => KontrolDetayPage(
-  kontrolIsId: kontrolIsi.id,
-)
-    ),
-  );
-
-  if (!mounted) return;
-
-  // Detay sayfasında işlem yapılıp yapılmadığına
-  // bakmadan iki ekranın verilerini de yenile.
-  await _tumKontrolEkraniniYenile();
-},
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius:
-                  BorderRadius.circular(15),
-              border: Border.all(
-                color:
-                    durum.renk.withOpacity(.28),
-                width: 1.3,
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color:
-                          durum.renk.withOpacity(.12),
-                      borderRadius:
-                          BorderRadius.circular(13),
-                      border: Border.all(
-                        color: durum.renk
-                            .withOpacity(.20),
-                      ),
-                    ),
-                    child: Text(
-                      kontrolIsi.koridor
-                              .trim()
-                              .isEmpty
-                          ? '-'
-                          : kontrolIsi.koridor
-                              .trim()
-                              .toUpperCase(),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      style: TextStyle(
-                        fontSize: 20,
-                        color: durum.renk,
-                        fontWeight:
-                            FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          kontrolIsi.isAdi,
-                          maxLines: 2,
-                          overflow:
-                              TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight:
-                                FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding:
-                              const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: durum.renk
-                                .withOpacity(.12),
-                            borderRadius:
-                                BorderRadius.circular(
-                              20,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize:
-                                MainAxisSize.min,
-                            children: [
-                              Icon(
-                                durum.ikon,
-                                size: 15,
-                                color: durum.renk,
-                              ),
-                              const SizedBox(width: 5),
-                              Flexible(
-                                child: Text(
-                                  durum.metin,
-                                  maxLines: 1,
-                                  overflow: TextOverflow
-                                      .ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    color:
-                                        durum.renk,
-                                    fontWeight:
-                                        FontWeight
-                                            .w800,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 7),
-                        Text(
-                          'Tünel: '
-                          '${kontrolIsi.tunel}',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: Colors.black
-                                .withOpacity(.60),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          kontrolIsi.koridor
-                                  .trim()
-                                  .isEmpty
-                              ? 'Sıra belirtilmemiş'
-                              : 'Sıra: '
-                                  '${kontrolIsi.koridor.trim().toUpperCase()}',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight:
-                                FontWeight.w600,
-                            color: Colors.black
-                                .withOpacity(.65),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          _tarihYaz(
-                            kontrolIsi.tarih,
-                          ),
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: Colors.black
-                                .withOpacity(.55),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: durum.renk,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _tarihYaz(DateTime? tarih) {
-    if (tarih == null) {
-      return 'Tarih bulunamadı';
-    }
-
-    final gun =
-        tarih.day.toString().padLeft(2, '0');
-    final ay =
-        tarih.month.toString().padLeft(2, '0');
-    final yil = tarih.year.toString();
-    final saat =
-        tarih.hour.toString().padLeft(2, '0');
-    final dakika =
-        tarih.minute.toString().padLeft(2, '0');
-
-    return '$gun.$ay.$yil $saat:$dakika';
   }
 
   String _basHarfler(String ad) {
@@ -1198,9 +1065,7 @@ class _KontrolPageState extends State<KontrolPage> {
         .where((x) => x.isNotEmpty)
         .toList();
 
-    if (parcalar.isEmpty) {
-      return '?';
-    }
+    if (parcalar.isEmpty) return '?';
 
     if (parcalar.length == 1) {
       return parcalar.first
@@ -1214,16 +1079,21 @@ class _KontrolPageState extends State<KontrolPage> {
   }
 }
 
+String _tarihSaatYaz(DateTime tarih) {
+  String iki(int deger) => deger.toString().padLeft(2, '0');
+
+  return '${iki(tarih.day)}.${iki(tarih.month)}.${tarih.year} '
+      '${iki(tarih.hour)}:${iki(tarih.minute)}';
+}
+
 class _KontrolKartDurumu {
   final Color renk;
   final Color arkaPlan;
   final IconData ikon;
-  final String metin;
 
   const _KontrolKartDurumu({
     required this.renk,
     required this.arkaPlan,
     required this.ikon,
-    required this.metin,
   });
 }

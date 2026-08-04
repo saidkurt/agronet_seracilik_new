@@ -8,7 +8,7 @@ class PersonelMesaiApi {
   Future<List<Map<String, dynamic>>> mesaiDurumu({
     required String bileklikid,
   }) async {
-    // 🔥 Direk insideurl kullanıyoruz
+    // 🔥 Direk outsideurl kullanıyoruz
     final Uri uri =
         Uri.parse("${App.outsideurl}/Mesai/MesaiDurumu/$bileklikid");
 

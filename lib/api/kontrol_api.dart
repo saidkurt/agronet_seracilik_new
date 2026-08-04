@@ -160,28 +160,52 @@ class KontrolApi {
   }
 
   // POST: /Kontrol/DurumDegistir
-  static Future<String> durumDegistir(
-    int kontrolIsId, {
+  static Future<String> durumDegistir({
+    required int kontrolIsId,
+    required String kontrolEdenPersonelKodu,
     String araSebebi = '',
   }) async {
+    final kod = kontrolEdenPersonelKodu.trim();
+
+    if (kontrolIsId <= 0) {
+      throw Exception(
+        'Geçersiz kontrol işi.',
+      );
+    }
+
+    if (kod.isEmpty) {
+      throw Exception(
+        'Kontrol eden personel kodu boş olamaz.',
+      );
+    }
+
     return _postIslem(
       '/Kontrol/DurumDegistir',
       {
         'KontrolIsId': kontrolIsId,
+        'KontrolEdenPersonelKodu': kod,
         'AraSebebi': araSebebi,
       },
     );
   }
 
   // POST: /Kontrol/Bitir
-  // Kontrol işi puanla birlikte tamamlanır.
   static Future<String> bitir({
     required int kontrolIsId,
+    required String kontrolEdenPersonelKodu,
     required int puan,
   }) async {
+    final kod = kontrolEdenPersonelKodu.trim();
+
     if (kontrolIsId <= 0) {
       throw Exception(
         'Geçersiz kontrol işi.',
+      );
+    }
+
+    if (kod.isEmpty) {
+      throw Exception(
+        'Kontrol eden personel kodu boş olamaz.',
       );
     }
 
@@ -195,19 +219,72 @@ class KontrolApi {
       '/Kontrol/Bitir',
       {
         'KontrolIsId': kontrolIsId,
+        'KontrolEdenPersonelKodu': kod,
+        'Puan': puan,
+      },
+    );
+  }
+
+  // POST: /Kontrol/PuanKaydet
+  static Future<String> puanKaydet({
+    required int kontrolIsId,
+    required String kontrolEdenPersonelKodu,
+    required int puan,
+  }) async {
+    final kod = kontrolEdenPersonelKodu.trim();
+
+    if (kontrolIsId <= 0) {
+      throw Exception(
+        'Geçersiz kontrol işi.',
+      );
+    }
+
+    if (kod.isEmpty) {
+      throw Exception(
+        'Kontrol eden personel kodu boş olamaz.',
+      );
+    }
+
+    if (puan < 1 || puan > 10) {
+      throw Exception(
+        'Puan 1 ile 10 arasında olmalıdır.',
+      );
+    }
+
+    return _postIslem(
+      '/Kontrol/PuanKaydet',
+      {
+        'KontrolIsId': kontrolIsId,
+        'KontrolEdenPersonelKodu': kod,
         'Puan': puan,
       },
     );
   }
 
   // POST: /Kontrol/TekrarEt
-  static Future<String> tekrarEt(
-    int kontrolIsId,
-  ) async {
+  static Future<String> tekrarEt({
+    required int kontrolIsId,
+    required String kontrolEdenPersonelKodu,
+  }) async {
+    final kod = kontrolEdenPersonelKodu.trim();
+
+    if (kontrolIsId <= 0) {
+      throw Exception(
+        'Geçersiz kontrol işi.',
+      );
+    }
+
+    if (kod.isEmpty) {
+      throw Exception(
+        'Kontrol eden personel kodu boş olamaz.',
+      );
+    }
+
     return _postIslem(
       '/Kontrol/TekrarEt',
       {
         'KontrolIsId': kontrolIsId,
+        'KontrolEdenPersonelKodu': kod,
         'AraSebebi': '',
       },
     );
