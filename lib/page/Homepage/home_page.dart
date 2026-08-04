@@ -3,6 +3,7 @@ import 'package:agronet/page/Depodurumraporu.dart';
 import 'package:agronet/page/PaletlemeRaporu.dart';
 import 'package:agronet/page/barkod_kontrol.dart';
 import 'package:agronet/page/beyaz_sinek_giris_page.dart';
+import 'package:agronet/page/depo_talep_onay.dart';
 import 'package:agronet/page/hasat_raporu.dart';
 import 'package:agronet/page/iskontrol/konrol_home.dart';
 import 'package:agronet/page/paketleme.dart';
@@ -98,6 +99,47 @@ class HomeMenuPage extends StatelessWidget {
           Navigator.push(context, MaterialPageRoute(builder: (_) =>  Paketleme(personelkodu: user.kullanicikodu ?? "",personelAdi: user.kullaniciadi ?? "",)));
         },
       ),
+      _MenuItem(
+  title: "Depo Talep Onay",
+  icon: Icons.fact_check_rounded,
+  visible: true,
+  onTap: () {
+    if (!user.oturumGecerli) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Mobil oturum bilgisi bulunamadı. Tekrar giriş yapın.",
+          ),
+        ),
+      );
+      return;
+    }
+
+    final kullaniciKodu = user.depoKullaniciKodu.trim();
+
+    if (kullaniciKodu.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Mikro kullanıcı kodu bulunamadı.",
+          ),
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DepoTalepOnayPage(
+          kullaniciKodu: kullaniciKodu,
+          oturumId: user.oturumId ?? 0,
+          token: user.token ?? '',
+        ),
+      ),
+    );
+  },
+),
        _MenuItem(
         title: "Barkod Kontrol",
         icon: Icons.qr_code_scanner_rounded,
