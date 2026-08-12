@@ -13,7 +13,7 @@ class KutuTipApi {
   /// Model yoksa en güvenlisi:
   /// List<Map<String, dynamic>> döndürmek
   Future<List<Map<String, dynamic>>> kutuTipleri() async {
-    final Uri uri = Uri.parse('${App.outsideurl}/Serapaket/Kutu');
+    final Uri uri = Uri.parse('${App.insideurl}/Serapaket/Kutu');
 
     try {
       final http.Response response = await _client.get(uri);

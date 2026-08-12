@@ -7,7 +7,7 @@ class SeraIsTanimlariApi {
   const SeraIsTanimlariApi();
 
   Future<List<SeraIsTanimlari>> getSeraIsTanimlari() async {
-    final String url = '${App.outsideurl}/Sera/Islistesi';
+    final String url = '${App.insideurl}/Sera/Islistesi';
     final Uri uri = Uri.parse(url);
 
     try {

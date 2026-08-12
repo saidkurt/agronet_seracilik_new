@@ -14,7 +14,7 @@ class SeraBarkodListesiApi {
     required String personelKodu,
   }) async {
     final Uri uri =
-        Uri.parse('${App.outsideurl}/SeraBarkod/IsListesi/$personelKodu');
+        Uri.parse('${App.insideurl}/SeraBarkod/IsListesi/$personelKodu');
 
     try {
       final http.Response response = await _client.get(uri);

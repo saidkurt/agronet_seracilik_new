@@ -8,7 +8,7 @@ import '../models/beyaz_sinek_giris_model.dart';
 class BeyazSinekGirisApi {
   const BeyazSinekGirisApi();
 
-  static final String _baseUrl = App.outsideurl;
+  static final String _baseUrl = App.insideurl;
 
   Future<BeyazSinekGirisResponseModel> beyazSinekGirisGetir({
     required DateTime tarih,

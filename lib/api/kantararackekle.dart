@@ -30,7 +30,7 @@ class KantarApi {
     required int doluagirlik,
     required String tckimlik,
   }) async {
-    final Uri uri = Uri.parse('${App.outsideurl}/Kantar/kayit');
+    final Uri uri = Uri.parse('${App.insideurl}/Kantar/kayit');
 
     final payload = <String, dynamic>{
       'adsoyad': adsoyad,
@@ -69,7 +69,7 @@ class KantarApi {
   ///
   /// Model yoksa en temiz dönüş: List<Map<String,dynamic>>
   Future<List<Map<String, dynamic>>> kantariceri() async {
-    final Uri uri = Uri.parse('${App.outsideurl}/Kantar/Bilgi');
+    final Uri uri = Uri.parse('${App.insideurl}/Kantar/Bilgi');
 
     try {
       final http.Response response = await _client.get(uri);

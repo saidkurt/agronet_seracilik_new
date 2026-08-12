@@ -33,7 +33,7 @@ class SerapaketApi {
     required String cihazadi,
   }) async {
     final Uri uri =
-        Uri.parse('${App.outsideurl}/Serapaket/PaletEtiketi');
+        Uri.parse('${App.insideurl}/Serapaket/PaletEtiketi');
 
     try {
       final http.Response response = await _client.post(
@@ -68,7 +68,7 @@ class SerapaketApi {
     required String paletkodu,
   }) async {
     final Uri uri =
-        Uri.parse('${App.outsideurl}/Serapaket/PaletSil');
+        Uri.parse('${App.insideurl}/Serapaket/PaletSil');
 
     try {
       final http.Response response = await _client.post(

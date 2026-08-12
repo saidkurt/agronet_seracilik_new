@@ -1,6 +1,7 @@
 import 'package:agronet/api/login_api.dart';
 import 'package:agronet/page/Homepage/home_page.dart';
 import 'package:agronet/page/LoginPage/otp_dogrulama_page.dart';
+import 'package:agronet/services/update_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -107,11 +108,16 @@ class _LoginPageViewState extends State<LoginPageView> {
 
       if (!mounted) return;
 
+      await UpdateService.cihazKaydet(
+  personelKodu: u.bsrKullaniciKodu,
+);
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => HomeMenuPage(user: u),
         ),
+        
       );
     } catch (e) {
       if (!mounted) return;

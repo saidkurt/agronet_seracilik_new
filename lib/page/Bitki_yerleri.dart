@@ -267,7 +267,7 @@ class _BitkiOlcumSahaSayfaState extends State<BitkiOlcumSahaSayfa> {
     required String deger,
     required int bildirildi,
   }) async {
-    final uri = Uri.parse('${App.outsideurl}/Sera/OlcumKaydet');
+    final uri = Uri.parse('${App.insideurl}/Sera/OlcumKaydet');
 
     final body = <String, dynamic>{
       'tarih': _yyyyMmDd(tarih),

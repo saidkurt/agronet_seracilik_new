@@ -11,7 +11,7 @@ class PaletlemeRaporApi {
     DateTime ilkTarih,
     DateTime sonTarih,
   ) async {
-    final String baseUrl = '${App.outsideurl}/Palet/Paletleme';
+    final String baseUrl = '${App.insideurl}/Palet/Paletleme';
 
     String fmt(DateTime d) =>
         "${d.year.toString().padLeft(4, '0')}"

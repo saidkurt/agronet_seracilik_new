@@ -8,7 +8,7 @@ class BitenislerApi {
   const BitenislerApi();
 
   Future<List<Bitenisler>> personelBitenisler(String personelAdi) async {
-    final String baseUrl = '${App.outsideurl}/Personel/Toplam';
+    final String baseUrl = '${App.insideurl}/Personel/Toplam';
     final Uri uri = Uri.parse('$baseUrl/$personelAdi');
 
     final http.Response response = await http.get(uri);
