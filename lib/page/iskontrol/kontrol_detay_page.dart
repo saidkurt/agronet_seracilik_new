@@ -20,8 +20,10 @@ class KontrolDetayPage extends StatefulWidget {
       _KontrolDetayPageState();
 }
 
-class _KontrolDetayPageState
-    extends State<KontrolDetayPage> {
+class _KontrolDetayPageState extends State<KontrolDetayPage> {
+  static const Color _bg = Color(0xFFF5F6F8);
+  static const Color _green = Color(0xFF1E6F5C);
+
   KontrolDetayModel? _detay;
 
   bool _yukleniyor = true;
@@ -46,6 +48,10 @@ class _KontrolDetayPageState
     _timer?.cancel();
     super.dispose();
   }
+
+  // ============================================================
+  // DETAY
+  // ============================================================
 
   Future<void> _detayGetir() async {
     if (!mounted) return;
@@ -79,7 +85,7 @@ class _KontrolDetayPageState
       if (!mounted) return;
 
       setState(() {
-        _hataMesaji = e.toString();
+        _hataMesaji = _temizHata(e);
       });
     } finally {
       if (mounted) {
@@ -89,6 +95,10 @@ class _KontrolDetayPageState
       }
     }
   }
+
+  // ============================================================
+  // TIMER
+  // ============================================================
 
   void _timeriAyarla() {
     _timer?.cancel();
@@ -127,8 +137,7 @@ class _KontrolDetayPageState
 
   int get _calisilanSaniye {
     if (_detay?.kontrolDurum == 1) {
-      return _temelCalisilanSaniye +
-          _gecenSaniye;
+      return _temelCalisilanSaniye + _gecenSaniye;
     }
 
     return _temelCalisilanSaniye;
@@ -136,21 +145,29 @@ class _KontrolDetayPageState
 
   int get _araSaniye {
     if (_detay?.kontrolDurum == 2) {
-      return _temelAraSaniye +
-          _gecenSaniye;
+      return _temelAraSaniye + _gecenSaniye;
     }
 
     return _temelAraSaniye;
   }
 
+  // ============================================================
+  // DURUM
+  // ============================================================
+
   Future<void> _durumDegistir() async {
     await _islemYap(
       () => KontrolApi.durumDegistir(
-  kontrolIsId: widget.kontrolIsId,
-  kontrolEdenPersonelKodu:
-      widget.kontrolEdenPersonelKodu,
-      ));
+        kontrolIsId: widget.kontrolIsId,
+        kontrolEdenPersonelKodu:
+            widget.kontrolEdenPersonelKodu,
+      ),
+    );
   }
+
+  // ============================================================
+  // BİTİR
+  // ============================================================
 
   Future<void> _bitir() async {
     if (_detay == null || _islemYapiliyor) {
@@ -166,6 +183,7 @@ class _KontrolDetayPageState
           backgroundColor: Colors.red,
         ),
       );
+
       return;
     }
 
@@ -176,10 +194,9 @@ class _KontrolDetayPageState
     }
 
     final onay = await _onaySor(
-      'Kontrol görevi $puan puan verilerek tamamlanacak. '
-      'Devam etmek istediğinizden emin misiniz?',
+      'Kontrol görevi $puan puan verilerek tamamlanacak.',
       baslik: 'Kontrolü bitir',
-      onayYazisi: 'Bitir ve kaydet',
+      onayYazisi: 'Bitir',
       tehlikeli: true,
     );
 
@@ -188,21 +205,24 @@ class _KontrolDetayPageState
     }
 
     await _islemYap(
-  () => KontrolApi.bitir(
-    kontrolIsId: widget.kontrolIsId,
-    kontrolEdenPersonelKodu:
-        widget.kontrolEdenPersonelKodu,
-    puan: puan,
-  ),
-  sayfayiKapat: true,
-);
+      () => KontrolApi.bitir(
+        kontrolIsId: widget.kontrolIsId,
+        kontrolEdenPersonelKodu:
+            widget.kontrolEdenPersonelKodu,
+        puan: puan,
+      ),
+      sayfayiKapat: true,
+    );
   }
+
+  // ============================================================
+  // TEKRAR
+  // ============================================================
 
   Future<void> _tekrarEt() async {
     final onay = await _onaySor(
-      'Kontrol edilen asıl iş tekrar yapılmak üzere gönderilecek. '
-      'Devam etmek istiyor musunuz?',
-      baslik: 'Asıl iş tekrar edilsin',
+      'Kontrol edilen asıl iş tekrar yapılmak üzere gönderilecek.',
+      baslik: 'Asıl işi tekrar et',
       onayYazisi: 'Tekrar ettir',
       tehlikeli: true,
     );
@@ -212,12 +232,16 @@ class _KontrolDetayPageState
     await _islemYap(
       () => KontrolApi.tekrarEt(
         kontrolIsId: widget.kontrolIsId,
-        kontrolEdenPersonelKodu: widget.kontrolEdenPersonelKodu,
+        kontrolEdenPersonelKodu:
+            widget.kontrolEdenPersonelKodu,
       ),
       sayfayiKapat: true,
     );
   }
 
+  // ============================================================
+  // PUAN
+  // ============================================================
 
   Future<int?> _puanSor() async {
     if (_detay == null || _islemYapiliyor) {
@@ -233,21 +257,20 @@ class _KontrolDetayPageState
       builder: (sheetContext) {
         return Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(
-              sheetContext,
-            ).viewInsets.bottom,
+            bottom:
+                MediaQuery.of(sheetContext).viewInsets.bottom,
           ),
           child: Container(
             padding: const EdgeInsets.fromLTRB(
-              20,
               14,
-              20,
-              20,
+              9,
+              14,
+              14,
             ),
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.vertical(
-                top: Radius.circular(26),
+                top: Radius.circular(16),
               ),
             ),
             child: SafeArea(
@@ -256,177 +279,208 @@ class _KontrolDetayPageState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 42,
-                    height: 5,
+                    width: 36,
+                    height: 4,
                     decoration: BoxDecoration(
                       color: Colors.black12,
-                      borderRadius: BorderRadius.circular(
-                        99,
-                      ),
+                      borderRadius: BorderRadius.circular(99),
                     ),
                   ),
-                  const SizedBox(height: 18),
+
+                  const SizedBox(height: 10),
+
                   const Row(
                     children: [
                       Icon(
                         Icons.star_rounded,
                         color: Colors.amber,
-                        size: 30,
+                        size: 20,
                       ),
-                      SizedBox(width: 10),
+                      SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           'Kontrol Puanı',
                           style: TextStyle(
-                            fontSize: 21,
+                            fontSize: 15,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+
+                  const SizedBox(height: 3),
+
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Kontrolü bitirmek için asıl işe verilecek puanı girin.',
+                      'Asıl işe 1 ile 10 arasında puan verin.',
                       style: TextStyle(
-                        color: Colors.black54,
+                        fontSize: 10,
+                        color: Colors.black45,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  TextFormField(
-                    autofocus: true,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.done,
-                    textAlign: TextAlign.center,
-                    maxLength: 2,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(2),
-                    ],
-                    style: const TextStyle(
-                      fontSize: 42,
-                      fontWeight: FontWeight.w900,
-                    ),
-                    decoration: InputDecoration(
-                      counterText: '',
-                      hintText: '1 - 10',
-                      filled: true,
-                      fillColor: const Color(0xFFF5F6F8),
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 18,
-                        horizontal: 12,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(18),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(18),
-                        borderSide: BorderSide(
-                          color: Colors.black.withOpacity(.06),
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(18),
-                        borderSide: const BorderSide(
-                          color: Colors.green,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    onChanged: (value) {
-                      girilenPuan = value.trim();
-                    },
-                    onFieldSubmitted: (value) {
-                      final sayi = int.tryParse(
-                        value.trim(),
-                      );
 
-                      if (sayi == null ||
-                          sayi < 1 ||
-                          sayi > 10) {
-                        ScaffoldMessenger.of(
-                          sheetContext,
-                        ).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Puan 1 ile 10 arasında olmalıdır.',
-                            ),
-                            backgroundColor: Colors.red,
+                  const SizedBox(height: 10),
+
+                  SizedBox(
+                    height: 54,
+                    child: TextFormField(
+                      autofocus: true,
+                      keyboardType: TextInputType.number,
+                      textInputAction: TextInputAction.done,
+                      textAlign: TextAlign.center,
+                      maxLength: 2,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(2),
+                      ],
+                      style: const TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.w900,
+                      ),
+                      decoration: InputDecoration(
+                        counterText: '',
+                        hintText: '1 - 10',
+                        hintStyle: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.black26,
+                        ),
+                        filled: true,
+                        fillColor: _bg,
+                        contentPadding:
+                            const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 10,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(9),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(9),
+                          borderSide: BorderSide(
+                            color: Colors.black.withOpacity(.06),
                           ),
-                        );
-                        return;
-                      }
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(9),
+                          ),
+                          borderSide: BorderSide(
+                            color: _green,
+                            width: 1.3,
+                          ),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        girilenPuan = value.trim();
+                      },
+                      onFieldSubmitted: (value) {
+                        final sayi =
+                            int.tryParse(value.trim());
 
-                      Navigator.of(sheetContext).pop(sayi);
-                    },
+                        if (sayi == null ||
+                            sayi < 1 ||
+                            sayi > 10) {
+                          ScaffoldMessenger.of(sheetContext)
+                              .showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Puan 1 ile 10 arasında olmalıdır.',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+
+                          return;
+                        }
+
+                        Navigator.of(sheetContext).pop(sayi);
+                      },
+                    ),
                   ),
-                  const SizedBox(height: 14),
+
+                  const SizedBox(height: 9),
+
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.of(sheetContext).pop();
-                          },
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(54),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
+                        child: SizedBox(
+                          height: 40,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              Navigator.of(sheetContext).pop();
+                            },
+                            style: OutlinedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(9),
+                              ),
                             ),
-                          ),
-                          child: const Text(
-                            'Vazgeç',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
+                            child: const Text(
+                              'Vazgeç',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+
+                      const SizedBox(width: 6),
+
                       Expanded(
                         flex: 2,
-                        child: FilledButton.icon(
-                          onPressed: () {
-                            final sayi = int.tryParse(
-                              girilenPuan,
-                            );
+                        child: SizedBox(
+                          height: 40,
+                          child: FilledButton.icon(
+                            onPressed: () {
+                              final sayi =
+                                  int.tryParse(girilenPuan);
 
-                            if (sayi == null ||
-                                sayi < 1 ||
-                                sayi > 10) {
-                              ScaffoldMessenger.of(
-                                sheetContext,
-                              ).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Puan 1 ile 10 arasında olmalıdır.',
+                              if (sayi == null ||
+                                  sayi < 1 ||
+                                  sayi > 10) {
+                                ScaffoldMessenger.of(
+                                  sheetContext,
+                                ).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Puan 1 ile 10 arasında olmalıdır.',
+                                    ),
+                                    backgroundColor: Colors.red,
                                   ),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                              return;
-                            }
+                                );
 
-                            Navigator.of(sheetContext).pop(sayi);
-                          },
-                          icon: const Icon(
-                            Icons.check_rounded,
-                          ),
-                          label: const Text(
-                            'DEVAM ET',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
+                                return;
+                              }
+
+                              Navigator.of(sheetContext)
+                                  .pop(sayi);
+                            },
+                            icon: const Icon(
+                              Icons.check_rounded,
+                              size: 17,
                             ),
-                          ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            minimumSize: const Size.fromHeight(54),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
+                            label: const Text(
+                              'DEVAM ET',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: _green,
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(9),
+                              ),
                             ),
                           ),
                         ),
@@ -441,6 +495,10 @@ class _KontrolDetayPageState
       },
     );
   }
+
+  // ============================================================
+  // İŞLEM
+  // ============================================================
 
   Future<void> _islemYap(
     Future<String> Function() islem, {
@@ -459,7 +517,10 @@ class _KontrolDetayPageState
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(mesaj),
+          content: Text(
+            mesaj,
+            style: const TextStyle(fontSize: 11),
+          ),
         ),
       );
 
@@ -474,7 +535,7 @@ class _KontrolDetayPageState
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.toString()),
+          content: Text(_temizHata(e)),
           backgroundColor: Colors.red,
         ),
       );
@@ -487,6 +548,10 @@ class _KontrolDetayPageState
     }
   }
 
+  // ============================================================
+  // ONAY
+  // ============================================================
+
   Future<bool> _onaySor(
     String mesaj, {
     String baslik = 'Onay',
@@ -498,16 +563,22 @@ class _KontrolDetayPageState
       builder: (dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(12),
           ),
           title: Text(
             baslik,
             style: const TextStyle(
+              fontSize: 15,
               fontWeight: FontWeight.w900,
             ),
           ),
-          content: Text(mesaj),
+          content: Text(
+            mesaj,
+            style: const TextStyle(
+              fontSize: 11.5,
+              height: 1.35,
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -516,7 +587,10 @@ class _KontrolDetayPageState
                   false,
                 );
               },
-              child: const Text('Vazgeç'),
+              child: const Text(
+                'Vazgeç',
+                style: TextStyle(fontSize: 11),
+              ),
             ),
             FilledButton(
               onPressed: () {
@@ -526,11 +600,16 @@ class _KontrolDetayPageState
                 );
               },
               style: FilledButton.styleFrom(
-                backgroundColor: tehlikeli
-                    ? Colors.red
-                    : Colors.green,
+                backgroundColor:
+                    tehlikeli ? Colors.red : _green,
               ),
-              child: Text(onayYazisi),
+              child: Text(
+                onayYazisi,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
           ],
         );
@@ -540,42 +619,60 @@ class _KontrolDetayPageState
     return sonuc ?? false;
   }
 
+  // ============================================================
+  // BUILD
+  // ============================================================
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor:
-          const Color(0xFFF4F5F7),
-      appBar: AppBar(
-        title: const Text(
-          'Kontrol Detayı',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        actions: [
-          IconButton(
-            tooltip: 'Yenile',
-            onPressed:
-                _yukleniyor ||
-                        _islemYapiliyor
-                    ? null
-                    : _detayGetir,
-            icon: const Icon(
-              Icons.refresh_rounded,
+    final scaler =
+        MediaQuery.textScalerOf(context).clamp(
+      maxScaleFactor: 1.06,
+    );
+
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        textScaler: scaler,
+      ),
+      child: Scaffold(
+        backgroundColor: _bg,
+        appBar: AppBar(
+          toolbarHeight: 48,
+          title: const Text(
+            'Kontrol Detayı',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
             ),
           ),
-        ],
+          centerTitle: true,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black87,
+          elevation: 0,
+          actions: [
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              tooltip: 'Yenile',
+              onPressed:
+                  _yukleniyor || _islemYapiliyor
+                      ? null
+                      : _detayGetir,
+              icon: const Icon(
+                Icons.refresh_rounded,
+                size: 21,
+              ),
+            ),
+          ],
+        ),
+        body: _govde(),
+        bottomNavigationBar: _altIslemAlani(),
       ),
-      body: _govde(),
-      bottomNavigationBar:
-          _altIslemAlani(),
     );
   }
+
+  // ============================================================
+  // GÖVDE
+  // ============================================================
 
   Widget _govde() {
     if (_yukleniyor) {
@@ -592,6 +689,10 @@ class _KontrolDetayPageState
       return const Center(
         child: Text(
           'Kontrol detayı bulunamadı.',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.black45,
+          ),
         ),
       );
     }
@@ -599,34 +700,32 @@ class _KontrolDetayPageState
     return Stack(
       children: [
         RefreshIndicator(
+          color: _green,
           onRefresh: _detayGetir,
           child: ListView(
             physics:
                 const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(
+              7,
+              6,
+              7,
               12,
-              12,
-              12,
-              24,
             ),
             children: [
               _ustOzetKarti(),
 
               if (_detay!.tekrarSayisi > 0) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 5),
                 _tekrarBilgisi(),
               ],
 
-              const SizedBox(height: 10),
-
+              const SizedBox(height: 5),
               _asilIsSureleriKarti(),
 
-              const SizedBox(height: 10),
-
+              const SizedBox(height: 5),
               _kontrolSureleriKarti(),
 
-              const SizedBox(height: 10),
-
+              const SizedBox(height: 5),
               _durumBilgisi(),
             ],
           ),
@@ -635,15 +734,13 @@ class _KontrolDetayPageState
         if (_islemYapiliyor)
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(
-                .14,
-              ),
+              color: Colors.black.withOpacity(.10),
               alignment: Alignment.center,
-              child: const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child:
-                      CircularProgressIndicator(),
+              child: const SizedBox(
+                width: 32,
+                height: 32,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
                 ),
               ),
             ),
@@ -652,68 +749,87 @@ class _KontrolDetayPageState
     );
   }
 
+  // ============================================================
+  // HATA
+  // ============================================================
+
   Widget _hataEkrani() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.error_outline_rounded,
-              size: 62,
-              color: Colors.red,
-            ),
-            const SizedBox(height: 14),
-            Text(
-              _hataMesaji!,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
+    return ListView(
+      physics:
+          const AlwaysScrollableScrollPhysics(),
+      children: [
+        const SizedBox(height: 100),
+
+        Icon(
+          Icons.error_outline_rounded,
+          size: 44,
+          color: Colors.red.shade300,
+        ),
+
+        const SizedBox(height: 8),
+
+        Text(
+          _hataMesaji!,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 10.5,
+            color: Colors.black54,
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        Center(
+          child: SizedBox(
+            height: 36,
+            child: FilledButton.icon(
               onPressed: _detayGetir,
               icon: const Icon(
                 Icons.refresh_rounded,
+                size: 16,
               ),
               label: const Text(
                 'Tekrar dene',
+                style: TextStyle(
+                  fontSize: 10.5,
+                ),
               ),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
+  // ============================================================
+  // ÜST ÖZET
+  // ============================================================
+
   Widget _ustOzetKarti() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(9),
       decoration: _kartDekorasyonu(),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 31,
+                height: 31,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: Colors.green
-                      .withOpacity(.10),
-                  borderRadius:
-                      BorderRadius.circular(14),
+                  color: _green.withOpacity(.09),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.person_rounded,
-                  color: Colors.green,
-                  size: 29,
+                  color: _green,
+                  size: 18,
                 ),
               ),
-              const SizedBox(width: 12),
+
+              const SizedBox(width: 7),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment:
@@ -723,69 +839,70 @@ class _KontrolDetayPageState
                       _detay!.personel.isEmpty
                           ? '-'
                           : _detay!.personel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight:
-                            FontWeight.w900,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 3),
                     Text(
                       _detay!.gorev.isEmpty
                           ? '-'
                           : _detay!.gorev,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 15,
-                        color: Colors.black54,
-                        fontWeight:
-                            FontWeight.w600,
+                        fontSize: 10,
+                        color: Colors.black45,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
+
               _durumRozeti(
                 _detay!.asilDurumAdi,
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          const Divider(height: 1),
-          const SizedBox(height: 13),
+
+          const SizedBox(height: 7),
+
           Row(
             children: [
               Expanded(
                 child: _kisaBilgi(
-                  Icons.grid_view_rounded,
                   'Tünel',
                   _detay!.tunel,
                 ),
               ),
-              _dikeyAyirici(),
+
+              Container(
+                width: 1,
+                height: 26,
+                color: Colors.black.withOpacity(.06),
+              ),
+
               Expanded(
                 child: _kisaBilgi(
-                  Icons.view_column_rounded,
                   'Koridor',
                   _detay!.koridor,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(
-                Icons.schedule_rounded,
-                size: 18,
-                color: Colors.black45,
+
+              Container(
+                width: 1,
+                height: 26,
+                color: Colors.black.withOpacity(.06),
               ),
-              const SizedBox(width: 7),
-              Text(
-                'Başlangıç: ${_tarihYaz(_detay!.baslangic)}',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w600,
+
+              Expanded(
+                flex: 2,
+                child: _kisaBilgi(
+                  'Başlangıç',
+                  _tarihYaz(_detay!.baslangic),
                 ),
               ),
             ],
@@ -795,58 +912,65 @@ class _KontrolDetayPageState
     );
   }
 
+  // ============================================================
+  // ASIL İŞ SÜRELERİ
+  // ============================================================
+
   Widget _asilIsSureleriKarti() {
     final aktifFazla =
         _detay!.azamiSaniye > 0 &&
-        _detay!.aktifSaniye >
-            _detay!.azamiSaniye;
+            _detay!.aktifSaniye >
+                _detay!.azamiSaniye;
 
     return _kart(
       baslik: 'Asıl İş Süreleri',
       ikon: Icons.work_history_rounded,
-      child: GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics:
-            const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: 2.15,
+      child: Row(
         children: [
-          _sureKutusu(
-            baslik: 'Aktif',
-            deger: _kisaSure(
-              _detay!.aktifSaniye,
+          Expanded(
+            child: _sureKutusu(
+              baslik: 'Aktif',
+              deger: _kisaSure(
+                _detay!.aktifSaniye,
+              ),
+              uyari: aktifFazla,
             ),
-            ikon:
-                Icons.play_circle_outline_rounded,
-            uyari: aktifFazla,
           ),
-          _sureKutusu(
-            baslik: 'Mola',
-            deger: _kisaSure(
-              _detay!.molaSaniye,
+          const SizedBox(width: 4),
+          Expanded(
+            child: _sureKutusu(
+              baslik: 'Mola',
+              deger: _kisaSure(
+                _detay!.molaSaniye,
+              ),
             ),
-            ikon: Icons.coffee_rounded,
           ),
-          _sureKutusu(
-            baslik: 'Hedef',
-            deger: _kisaSure(
-              _detay!.hedefSaniye,
+          const SizedBox(width: 4),
+          Expanded(
+            child: _sureKutusu(
+              baslik: 'Hedef',
+              deger: _kisaSure(
+                _detay!.hedefSaniye,
+              ),
             ),
-            ikon: Icons.flag_rounded,
           ),
-          _sureKutusu(
-            baslik: 'Azami',
-            deger: _kisaSure(
-              _detay!.azamiSaniye,
+          const SizedBox(width: 4),
+          Expanded(
+            child: _sureKutusu(
+              baslik: 'Azami',
+              deger: _kisaSure(
+                _detay!.azamiSaniye,
+              ),
             ),
-            ikon: Icons.timer_rounded,
           ),
         ],
       ),
     );
   }
+
+  // ============================================================
+  // KONTROL SÜRELERİ
+  // ============================================================
 
   Widget _kontrolSureleriKarti() {
     return _kart(
@@ -863,7 +987,9 @@ class _KontrolDetayPageState
               Colors.green,
             ),
           ),
-          const SizedBox(width: 8),
+
+          const SizedBox(width: 4),
+
           Expanded(
             child: _kontrolSureKutusu(
               'Ara',
@@ -873,7 +999,9 @@ class _KontrolDetayPageState
               Colors.orange,
             ),
           ),
-          const SizedBox(width: 8),
+
+          const SizedBox(width: 4),
+
           Expanded(
             child: _kontrolSureKutusu(
               'Toplam',
@@ -889,6 +1017,10 @@ class _KontrolDetayPageState
     );
   }
 
+  // ============================================================
+  // DURUM
+  // ============================================================
+
   Widget _durumBilgisi() {
     final durum = _detay!.kontrolDurum;
 
@@ -899,47 +1031,45 @@ class _KontrolDetayPageState
 
     switch (durum) {
       case 1:
-        renk = Colors.green;
+        renk = Colors.green.shade700;
         ikon = Icons.play_circle_rounded;
         baslik = 'Kontrol devam ediyor';
-        aciklama =
-            'Kontrol süresi çalışıyor.';
+        aciklama = 'Kontrol süresi çalışıyor.';
         break;
 
       case 2:
-        renk = Colors.orange;
+        renk = Colors.orange.shade800;
         ikon = Icons.pause_circle_rounded;
         baslik = 'Kontrole ara verildi';
-        aciklama =
-            'Devam Et butonuyla sürdürebilirsiniz.';
+        aciklama = 'Devam Et ile sürdürebilirsiniz.';
         break;
 
       case 3:
-        renk = Colors.green;
+        renk = Colors.green.shade700;
         ikon = Icons.check_circle_rounded;
         baslik = 'Kontrol tamamlandı';
-        aciklama =
-            _detay!.puan > 0
-                ? 'Verilen puan: ${_detay!.puan.toInt()}'
-                : 'Kontrol tamamlandı.';
+        aciklama = _detay!.puan > 0
+            ? 'Puan: ${_detay!.puan.toInt()}'
+            : 'Kontrol tamamlandı.';
         break;
 
       default:
-        renk = Colors.blue;
+        renk = Colors.blue.shade700;
         ikon = Icons.info_rounded;
         baslik = 'Kontrol bekliyor';
-        aciklama =
-            'Başla butonuna basarak kontrolü başlatın.';
+        aciklama = 'Başla ile kontrolü başlatın.';
     }
 
     return Container(
-      padding: const EdgeInsets.all(13),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 9,
+        vertical: 7,
+      ),
       decoration: BoxDecoration(
-        color: renk.withOpacity(.09),
-        borderRadius:
-            BorderRadius.circular(15),
+        color: renk.withOpacity(.07),
+        borderRadius: BorderRadius.circular(9),
         border: Border.all(
-          color: renk.withOpacity(.25),
+          color: renk.withOpacity(.16),
         ),
       ),
       child: Row(
@@ -947,9 +1077,11 @@ class _KontrolDetayPageState
           Icon(
             ikon,
             color: renk,
-            size: 28,
+            size: 19,
           ),
-          const SizedBox(width: 10),
+
+          const SizedBox(width: 6),
+
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -959,17 +1091,15 @@ class _KontrolDetayPageState
                   baslik,
                   style: TextStyle(
                     color: renk,
-                    fontWeight:
-                        FontWeight.w900,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 2),
                 Text(
                   aciklama,
                   style: TextStyle(
-                    color:
-                        renk.withOpacity(.85),
-                    fontSize: 12,
+                    color: renk.withOpacity(.8),
+                    fontSize: 9,
                   ),
                 ),
               ],
@@ -980,6 +1110,10 @@ class _KontrolDetayPageState
     );
   }
 
+  // ============================================================
+  // ALT BAR
+  // ============================================================
+
   Widget? _altIslemAlani() {
     if (_yukleniyor ||
         _hataMesaji != null ||
@@ -987,25 +1121,26 @@ class _KontrolDetayPageState
       return null;
     }
 
+    if (_detay!.kontrolDurum == 3) {
+      return null;
+    }
+
     return SafeArea(
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(
-          12,
-          10,
-          12,
-          10,
+          7,
+          5,
+          7,
+          5,
         ),
         decoration: BoxDecoration(
           color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color:
-                  Colors.black.withOpacity(.08),
-              blurRadius: 16,
-              offset: const Offset(0, -4),
+          border: Border(
+            top: BorderSide(
+              color: Colors.black.withOpacity(.06),
             ),
-          ],
+          ),
         ),
         child: _altButonlar(),
       ),
@@ -1022,19 +1157,19 @@ class _KontrolDetayPageState
               flex: 2,
               child: _anaButon(
                 yazi: 'BAŞLA',
-                ikon:
-                    Icons.play_arrow_rounded,
-                renk: Colors.green,
+                ikon: Icons.play_arrow_rounded,
+                renk: _green,
                 onPressed: _durumDegistir,
               ),
             ),
-            const SizedBox(width: 8),
+
+            const SizedBox(width: 5),
+
             Expanded(
               child: _ikincilButon(
                 yazi: 'Tekrar',
-                ikon:
-                    Icons.replay_rounded,
-                renk: Colors.orange,
+                ikon: Icons.replay_rounded,
+                renk: Colors.orange.shade800,
                 onPressed: _tekrarEt,
               ),
             ),
@@ -1048,16 +1183,18 @@ class _KontrolDetayPageState
               child: _anaButon(
                 yazi: 'ARA VER',
                 ikon: Icons.pause_rounded,
-                renk: Colors.orange,
+                renk: Colors.orange.shade800,
                 onPressed: _durumDegistir,
               ),
             ),
-            const SizedBox(width: 8),
+
+            const SizedBox(width: 5),
+
             Expanded(
               child: _anaButon(
                 yazi: 'BİTİR',
                 ikon: Icons.stop_rounded,
-                renk: Colors.red,
+                renk: Colors.red.shade700,
                 onPressed: _bitir,
               ),
             ),
@@ -1065,15 +1202,13 @@ class _KontrolDetayPageState
         );
 
       case 2:
-  return _anaButon(
-    yazi: 'DEVAM ET',
-    ikon: Icons.play_arrow_rounded,
-    renk: Colors.green,
-    onPressed: _durumDegistir,
-  );
+        return _anaButon(
+          yazi: 'DEVAM ET',
+          ikon: Icons.play_arrow_rounded,
+          renk: _green,
+          onPressed: _durumDegistir,
+        );
 
-     case 3:
-  return const SizedBox.shrink();
       default:
         return const SizedBox.shrink();
     }
@@ -1086,29 +1221,28 @@ class _KontrolDetayPageState
     required VoidCallback onPressed,
   }) {
     return SizedBox(
-      height: 56,
+      height: 40,
       child: FilledButton.icon(
         onPressed:
-            _islemYapiliyor
-                ? null
-                : onPressed,
+            _islemYapiliyor ? null : onPressed,
         icon: Icon(
           ikon,
-          size: 25,
+          size: 17,
         ),
         label: Text(
           yazi,
-          maxLines: 1,
           style: const TextStyle(
+            fontSize: 10.5,
             fontWeight: FontWeight.w900,
-            fontSize: 15,
           ),
         ),
         style: FilledButton.styleFrom(
           backgroundColor: renk,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 6,
+          ),
           shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(9),
           ),
         ),
       ),
@@ -1122,59 +1256,51 @@ class _KontrolDetayPageState
     required VoidCallback onPressed,
   }) {
     return SizedBox(
-      height: 56,
-      child: OutlinedButton(
+      height: 40,
+      child: OutlinedButton.icon(
         onPressed:
-            _islemYapiliyor
-                ? null
-                : onPressed,
+            _islemYapiliyor ? null : onPressed,
+        icon: Icon(
+          ikon,
+          size: 16,
+        ),
+        label: Text(
+          yazi,
+          style: const TextStyle(
+            fontSize: 9.5,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         style: OutlinedButton.styleFrom(
           foregroundColor: renk,
           side: BorderSide(
-            color: renk.withOpacity(.55),
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(15),
+            color: renk.withOpacity(.4),
           ),
           padding: const EdgeInsets.symmetric(
-            horizontal: 8,
+            horizontal: 5,
           ),
-        ),
-        child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
-          children: [
-            Icon(
-              ikon,
-              size: 21,
-            ),
-            const SizedBox(height: 1),
-            Text(
-              yazi,
-              maxLines: 1,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(9),
+          ),
         ),
       ),
     );
   }
 
+  // ============================================================
+  // TEKRAR
+  // ============================================================
+
   Widget _tekrarBilgisi() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
-        horizontal: 13,
-        vertical: 10,
+        horizontal: 8,
+        vertical: 6,
       ),
       decoration: BoxDecoration(
         color: Colors.orange.shade50,
-        borderRadius:
-            BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: Colors.orange.shade200,
         ),
@@ -1184,16 +1310,18 @@ class _KontrolDetayPageState
           Icon(
             Icons.replay_rounded,
             color: Colors.orange.shade800,
-            size: 21,
+            size: 15,
           ),
-          const SizedBox(width: 8),
+
+          const SizedBox(width: 5),
+
           Expanded(
             child: Text(
-              'Bu iş ${_detay!.tekrarSayisi} defa tekrar edildi.',
+              '${_detay!.tekrarSayisi} defa tekrar edildi.',
               style: TextStyle(
                 color: Colors.orange.shade900,
                 fontWeight: FontWeight.w800,
-                fontSize: 13,
+                fontSize: 9.5,
               ),
             ),
           ),
@@ -1202,13 +1330,17 @@ class _KontrolDetayPageState
     );
   }
 
+  // ============================================================
+  // KART
+  // ============================================================
+
   Widget _kart({
     required String baslik,
     required IconData ikon,
     required Widget child,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(8),
       decoration: _kartDekorasyonu(),
       child: Column(
         crossAxisAlignment:
@@ -1218,21 +1350,24 @@ class _KontrolDetayPageState
             children: [
               Icon(
                 ikon,
-                size: 20,
-                color: Colors.black54,
+                size: 15,
+                color: Colors.black45,
               ),
-              const SizedBox(width: 7),
+
+              const SizedBox(width: 4),
+
               Text(
                 baslik,
                 style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight:
-                      FontWeight.w900,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: 7),
+
           child,
         ],
       ),
@@ -1242,68 +1377,51 @@ class _KontrolDetayPageState
   BoxDecoration _kartDekorasyonu() {
     return BoxDecoration(
       color: Colors.white,
-      borderRadius:
-          BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(9),
       border: Border.all(
         color: Colors.black.withOpacity(.05),
       ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(.025),
-          blurRadius: 8,
-          offset: const Offset(0, 3),
-        ),
-      ],
     );
   }
 
+  // ============================================================
+  // KISA BİLGİ
+  // ============================================================
+
   Widget _kisaBilgi(
-    IconData ikon,
     String baslik,
     String deger,
   ) {
-    return Row(
-      children: [
-        Icon(
-          ikon,
-          size: 21,
-          color: Colors.black45,
-        ),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Text(
-              baslik,
-              style: const TextStyle(
-                fontSize: 11,
-                color: Colors.black45,
-              ),
-            ),
-            Text(
-              deger.isEmpty ? '-' : deger,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight:
-                    FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _dikeyAyirici() {
-    return Container(
-      width: 1,
-      height: 35,
-      margin:
-          const EdgeInsets.symmetric(
-        horizontal: 10,
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 5,
       ),
-      color: Colors.black.withOpacity(.07),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Text(
+            baslik,
+            style: const TextStyle(
+              fontSize: 8.5,
+              color: Colors.black38,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const SizedBox(height: 1),
+
+          Text(
+            deger.isEmpty ? '-' : deger,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1312,130 +1430,76 @@ class _KontrolDetayPageState
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: 9,
-        vertical: 6,
+        horizontal: 6,
+        vertical: 3,
       ),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(.10),
-        borderRadius:
-            BorderRadius.circular(99),
+        color: _green.withOpacity(.09),
+        borderRadius: BorderRadius.circular(7),
       ),
       child: Text(
         durum.isEmpty ? '-' : durum,
         style: const TextStyle(
-          color: Colors.green,
-          fontSize: 11,
+          color: _green,
+          fontSize: 8.5,
           fontWeight: FontWeight.w900,
         ),
       ),
     );
   }
 
+  // ============================================================
+  // ASIL SÜRE
+  // ============================================================
+
   Widget _sureKutusu({
     required String baslik,
     required String deger,
-    required IconData ikon,
     bool uyari = false,
   }) {
     final renk =
-        uyari ? Colors.red : Colors.black87;
+        uyari ? Colors.red.shade700 : Colors.black87;
 
     return Container(
+      height: 42,
       padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 8,
+        horizontal: 4,
+        vertical: 5,
       ),
       decoration: BoxDecoration(
         color: uyari
-            ? Colors.red.withOpacity(.08)
-            : const Color(0xFFF7F8FA),
-        borderRadius:
-            BorderRadius.circular(13),
+            ? Colors.red.withOpacity(.06)
+            : const Color(0xFFF7F7F9),
+        borderRadius: BorderRadius.circular(7),
         border: Border.all(
           color: uyari
-              ? Colors.red.withOpacity(.25)
-              : Colors.black.withOpacity(.04),
+              ? Colors.red.withOpacity(.18)
+              : Colors.black.withOpacity(.035),
         ),
       ),
-      child: Row(
-        children: [
-          Icon(
-            ikon,
-            size: 21,
-            color: uyari
-                ? Colors.red
-                : Colors.black45,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-              mainAxisAlignment:
-                  MainAxisAlignment.center,
-              children: [
-                Text(
-                  baslik,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.black45,
-                  ),
-                ),
-                Text(
-                  deger,
-                  maxLines: 1,
-                  overflow:
-                      TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: renk,
-                    fontSize: 14,
-                    fontWeight:
-                        FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _kontrolSureKutusu(
-    String baslik,
-    String deger,
-    Color renk,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 5,
-        vertical: 11,
-      ),
-      decoration: BoxDecoration(
-        color: renk.withOpacity(.08),
-        borderRadius:
-            BorderRadius.circular(13),
-      ),
       child: Column(
+        mainAxisAlignment:
+            MainAxisAlignment.center,
         children: [
           Text(
             baslik,
-            style: TextStyle(
-              fontSize: 11,
-              color: renk,
-              fontWeight: FontWeight.w700,
+            style: const TextStyle(
+              fontSize: 8,
+              color: Colors.black45,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
+
+          const SizedBox(height: 1),
+
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               deger,
               style: TextStyle(
                 color: renk,
-                fontSize: 16,
-                fontWeight:
-                    FontWeight.w900,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
@@ -1443,6 +1507,60 @@ class _KontrolDetayPageState
       ),
     );
   }
+
+  // ============================================================
+  // KONTROL SÜRESİ
+  // ============================================================
+
+  Widget _kontrolSureKutusu(
+    String baslik,
+    String deger,
+    Color renk,
+  ) {
+    return Container(
+      height: 46,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 3,
+        vertical: 5,
+      ),
+      decoration: BoxDecoration(
+        color: renk.withOpacity(.07),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Column(
+        mainAxisAlignment:
+            MainAxisAlignment.center,
+        children: [
+          Text(
+            baslik,
+            style: TextStyle(
+              fontSize: 8,
+              color: renk,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+
+          const SizedBox(height: 2),
+
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              deger,
+              style: TextStyle(
+                color: renk,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // TARİH
+  // ============================================================
 
   String _tarihYaz(
     DateTime? tarih,
@@ -1455,16 +1573,18 @@ class _KontrolDetayPageState
     final ay =
         tarih.month.toString().padLeft(2, '0');
 
-    final yil = tarih.year.toString();
-
     final saat =
         tarih.hour.toString().padLeft(2, '0');
 
     final dakika =
         tarih.minute.toString().padLeft(2, '0');
 
-    return '$gun.$ay.$yil $saat:$dakika';
+    return '$gun.$ay $saat:$dakika';
   }
+
+  // ============================================================
+  // SÜRE
+  // ============================================================
 
   String _saatFormat(
     int toplamSaniye,
@@ -1491,7 +1611,7 @@ class _KontrolDetayPageState
     int toplamSaniye,
   ) {
     if (toplamSaniye <= 0) {
-      return '0 sn';
+      return '0 dk';
     }
 
     final saat =
@@ -1500,23 +1620,24 @@ class _KontrolDetayPageState
     final dakika =
         (toplamSaniye % 3600) ~/ 60;
 
-    final saniye =
-        toplamSaniye % 60;
-
-    final parcalar = <String>[];
-
     if (saat > 0) {
-      parcalar.add('$saat sa');
+      return '$saat sa ${dakika > 0 ? '$dakika dk' : ''}';
     }
 
     if (dakika > 0) {
-      parcalar.add('$dakika dk');
+      return '$dakika dk';
     }
 
-    if (saat == 0 && dakika == 0) {
-      parcalar.add('$saniye sn');
-    }
+    return '${toplamSaniye % 60} sn';
+  }
 
-    return parcalar.join(' ');
+  String _temizHata(dynamic e) {
+    return e
+        .toString()
+        .replaceFirst(
+          'Exception: ',
+          '',
+        )
+        .trim();
   }
 }

@@ -9,86 +9,164 @@ import 'package:agronet/page/iskontrol/konrol_home.dart';
 import 'package:agronet/page/paketleme.dart';
 import 'package:agronet/page/paketleme_raporu.dart';
 import 'package:agronet/page/personel_anlik_durum.dart';
+import 'package:agronet/page/sera_is_tarihleri.dart';
 import 'package:agronet/page/tuta_giris.dart';
 import 'package:agronet/page/tuta_rapor.dart';
 import 'package:agronet/widget/profile_header.dart';
+
 import 'package:flutter/material.dart';
 import 'package:agronet/models/login_user_model.dart';
 
 class HomeMenuPage extends StatelessWidget {
   final LoginUserModel user;
-  const HomeMenuPage({super.key, required this.user});
 
-  static const accent = Color(0xFF1E6F5C);
+  const HomeMenuPage({
+    super.key,
+    required this.user,
+  });
 
-  // Rol label: senin öncelik kuralına göre
+  static const Color accent = Color(0xFF1E6F5C);
+  static const Color background = Color(0xFFF5F6F8);
+
   String _roleLabel() {
-    if (user.yonetimraporlarigorebilir) return "Yönetici";
-    if (user.danismanraporlari) return "Danışman";
-    if (user.kontrolcuraporlarigorebilir) return "Kontrol";
-    if (user.depopaketleme || user.deporaporlarinigorebilir) return "Depo";
-    if (user.seraraporlarigorebilir) return "Seracı";
+    if (user.yonetimraporlarigorebilir) {
+      return "Yönetici";
+    }
+
+    if (user.danismanraporlari) {
+      return "Danışman";
+    }
+
+    if (user.kontrolcuraporlarigorebilir) {
+      return "Kontrol";
+    }
+
+    if (user.depopaketleme ||
+        user.deporaporlarinigorebilir) {
+      return "Depo";
+    }
+
+    if (user.seraraporlarigorebilir) {
+      return "Seracı";
+    }
+
     final t = (user.tip ?? "").trim();
-    return t.isEmpty ? "Kullanıcı" : t;
+
+    return t.isEmpty
+        ? "Kullanıcı"
+        : t;
   }
 
   @override
   Widget build(BuildContext context) {
-    // Yazı büyütme yüzünden bozulmasın
     final ts = MediaQuery.textScalerOf(context);
-    final safeScaler = ts.clamp(maxScaleFactor: 1.10);
+
+    final safeScaler = ts.clamp(
+      maxScaleFactor: 1.06,
+    );
+
+    // ============================================================
+    // OPERASYON
+    // ============================================================
 
     final operasyonItems = <_MenuItem>[
-     
       _MenuItem(
-  title: "Kontrol",
-  icon: Icons.fact_check_rounded,
-  visible: true,
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => KontrolPage(
-          personelKodu: user.kullanicikodu ?? "",
-          personelAdi: user.kullaniciadi ?? "",
-        ),
+        title: "Kontrol",
+        icon: Icons.fact_check_rounded,
+        visible: true,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => KontrolPage(
+                personelKodu:
+                    user.kullanicikodu ?? "",
+                personelAdi:
+                    user.kullaniciadi ?? "",
+              ),
+            ),
+          );
+        },
       ),
-    );
-  },
-),
-  
-          _MenuItem(
+
+      _MenuItem(
+        title: "Döngü Kontrol",
+        icon: Icons.repeat_rounded,
+        visible: true,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DonguKontrolPage(
+                personelKodu:
+                    user.kullanicikodu ?? "",
+                kullaniciId:
+                    user.oturumId ?? 0,
+              ),
+            ),
+          );
+        },
+      ),
+
+      _MenuItem(
         title: "Tuta Sayımı",
-      icon: Icons.bug_report_rounded,
+        icon: Icons.bug_report_rounded,
         visible: true,
-       onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) =>  TutaGirisPage(personelKodu: user.kullanicikodu ?? " ")));
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => TutaGirisPage(
+                personelKodu:
+                    user.kullanicikodu ?? "",
+              ),
+            ),
+          );
         },
-        ),
-          _MenuItem(
-        title: "Bitki Ölçüm Giriş",
-      icon: Icons.bug_report_rounded,
-        visible: true,
-       onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) =>  BitkiOlcumSahaSayfa(personelKodu: user.kullanicikodu ?? " ",personelAdi: user.kullaniciadi ?? "",)));
-        },
-        ),
-        _MenuItem(
-  title: "Beyaz Sinek Sayımı",
-  icon: Icons.pest_control_rounded,
-  visible: true,
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => BeyazSinekGirisPage(
-          personelKodu: user.kullanicikodu ?? "",
-        ),
       ),
-    );
-  },
-),
+
+      _MenuItem(
+        title: "Bitki Ölçüm Giriş",
+        icon: Icons.straighten_rounded,
+        visible: true,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  BitkiOlcumSahaSayfa(
+                personelKodu:
+                    user.kullanicikodu ?? "",
+                personelAdi:
+                    user.kullaniciadi ?? "",
+              ),
+            ),
+          );
+        },
+      ),
+
+      _MenuItem(
+        title: "Beyaz Sinek Sayımı",
+        icon: Icons.pest_control_rounded,
+        visible: true,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  BeyazSinekGirisPage(
+                personelKodu:
+                    user.kullanicikodu ?? "",
+              ),
+            ),
+          );
+        },
+      ),
     ];
+
+    // ============================================================
+    // DEPO
+    // ============================================================
 
     final depoItems = <_MenuItem>[
       _MenuItem(
@@ -96,149 +174,278 @@ class HomeMenuPage extends StatelessWidget {
         icon: Icons.inventory_2_rounded,
         visible: true,
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) =>  Paketleme(personelkodu: user.kullanicikodu ?? "",personelAdi: user.kullaniciadi ?? "",)));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => Paketleme(
+                personelkodu:
+                    user.kullanicikodu ?? "",
+                personelAdi:
+                    user.kullaniciadi ?? "",
+              ),
+            ),
+          );
         },
       ),
+
       _MenuItem(
-  title: "Depo Talep Onay",
-  icon: Icons.fact_check_rounded,
-  visible: true,
-  onTap: () {
-    if (!user.oturumGecerli) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Mobil oturum bilgisi bulunamadı. Tekrar giriş yapın.",
-          ),
-        ),
-      );
-      return;
-    }
+        title: "Depo Talep Onay",
+        icon: Icons.fact_check_rounded,
+        visible: true,
+        onTap: () {
+          if (!user.oturumGecerli) {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(
+              const SnackBar(
+                content: Text(
+                  "Mobil oturum bilgisi bulunamadı. Tekrar giriş yapın.",
+                ),
+              ),
+            );
 
-    final kullaniciKodu = user.depoKullaniciKodu.trim();
+            return;
+          }
 
-    if (kullaniciKodu.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Mikro kullanıcı kodu bulunamadı.",
-          ),
-        ),
-      );
-      return;
-    }
+          final kullaniciKodu =
+              user.depoKullaniciKodu.trim();
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => DepoTalepOnayPage(
-          kullaniciKodu: kullaniciKodu,
-          oturumId: user.oturumId ?? 0,
-          token: user.token ?? '',
-        ),
+          if (kullaniciKodu.isEmpty) {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(
+              const SnackBar(
+                content: Text(
+                  "Mikro kullanıcı kodu bulunamadı.",
+                ),
+              ),
+            );
+
+            return;
+          }
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  DepoTalepOnayPage(
+                kullaniciKodu:
+                    kullaniciKodu,
+                oturumId:
+                    user.oturumId ?? 0,
+                token:
+                    user.token ?? '',
+              ),
+            ),
+          );
+        },
       ),
-    );
-  },
-),
-       _MenuItem(
+
+      _MenuItem(
         title: "Barkod Kontrol",
         icon: Icons.qr_code_scanner_rounded,
         visible: true,
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) =>  KoliBarkodPage()));
-        },
-      )
-    ];
-
-    final raporItems = <_MenuItem>[
-       _MenuItem(
-        title: "Paletleme Raporu",
-        icon: Icons.qr_code_scanner_rounded,
-        visible:true,
-             onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) =>  PaletlemeRaporPage()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  KoliBarkodPage(),
+            ),
+          );
         },
       ),
+    ];
+
+    // ============================================================
+    // RAPORLAR
+    // ============================================================
+
+    final raporItems = <_MenuItem>[
+      _MenuItem(
+        title: "Paletleme Raporu",
+        icon: Icons.view_in_ar_rounded,
+        visible: true,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  PaletlemeRaporPage(),
+            ),
+          );
+        },
+      ),
+
       _MenuItem(
         title: "Paketleme Raporları",
         icon: Icons.receipt_long_rounded,
         visible: true,
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) =>  PaketlemeRaporPage()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  PaketlemeRaporPage(),
+            ),
+          );
         },
       ),
-        _MenuItem(
+
+      _MenuItem(
         title: "Hasat Raporu",
-        icon: Icons.qr_code_scanner_rounded,
+        icon: Icons.agriculture_rounded,
         visible: true,
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) =>  HasatRaporuDetayliPage()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  HasatRaporuDetayliPage(),
+            ),
+          );
         },
       ),
-         _MenuItem(
+
+      _MenuItem(
         title: "Tuta Raporu",
         icon: Icons.bug_report_outlined,
         visible: true,
-             onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) =>  TutaRaporPage()));
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  TutaRaporPage(),
+            ),
+          );
         },
       ),
-        
+
       _MenuItem(
         title: "Personel Anlık Durum",
-        icon: Icons.person_3_outlined,
+        icon: Icons.person_search_outlined,
         visible: true,
-            onTap: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => const PersonelAnlikDurumPage()),
-  );
-},
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  const PersonelAnlikDurumPage(),
+            ),
+          );
+        },
       ),
+
       _MenuItem(
         title: "Depo Durum Raporu",
         icon: Icons.warehouse_rounded,
-        visible:true,
-            onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) =>  DepodurumRaporu(personeladi: user.kullaniciadi ?? "",)));
+        visible: true,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  DepodurumRaporu(
+                personeladi:
+                    user.kullaniciadi ?? "",
+              ),
+            ),
+          );
         },
       ),
     ];
 
     return MediaQuery(
-      data: MediaQuery.of(context).copyWith(textScaler: safeScaler),
+      data: MediaQuery.of(context).copyWith(
+        textScaler: safeScaler,
+      ),
       child: Scaffold(
-        backgroundColor: const Color(0xFFF6F7F9),
+        backgroundColor: background,
+
+        // ========================================================
+        // APP BAR
+        // ========================================================
+
         appBar: AppBar(
-          title: const Text("Agronet Seracılık A.Ş"),
+          toolbarHeight: 48,
+          title: const Text(
+            "Agronet Seracılık A.Ş",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           centerTitle: true,
           foregroundColor: Colors.black,
+          backgroundColor: Colors.white,
           elevation: 0,
         ),
+
+        // ========================================================
+        // BODY
+        // ========================================================
+
         body: ListView(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 18),
+          physics:
+              const BouncingScrollPhysics(),
+          padding:
+              const EdgeInsets.fromLTRB(
+            9,
+            7,
+            9,
+            12,
+          ),
           children: [
+            // ====================================================
+            // PROFİL
+            // ====================================================
+
             ProfileCard(
               user: user,
               role: _roleLabel(),
             ),
-            const SizedBox(height: 14),
+
+            const SizedBox(height: 8),
+
+            // ====================================================
+            // OPERASYON
+            // ====================================================
 
             _SectionRow(
               title: "Operasyon",
-              items: operasyonItems.where((e) => e.visible).toList(),
+              icon:
+                  Icons.settings_suggest_outlined,
+              items: operasyonItems
+                  .where((e) => e.visible)
+                  .toList(),
             ),
-            const SizedBox(height: 14),
+
+            const SizedBox(height: 8),
+
+            // ====================================================
+            // DEPO
+            // ====================================================
 
             _SectionRow(
               title: "Depo",
-              items: depoItems.where((e) => e.visible).toList(),
+              icon: Icons.warehouse_outlined,
+              items: depoItems
+                  .where((e) => e.visible)
+                  .toList(),
             ),
-            const SizedBox(height: 14),
+
+            const SizedBox(height: 8),
+
+            // ====================================================
+            // RAPORLAR
+            // ====================================================
 
             _SectionRow(
               title: "Raporlar",
-              items: raporItems.where((e) => e.visible).toList(),
+              icon:
+                  Icons.analytics_outlined,
+              items: raporItems
+                  .where((e) => e.visible)
+                  .toList(),
             ),
           ],
         ),
@@ -247,57 +454,127 @@ class HomeMenuPage extends StatelessWidget {
   }
 }
 
-
+// ============================================================================
+// BÖLÜM
+// ============================================================================
 
 class _SectionRow extends StatelessWidget {
   final String title;
+  final IconData icon;
   final List<_MenuItem> items;
 
-  const _SectionRow({required this.title, required this.items});
+  const _SectionRow({
+    required this.title,
+    required this.icon,
+    required this.items,
+  });
+
+  static const Color accent =
+      Color(0xFF1E6F5C);
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) return const SizedBox.shrink();
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      padding: const EdgeInsets.fromLTRB(
+        9,
+        7,
+        9,
+        8,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.black.withOpacity(.06)),
+        borderRadius:
+            BorderRadius.circular(13),
+        border: Border.all(
+          color:
+              Colors.black.withOpacity(.05),
+        ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment:
+            CrossAxisAlignment.stretch,
         children: [
-          // Başlık: küçük + sağda
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: Colors.black.withOpacity(.55),
-                letterSpacing: .2,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
+          // ======================================================
+          // BAŞLIK
+          // ======================================================
 
-          // Yatay kayan menü
+          Row(
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color:
+                      accent.withOpacity(.08),
+                  borderRadius:
+                      BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  icon,
+                  size: 13,
+                  color: accent,
+                ),
+              ),
+
+              const SizedBox(width: 6),
+
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight:
+                      FontWeight.w900,
+                  color: Colors.black
+                      .withOpacity(.57),
+                ),
+              ),
+
+              const Spacer(),
+
+              Text(
+                '${items.length}',
+                style: TextStyle(
+                  fontSize: 9.5,
+                  color: Colors.black
+                      .withOpacity(.30),
+                  fontWeight:
+                      FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 6),
+
+          // ======================================================
+          // YATAY MENÜ
+          // ======================================================
+
           SizedBox(
-            height: 92,
+            height: 68,
             child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.only(right: 2),
+              scrollDirection:
+                  Axis.horizontal,
+              physics:
+                  const BouncingScrollPhysics(),
+              padding: EdgeInsets.zero,
               itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (context, i) {
-                // Kartların biraz daha "kaydırılabilir" hissettirmesi için genişliği sabit
+              separatorBuilder: (_, __) {
+                return const SizedBox(
+                  width: 6,
+                );
+              },
+              itemBuilder:
+                  (context, index) {
                 return SizedBox(
-                  width: 168,
-                  child: _MenuCard(item: items[i]),
+                  width: 126,
+                  child: _MenuCard(
+                    item: items[index],
+                  ),
                 );
               },
             ),
@@ -308,68 +585,117 @@ class _SectionRow extends StatelessWidget {
   }
 }
 
+// ============================================================================
+// MENÜ KARTI
+// ============================================================================
+
 class _MenuCard extends StatelessWidget {
   final _MenuItem item;
-  const _MenuCard({required this.item});
 
-  static const accent = Colors.green;
+  const _MenuCard({
+    required this.item,
+  });
+
+  static const Color accent =
+      Color(0xFF1E6F5C);
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: item.onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          color: const Color(0xFFF7F7F9),
-          border: Border.all(color: Colors.black.withOpacity(.06)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // üst satır: icon + ok
-            Row(
-              children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: accent.withOpacity(.10),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(item.icon, color: accent.withOpacity(.92)),
-                ),
-                const Spacer(),
-                Icon(Icons.chevron_right_rounded, color: Colors.black.withOpacity(.35)),
-              ],
+    return Material(
+      color: const Color(0xFFF7F7F9),
+      borderRadius:
+          BorderRadius.circular(10),
+      child: InkWell(
+        onTap: item.onTap,
+        borderRadius:
+            BorderRadius.circular(10),
+        child: Container(
+          padding:
+              const EdgeInsets.fromLTRB(
+            8,
+            7,
+            7,
+            6,
+          ),
+          decoration: BoxDecoration(
+            borderRadius:
+                BorderRadius.circular(10),
+            border: Border.all(
+              color: Colors.black
+                  .withOpacity(.045),
             ),
-            const SizedBox(height: 10),
+          ),
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              // ==================================================
+              // ÜST
+              // ==================================================
 
-            // başlık: geniş alan + 2 satır düzgün
-            Expanded(
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Text(
-                  item.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.black.withOpacity(.86),
-                    height: 1.15,
+              Row(
+                children: [
+                  Container(
+                    width: 23,
+                    height: 23,
+                    decoration: BoxDecoration(
+                      color: accent
+                          .withOpacity(.09),
+                      borderRadius:
+                          BorderRadius.circular(
+                              7),
+                    ),
+                    child: Icon(
+                      item.icon,
+                      size: 14,
+                      color: accent,
+                    ),
                   ),
+
+                  const Spacer(),
+
+                  Icon(
+                    Icons
+                        .chevron_right_rounded,
+                    size: 15,
+                    color: Colors.black
+                        .withOpacity(.25),
+                  ),
+                ],
+              ),
+
+              const Spacer(),
+
+              // ==================================================
+              // BAŞLIK
+              // ==================================================
+
+              Text(
+                item.title,
+                maxLines: 2,
+                overflow:
+                    TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  height: 1.05,
+                  fontWeight:
+                      FontWeight.w900,
+                  color: Colors.black
+                      .withOpacity(.82),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+// ============================================================================
+// MODEL
+// ============================================================================
+
 class _MenuItem {
   final String title;
   final IconData icon;

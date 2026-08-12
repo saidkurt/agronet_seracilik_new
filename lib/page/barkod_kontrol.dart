@@ -1,201 +1,605 @@
 import 'package:agronet/api/barkod_kontrol_api.dart';
 import 'package:agronet/models/barkod_kontrol_model.dart';
 import 'package:agronet/widget/shimmer.dart';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-// ✅ Sende zaten var:
-// import 'package:agronet/api/koli_barkod_api.dart';
-// import 'package:agronet/models/koli_barkod_model.dart';
-
 class KoliBarkodPage extends StatefulWidget {
-  const KoliBarkodPage({super.key});
+  const KoliBarkodPage({
+    super.key,
+  });
 
   @override
-  State<KoliBarkodPage> createState() => _KoliBarkodPageState();
+  State<KoliBarkodPage> createState() =>
+      _KoliBarkodPageState();
 }
 
-class _KoliBarkodPageState extends State<KoliBarkodPage> {
-  static const accent = Color(0xFF1E6F5C);
+class _KoliBarkodPageState
+    extends State<KoliBarkodPage> {
+  static const Color accent = Color(0xFF1E6F5C);
+  static const Color bg = Color(0xFFF5F6F8);
 
-  final _ctrl = TextEditingController();
+  final TextEditingController _ctrl =
+      TextEditingController();
+
   bool _loading = false;
+
   String? _error;
+
   List<KoliBarkodModel> _items = const [];
 
-  final _fmt = DateFormat("dd.MM.yyyy  HH:mm");
+  final DateFormat _fmt =
+      DateFormat(
+    "dd.MM.yyyy  HH:mm",
+  );
 
   @override
   void dispose() {
     _ctrl.dispose();
+
     super.dispose();
   }
 
-  Future<void> _ara() async {
-    final barkod = _ctrl.text.trim();
-    if (barkod.isEmpty) return;
+  // ============================================================
+  // ARA
+  // ============================================================
 
-    FocusScope.of(context).unfocus();
+  Future<void> _ara() async {
+    final barkod =
+        _ctrl.text.trim();
+
+    if (barkod.isEmpty) {
+      _mesajGoster(
+        'Barkod giriniz.',
+        hata: true,
+      );
+
+      return;
+    }
+
+    FocusManager.instance.primaryFocus?.unfocus();
 
     setState(() {
       _loading = true;
+
       _error = null;
+
       _items = const [];
     });
 
     try {
-      final list = await KoliBarkodApi.getir(barkod);
-      setState(() => _items = list);
+      final list =
+          await KoliBarkodApi.getir(
+        barkod,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _items = list;
+      });
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (!mounted) return;
+
+      setState(() {
+        _error = e
+            .toString()
+            .replaceFirst(
+              'Exception: ',
+              '',
+            )
+            .trim();
+      });
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 
+  // ============================================================
+  // TEMİZLE
+  // ============================================================
+
+  void _temizle() {
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    setState(() {
+      _ctrl.clear();
+
+      _items = const [];
+
+      _error = null;
+    });
+  }
+
+  // ============================================================
+  // MESAJ
+  // ============================================================
+
+  void _mesajGoster(
+    String mesaj, {
+    bool hata = false,
+  }) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior:
+              SnackBarBehavior.floating,
+          backgroundColor:
+              hata
+                  ? Colors.red.shade700
+                  : accent,
+          content: Text(
+            mesaj,
+            style: const TextStyle(
+              fontSize: 11,
+            ),
+          ),
+        ),
+      );
+  }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6F7F8),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        title: const Text("Koli Barkod Sorgu"),
+  Widget build(
+    BuildContext context,
+  ) {
+    final scaler =
+        MediaQuery.textScalerOf(context)
+            .clamp(
+      maxScaleFactor: 1.06,
+    );
+
+    return MediaQuery(
+      data:
+          MediaQuery.of(context)
+              .copyWith(
+        textScaler: scaler,
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
-          children: [
-            _SearchCard(
-              controller: _ctrl,
-              onSearch: _ara,
+      child: Scaffold(
+        backgroundColor: bg,
+
+        // ========================================================
+        // APP BAR
+        // ========================================================
+
+        appBar: AppBar(
+          toolbarHeight: 48,
+          elevation: 0,
+          backgroundColor:
+              Colors.white,
+          surfaceTintColor:
+              Colors.white,
+          foregroundColor:
+              Colors.black87,
+          centerTitle: true,
+          title: const Text(
+            'Koli Barkod Sorgu',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight:
+                  FontWeight.w900,
             ),
-            const SizedBox(height: 12),
-            _SectionHeader(
-              title: "Son Kayıtlar",
-              subtitle: _loading
-                  ? "Yükleniyor…"
-                  : (_items.isEmpty ? "0 kayıt" : "${_items.length} kayıt"),
-            ),
-            const SizedBox(height: 10),
-
-            if (_loading) ...List.generate(5, (_) => const _ShimmerSkeletonCard()),
-
-            if (!_loading && _error != null)
-              _ErrorCard(message: _error!),
-
-            if (!_loading && _error == null && _items.isEmpty)
-              const _EmptyCard(),
-
-            if (!_loading && _error == null && _items.isNotEmpty)
-              ..._items.map((e) => _ResultCard(
-                    dt: e.tartimZamani == null ? "-" : _fmt.format(e.tartimZamani!),
-                    personel: (e.personel ?? "-").trim().isEmpty ? "-" : e.personel!,
-                    bolum: (e.bolum ?? "-").trim().isEmpty ? "-" : e.bolum!,
-                    tunel: (e.tunel ?? "-").trim().isEmpty ? "-" : e.tunel!,
-                  )),
+          ),
+          actions: [
+            if (_ctrl.text.isNotEmpty ||
+                _items.isNotEmpty)
+              IconButton(
+                tooltip: 'Temizle',
+                visualDensity:
+                    VisualDensity.compact,
+                onPressed:
+                    _loading
+                        ? null
+                        : _temizle,
+                icon: const Icon(
+                  Icons
+                      .cleaning_services_outlined,
+                  size: 20,
+                ),
+              ),
           ],
+        ),
+
+        // ========================================================
+        // BODY
+        // ========================================================
+
+        body: SafeArea(
+          child: Column(
+            children: [
+              _aramaAlani(),
+
+              Expanded(
+                child: _icerik(),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-class _SearchCard extends StatelessWidget {
-  final TextEditingController controller;
-  final VoidCallback onSearch;
+  // ============================================================
+  // ARAMA ALANI
+  // ============================================================
 
-  static const accent = Color(0xFF1E6F5C);
-
-  const _SearchCard({
-    required this.controller,
-    required this.onSearch,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _aramaAlani() {
     return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withOpacity(.06)),
+      color: Colors.white,
+      padding:
+          const EdgeInsets.fromLTRB(
+        10,
+        8,
+        10,
+        8,
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Barkod",
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: controller,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => onSearch(),
-            decoration: InputDecoration(
-              hintText: "Örn: AG04852",
-              isDense: true,
-              filled: true,
-              fillColor: const Color(0xFFF3F4F6),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-              prefixIcon: const Icon(Icons.qr_code_2, size: 20),
-            ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: ElevatedButton(
-              onPressed: onSearch,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accent,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 46,
+                  child: TextField(
+                    controller: _ctrl,
+                    enabled:
+                        !_loading,
+                    textInputAction:
+                        TextInputAction
+                            .search,
+                    onSubmitted:
+                        (_) => _ara(),
+                    onChanged: (_) {
+                      setState(() {});
+                    },
+                    style:
+                        const TextStyle(
+                      fontSize: 13,
+                      fontWeight:
+                          FontWeight.w700,
+                    ),
+                    decoration:
+                        InputDecoration(
+                      labelText:
+                          'Koli Barkodu',
+                      hintText:
+                          'Örn: AG04852',
+
+                      labelStyle:
+                          const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight:
+                            FontWeight.w700,
+                      ),
+
+                      hintStyle:
+                          const TextStyle(
+                        fontSize: 11,
+                        color:
+                            Colors.black38,
+                      ),
+
+                      prefixIcon:
+                          const Icon(
+                        Icons
+                            .qr_code_2_rounded,
+                        size: 19,
+                        color: accent,
+                      ),
+
+                      suffixIcon:
+                          _ctrl.text.isEmpty
+                              ? null
+                              : IconButton(
+                                  visualDensity:
+                                      VisualDensity.compact,
+                                  onPressed:
+                                      _loading
+                                          ? null
+                                          : () {
+                                              setState(() {
+                                                _ctrl.clear();
+                                              });
+                                            },
+                                  icon:
+                                      const Icon(
+                                    Icons.close_rounded,
+                                    size:
+                                        17,
+                                  ),
+                                ),
+
+                      filled: true,
+                      fillColor:
+                          const Color(
+                        0xFFF7F7F9,
+                      ),
+
+                      isDense: true,
+
+                      contentPadding:
+                          const EdgeInsets
+                              .symmetric(
+                        horizontal: 10,
+                        vertical: 11,
+                      ),
+
+                      border:
+                          OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(
+                                9),
+                        borderSide:
+                            BorderSide.none,
+                      ),
+
+                      enabledBorder:
+                          OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(
+                                9),
+                        borderSide:
+                            BorderSide(
+                          color: Colors
+                              .black
+                              .withOpacity(
+                                  .055),
+                        ),
+                      ),
+
+                      focusedBorder:
+                          const OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.all(
+                          Radius.circular(
+                              9),
+                        ),
+                        borderSide:
+                            BorderSide(
+                          color: accent,
+                          width: 1.3,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                elevation: 0,
               ),
-              child: const Text("Ara"),
-            ),
+
+              const SizedBox(
+                width: 7,
+              ),
+
+              SizedBox(
+                width: 86,
+                height: 46,
+                child:
+                    FilledButton.icon(
+                  onPressed:
+                      _loading
+                          ? null
+                          : _ara,
+                  style:
+                      FilledButton
+                          .styleFrom(
+                    elevation: 0,
+                    backgroundColor:
+                        accent,
+                    foregroundColor:
+                        Colors.white,
+                    padding:
+                        const EdgeInsets
+                            .symmetric(
+                      horizontal: 6,
+                    ),
+                    shape:
+                        RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(
+                              9),
+                    ),
+                  ),
+                  icon: _loading
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child:
+                              CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color:
+                                Colors.white,
+                          ),
+                        )
+                      : const Icon(
+                          Icons
+                              .search_rounded,
+                          size: 17,
+                        ),
+                  label: const Text(
+                    'ARA',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight:
+                          FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(
+            height: 7,
+          ),
+
+          Row(
+            children: [
+              const Icon(
+                Icons
+                    .history_rounded,
+                size: 15,
+                color:
+                    Colors.black38,
+              ),
+
+              const SizedBox(
+                width: 5,
+              ),
+
+              const Text(
+                'Son Kayıtlar',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight:
+                      FontWeight.w900,
+                ),
+              ),
+
+              const Spacer(),
+
+              Text(
+                _loading
+                    ? 'Yükleniyor...'
+                    : '${_items.length} kayıt',
+                style:
+                    const TextStyle(
+                  fontSize: 9.5,
+                  color:
+                      Colors.black45,
+                  fontWeight:
+                      FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
-}
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  const _SectionHeader({required this.title, required this.subtitle});
+  // ============================================================
+  // İÇERİK
+  // ============================================================
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
-          ),
+  Widget _icerik() {
+    if (_loading) {
+      return ListView.separated(
+        padding:
+            const EdgeInsets.fromLTRB(
+          10,
+          7,
+          10,
+          14,
         ),
-        Text(
-          subtitle,
-          style: TextStyle(
-            fontSize: 12.5,
-            color: Colors.black.withOpacity(.55),
-            fontWeight: FontWeight.w600,
-          ),
+        itemCount: 6,
+        separatorBuilder:
+            (_, __) =>
+                const SizedBox(
+          height: 6,
         ),
-      ],
+        itemBuilder:
+            (_, __) =>
+                const _ShimmerSkeletonCard(),
+      );
+    }
+
+    if (_error != null) {
+      return ListView(
+        physics:
+            const AlwaysScrollableScrollPhysics(),
+        padding:
+            const EdgeInsets.fromLTRB(
+          10,
+          7,
+          10,
+          14,
+        ),
+        children: [
+          _ErrorCard(
+            message: _error!,
+          ),
+        ],
+      );
+    }
+
+    if (_items.isEmpty) {
+      return const _EmptyView();
+    }
+
+    return ListView.separated(
+      physics:
+          const AlwaysScrollableScrollPhysics(),
+      padding:
+          const EdgeInsets.fromLTRB(
+        10,
+        7,
+        10,
+        14,
+      ),
+      itemCount:
+          _items.length,
+      separatorBuilder:
+          (_, __) =>
+              const SizedBox(
+        height: 6,
+      ),
+      itemBuilder:
+          (context, index) {
+        final item =
+            _items[index];
+
+        final tarih =
+            item.tartimZamani == null
+                ? '-'
+                : _fmt.format(
+                    item.tartimZamani!,
+                  );
+
+        final personel =
+            (item.personel ?? '')
+                    .trim()
+                    .isEmpty
+                ? '-'
+                : item.personel!;
+
+        final bolum =
+            (item.bolum ?? '')
+                    .trim()
+                    .isEmpty
+                ? '-'
+                : item.bolum!;
+
+        final tunel =
+            (item.tunel ?? '')
+                    .trim()
+                    .isEmpty
+                ? '-'
+                : item.tunel!;
+
+        return _ResultCard(
+          dt: tarih,
+          personel: personel,
+          bolum: bolum,
+          tunel: tunel,
+        );
+      },
     );
   }
 }
+
+// ============================================================================
+// SONUÇ KARTI
+// ============================================================================
 
 class _ResultCard extends StatelessWidget {
   final String dt;
@@ -203,7 +607,8 @@ class _ResultCard extends StatelessWidget {
   final String bolum;
   final String tunel;
 
-  static const accent = Color(0xFF1E6F5C);
+  static const Color accent =
+      Color(0xFF1E6F5C);
 
   const _ResultCard({
     required this.dt,
@@ -212,67 +617,351 @@ class _ResultCard extends StatelessWidget {
     required this.tunel,
   });
 
-  Widget _chip(String text) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(.04),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: Colors.black.withOpacity(.06)),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
-        ),
-      );
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
+      height: 74,
+      decoration:
+          BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withOpacity(.06)),
+        borderRadius:
+            BorderRadius.circular(10),
+        border: Border.all(
+          color:
+              Colors.black.withOpacity(.055),
+        ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: accent.withOpacity(.12),
-              borderRadius: BorderRadius.circular(14),
+            width: 5,
+            decoration:
+                const BoxDecoration(
+              color: accent,
+              borderRadius:
+                  BorderRadius.only(
+                topLeft:
+                    Radius.circular(9),
+                bottomLeft:
+                    Radius.circular(9),
+              ),
             ),
-            child: Icon(Icons.inventory_2_outlined, color: accent.withOpacity(.95)),
           ),
-          const SizedBox(width: 12),
+
+          const SizedBox(
+            width: 9,
+          ),
+
+          Container(
+            width: 36,
+            height: 36,
+            decoration:
+                BoxDecoration(
+              color:
+                  accent.withOpacity(.09),
+              borderRadius:
+                  BorderRadius.circular(9),
+            ),
+            child: const Icon(
+              Icons
+                  .inventory_2_outlined,
+              color: accent,
+              size: 20,
+            ),
+          ),
+
+          const SizedBox(
+            width: 9,
+          ),
+
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Text(
-                  dt,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 6),
-                Text(
                   personel,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.black.withOpacity(.75),
-                    fontWeight: FontWeight.w700,
+                  maxLines: 1,
+                  overflow:
+                      TextOverflow.ellipsis,
+                  style:
+                      const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight:
+                        FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+
+                const SizedBox(
+                  height: 3,
+                ),
+
+                Row(
                   children: [
-                    _chip("Bölüm: $bolum"),
-                    _chip("Tünel: $tunel"),
+                    const Icon(
+                      Icons
+                          .schedule_rounded,
+                      size: 12,
+                      color:
+                          Colors.black38,
+                    ),
+
+                    const SizedBox(
+                      width: 3,
+                    ),
+
+                    Expanded(
+                      child: Text(
+                        dt,
+                        maxLines: 1,
+                        overflow:
+                            TextOverflow
+                                .ellipsis,
+                        style:
+                            const TextStyle(
+                          fontSize: 9.5,
+                          color:
+                              Colors.black45,
+                          fontWeight:
+                              FontWeight
+                                  .w600,
+                        ),
+                      ),
+                    ),
                   ],
+                ),
+
+                const SizedBox(
+                  height: 3,
+                ),
+
+                Row(
+                  children: [
+                    _miniBilgi(
+                      Icons
+                          .grid_view_rounded,
+                      bolum,
+                    ),
+
+                    const SizedBox(
+                      width: 9,
+                    ),
+
+                    _miniBilgi(
+                      Icons
+                          .view_column_outlined,
+                      tunel,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const Icon(
+            Icons.chevron_right_rounded,
+            size: 18,
+            color:
+                Colors.black26,
+          ),
+
+          const SizedBox(
+            width: 6,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniBilgi(
+    IconData icon,
+    String text,
+  ) {
+    return Row(
+      mainAxisSize:
+          MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 11,
+          color: accent,
+        ),
+
+        const SizedBox(
+          width: 3,
+        ),
+
+        Text(
+          text,
+          maxLines: 1,
+          overflow:
+              TextOverflow.ellipsis,
+          style:
+              const TextStyle(
+            fontSize: 9,
+            color:
+                Colors.black54,
+            fontWeight:
+                FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ============================================================================
+// BOŞ EKRAN
+// ============================================================================
+
+class _EmptyView
+    extends StatelessWidget {
+  const _EmptyView();
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) {
+    return ListView(
+      physics:
+          const AlwaysScrollableScrollPhysics(),
+      children: const [
+        SizedBox(
+          height: 115,
+        ),
+
+        Icon(
+          Icons
+              .qr_code_scanner_rounded,
+          size: 48,
+          color:
+              Colors.black26,
+        ),
+
+        SizedBox(
+          height: 9,
+        ),
+
+        Text(
+          'Barkod sorgulayın',
+          textAlign:
+              TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight:
+                FontWeight.w900,
+            color:
+                Colors.black54,
+          ),
+        ),
+
+        SizedBox(
+          height: 3,
+        ),
+
+        Text(
+          'Koli barkodunu girip Ara butonuna basın.',
+          textAlign:
+              TextAlign.center,
+          style: TextStyle(
+            fontSize: 10,
+            color:
+                Colors.black38,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ============================================================================
+// HATA
+// ============================================================================
+
+class _ErrorCard
+    extends StatelessWidget {
+  final String message;
+
+  const _ErrorCard({
+    required this.message,
+  });
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) {
+    return Container(
+      padding:
+          const EdgeInsets.all(10),
+      decoration:
+          BoxDecoration(
+        color:
+            Colors.red.withOpacity(.05),
+        borderRadius:
+            BorderRadius.circular(10),
+        border: Border.all(
+          color:
+              Colors.red.withOpacity(.18),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 31,
+            height: 31,
+            decoration:
+                BoxDecoration(
+              color:
+                  Colors.red.withOpacity(.09),
+              borderRadius:
+                  BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons
+                  .error_outline_rounded,
+              color: Colors.red,
+              size: 18,
+            ),
+          ),
+
+          const SizedBox(
+            width: 7,
+          ),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Sorgu Hatası',
+                  style:
+                      TextStyle(
+                    fontSize: 11,
+                    fontWeight:
+                        FontWeight.w900,
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 2,
+                ),
+
+                Text(
+                  message,
+                  style:
+                      const TextStyle(
+                    fontSize: 9.5,
+                    color:
+                        Colors.black54,
+                    height: 1.25,
+                  ),
                 ),
               ],
             ),
@@ -283,129 +972,93 @@ class _ResultCard extends StatelessWidget {
   }
 }
 
-class _EmptyCard extends StatelessWidget {
-  const _EmptyCard();
+// ============================================================================
+// SHIMMER
+// ============================================================================
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withOpacity(.06)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(.05),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(Icons.info_outline, color: Colors.black.withOpacity(.6)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              "Kayıt bulunamadı.\nBarkodu kontrol edip tekrar deneyin.",
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.3,
-                color: Colors.black.withOpacity(.7),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ErrorCard extends StatelessWidget {
-  final String message;
-  const _ErrorCard({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.red.withOpacity(.18)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.red.withOpacity(.10),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(Icons.error_outline, color: Colors.red.withOpacity(.85)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              "Hata oluştu:\n$message",
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.3,
-                color: Colors.black.withOpacity(.75),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// ✅ Shimmer Skeleton Card
-/// Buradaki ShimmerLoading sınıfı = senin projedeki shimmer class.
-/// Eğer adı farklıysa sadece bu widget içindeki 1 satırı kendi classınla değiştir.
-class _ShimmerSkeletonCard extends StatelessWidget {
+class _ShimmerSkeletonCard
+    extends StatelessWidget {
   const _ShimmerSkeletonCard();
 
   @override
-  Widget build(BuildContext context) {
-    final card = Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
+  Widget build(
+    BuildContext context,
+  ) {
+    final card =
+        Container(
+      height: 74,
+      decoration:
+          BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withOpacity(.06)),
+        borderRadius:
+            BorderRadius.circular(10),
+        border: Border.all(
+          color:
+              Colors.black.withOpacity(.04),
+        ),
       ),
       child: Row(
         children: [
+          const SizedBox(
+            width: 9,
+          ),
+
           Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(.06),
-              borderRadius: BorderRadius.circular(14),
+            width: 36,
+            height: 36,
+            decoration:
+                BoxDecoration(
+              color: Colors.black
+                  .withOpacity(.06),
+              borderRadius:
+                  BorderRadius.circular(9),
             ),
           ),
-          const SizedBox(width: 12),
+
+          const SizedBox(
+            width: 9,
+          ),
+
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
-                _bar(w: 160, h: 12),
-                const SizedBox(height: 10),
-                _bar(w: 220, h: 12),
-                const SizedBox(height: 12),
+                _bar(
+                  w: 150,
+                  h: 10,
+                ),
+
+                const SizedBox(
+                  height: 7,
+                ),
+
+                _bar(
+                  w: 110,
+                  h: 8,
+                ),
+
+                const SizedBox(
+                  height: 7,
+                ),
+
                 Row(
                   children: [
-                    _bar(w: 90, h: 26, r: 999),
-                    const SizedBox(width: 8),
-                    _bar(w: 90, h: 26, r: 999),
+                    _bar(
+                      w: 55,
+                      h: 8,
+                    ),
+
+                    const SizedBox(
+                      width: 10,
+                    ),
+
+                    _bar(
+                      w: 55,
+                      h: 8,
+                    ),
                   ],
                 ),
               ],
@@ -415,17 +1068,25 @@ class _ShimmerSkeletonCard extends StatelessWidget {
       ),
     );
 
-    // ✅ SENİN SHIMMER CLASS'IN BURAYA
-    // Örn: ShimmerLoading(child: card)
-    return Shimmer(child: card);
+    return Shimmer(
+      child: card,
+    );
   }
 
-  static Widget _bar({double w = 140, double h = 12, double r = 8}) => Container(
-        width: w,
-        height: h,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(r),
-          color: Colors.black.withOpacity(0.06),
-        ),
-      );
+  static Widget _bar({
+    double w = 140,
+    double h = 10,
+  }) {
+    return Container(
+      width: w,
+      height: h,
+      decoration:
+          BoxDecoration(
+        borderRadius:
+            BorderRadius.circular(6),
+        color: Colors.black
+            .withOpacity(.06),
+      ),
+    );
+  }
 }

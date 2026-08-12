@@ -23,24 +23,26 @@ class HasatRaporuDetayliPage extends StatefulWidget {
   const HasatRaporuDetayliPage({super.key});
 
   @override
-  State<HasatRaporuDetayliPage> createState() => _HasatRaporuDetayliPageState();
+  State<HasatRaporuDetayliPage> createState() =>
+      _HasatRaporuDetayliPageState();
 }
 
-class _HasatRaporuDetayliPageState extends State<HasatRaporuDetayliPage> {
+class _HasatRaporuDetayliPageState
+    extends State<HasatRaporuDetayliPage> {
   static const Color accent = Color(0xFF1E6F5C);
-  static const Color bg = Color(0xFFF6F7F9);
+  static const Color bg = Color(0xFFF5F6F8);
 
   final _api = HasatApi();
 
   DateTime _ilk = DateTime.now();
   DateTime _son = DateTime.now();
-  final NumberFormat _nf = NumberFormat.decimalPattern('tr_TR');
 
-String _fmtInt(num? v) => _nf.format((v ?? 0).round());
-
+  final NumberFormat _nf =
+      NumberFormat.decimalPattern('tr_TR');
 
   bool _loading = false;
   String? _err;
+
   List<HasatRaporuDetayModel> _rows = [];
 
   HasatGroupBy _groupBy = HasatGroupBy.bolum;
@@ -48,20 +50,72 @@ String _fmtInt(num? v) => _nf.format((v ?? 0).round());
   @override
   void initState() {
     super.initState();
+
     _setTodayLocal();
     _fetch();
   }
 
+  // ============================================================
+  // TARİH
+  // ============================================================
+
   void _setTodayLocal() {
     final n = DateTime.now();
-    _ilk = DateTime(n.year, n.month, n.day);
-    _son = DateTime(n.year, n.month, n.day);
+
+    _ilk = DateTime(
+      n.year,
+      n.month,
+      n.day,
+    );
+
+    _son = DateTime(
+      n.year,
+      n.month,
+      n.day,
+    );
   }
 
   Future<void> _setTodayAndFetch() async {
     setState(_setTodayLocal);
+
     await _fetch();
   }
+
+  Future<void> _pickRange() async {
+    final picked =
+        await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      initialDateRange: DateTimeRange(
+        start: _ilk,
+        end: _son,
+      ),
+      helpText: 'Tarih Aralığı Seç',
+    );
+
+    if (picked == null) return;
+
+    setState(() {
+      _ilk = DateTime(
+        picked.start.year,
+        picked.start.month,
+        picked.start.day,
+      );
+
+      _son = DateTime(
+        picked.end.year,
+        picked.end.month,
+        picked.end.day,
+      );
+    });
+
+    await _fetch();
+  }
+
+  // ============================================================
+  // VERİ
+  // ============================================================
 
   Future<void> _fetch() async {
     setState(() {
@@ -70,152 +124,337 @@ String _fmtInt(num? v) => _nf.format((v ?? 0).round());
     });
 
     try {
-      final data = await _api.getHasatRaporuDetayli(_ilk, _son);
+      final data =
+          await _api.getHasatRaporuDetayli(
+        _ilk,
+        _son,
+      );
+
       if (!mounted) return;
-      setState(() => _rows = data);
+
+      setState(() {
+        _rows = data;
+      });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _err = e.toString());
+
+      setState(() {
+        _err = e
+            .toString()
+            .replaceFirst(
+              'Exception: ',
+              '',
+            )
+            .trim();
+      });
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 
-  String _fmtDate(DateTime d) =>
-      "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+  // ============================================================
+  // FORMAT
+  // ============================================================
 
-  double get _sumBrut => _rows.fold(0.0, (p, e) => p + (e.brutKg ?? 0));
-  double get _sumNet => _rows.fold(0.0, (p, e) => p + (e.netKg ?? 0));
-  double get _sumDara => _rows.fold(0.0, (p, e) => p + (e.dara ?? 0));
+  String _fmtDate(DateTime d) {
+    return '${d.day.toString().padLeft(2, '0')}.'
+        '${d.month.toString().padLeft(2, '0')}.'
+        '${d.year}';
+  }
 
-  String _groupTitle(HasatGroupBy g) {
+  String _fmtInt(num? v) {
+    return _nf.format(
+      (v ?? 0).round(),
+    );
+  }
+
+  // ============================================================
+  // KPI
+  // ============================================================
+
+  double get _sumBrut {
+    return _rows.fold(
+      0.0,
+      (p, e) => p + (e.brutKg ?? 0),
+    );
+  }
+
+  double get _sumNet {
+    return _rows.fold(
+      0.0,
+      (p, e) => p + (e.netKg ?? 0),
+    );
+  }
+
+  double get _sumDara {
+    return _rows.fold(
+      0.0,
+      (p, e) => p + (e.dara ?? 0),
+    );
+  }
+
+  // ============================================================
+  // GROUP
+  // ============================================================
+
+  String _groupTitle(
+    HasatGroupBy g,
+  ) {
     switch (g) {
       case HasatGroupBy.tunel:
-        return "Tünel";
+        return 'Tünel';
+
       case HasatGroupBy.bolum:
-        return "Bölüm";
+        return 'Bölüm';
+
       case HasatGroupBy.isitma:
-        return "Isıtma Sektörü";
+        return 'Isıtma Sektörü';
+
       case HasatGroupBy.sulama:
-        return "Sulama Sektörü";
+        return 'Sulama Sektörü';
+
       case HasatGroupBy.yon:
-        return "Tünel Yönü";
+        return 'Tünel Yönü';
+
       case HasatGroupBy.kutuTipi:
-        return "Kutu Tipi";
+        return 'Kutu Tipi';
+
       case HasatGroupBy.urunTipi:
-        return "Ürün Tipi";
+        return 'Ürün Tipi';
+
       case HasatGroupBy.toplayan:
-        return "Toplayan Personel";
+        return 'Toplayan Personel';
+
       case HasatGroupBy.okutan:
-        return "Okutan Personel";
+        return 'Okutan Personel';
+
       case HasatGroupBy.paketleyen:
-        return "Paketleyen Personel";
+        return 'Paketleyen Personel';
     }
   }
 
-  String _groupKey(HasatRaporuDetayModel r) {
+  String _groupKey(
+    HasatRaporuDetayModel r,
+  ) {
     switch (_groupBy) {
       case HasatGroupBy.tunel:
-        return r.tunel ?? "-";
+        return r.tunel ?? '-';
+
       case HasatGroupBy.bolum:
-        return r.bolum ?? "-";
+        return r.bolum ?? '-';
+
       case HasatGroupBy.isitma:
-        return r.isitmaSektoru ?? "-";
+        return r.isitmaSektoru ?? '-';
+
       case HasatGroupBy.sulama:
-        return r.sulamaSektoru ?? "-";
+        return r.sulamaSektoru ?? '-';
+
       case HasatGroupBy.yon:
-        return r.tunelYonu ?? "-";
+        return r.tunelYonu ?? '-';
+
       case HasatGroupBy.kutuTipi:
-        return r.kutuTipi ?? "-";
+        return r.kutuTipi ?? '-';
+
       case HasatGroupBy.urunTipi:
-        return r.urunTipi ?? "-";
+        return r.urunTipi ?? '-';
+
       case HasatGroupBy.toplayan:
-        return r.toplayanPersonel ?? "-";
+        return r.toplayanPersonel ?? '-';
+
       case HasatGroupBy.okutan:
-        return r.okutanPersonel ?? "-";
+        return r.okutanPersonel ?? '-';
+
       case HasatGroupBy.paketleyen:
-        return r.paketleyenPersonel ?? "-";
+        return r.paketleyenPersonel ?? '-';
     }
   }
 
-  Map<String, List<HasatRaporuDetayModel>> get _grouped {
-    final m = <String, List<HasatRaporuDetayModel>>{};
-    for (final r in _rows) {
-      final k = _groupKey(r);
-      (m[k] ??= []).add(r);
+  Map<String, List<HasatRaporuDetayModel>>
+      get _grouped {
+    final map =
+        <String, List<HasatRaporuDetayModel>>{};
+
+    for (final row in _rows) {
+      final key = _groupKey(row);
+
+      (map[key] ??= []).add(row);
     }
-    return m;
+
+    return map;
   }
 
-  Future<void> _pickRange() async {
-    final picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-      initialDateRange: DateTimeRange(start: _ilk, end: _son),
-      helpText: "Tarih Aralığı Seç",
-    );
-    if (picked == null) return;
+  // ============================================================
+  // GROUP SEÇ
+  // ============================================================
 
-    setState(() {
-      _ilk = DateTime(picked.start.year, picked.start.month, picked.start.day);
-      _son = DateTime(picked.end.year, picked.end.month, picked.end.day);
-    });
-
-    await _fetch();
-  }
-
-  // ----------------------------
-  // BottomSheet: GroupBy seçimi
-  // ----------------------------
   void _openGroupBySheet() {
     showModalBottomSheet(
       context: context,
-      showDragHandle: true,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (_) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight:
+                MediaQuery.of(context).size.height *
+                    .72,
+          ),
+          decoration: const BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(16),
+            ),
+          ),
+          child: SafeArea(
+            top: false,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: 6),
-                Row(
-                  children: const [
-                    Icon(Icons.pivot_table_chart_outlined, color: accent),
-                    SizedBox(width: 8),
-                    Text(
-                      "Filtre Seç",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
-                    ),
-                  ],
+                const SizedBox(height: 8),
+
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius:
+                        BorderRadius.circular(99),
+                  ),
                 ),
-                const SizedBox(height: 12),
+
+                Padding(
+                  padding:
+                      const EdgeInsets.fromLTRB(
+                    10,
+                    8,
+                    10,
+                    6,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 29,
+                        height: 29,
+                        decoration: BoxDecoration(
+                          color:
+                              accent.withOpacity(.09),
+                          borderRadius:
+                              BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons
+                              .pivot_table_chart_outlined,
+                          size: 17,
+                          color: accent,
+                        ),
+                      ),
+
+                      const SizedBox(width: 7),
+
+                      const Expanded(
+                        child: Text(
+                          'Gruplama Seç',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight:
+                                FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 Flexible(
                   child: ListView.separated(
                     shrinkWrap: true,
-                    itemCount: HasatGroupBy.values.length,
-                    separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
-                    itemBuilder: (_, i) {
-                      final g = HasatGroupBy.values[i];
-                      final selected = g == _groupBy;
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 6),
-                        title: Text(
-                          _groupTitle(g),
-                          style: const TextStyle(fontWeight: FontWeight.w800),
+                    padding:
+                        const EdgeInsets.fromLTRB(
+                      9,
+                      0,
+                      9,
+                      10,
+                    ),
+                    itemCount:
+                        HasatGroupBy.values.length,
+                    separatorBuilder:
+                        (_, __) =>
+                            const SizedBox(
+                      height: 4,
+                    ),
+                    itemBuilder:
+                        (_, index) {
+                      final group =
+                          HasatGroupBy.values[index];
+
+                      final selected =
+                          group == _groupBy;
+
+                      return Material(
+                        color: selected
+                            ? accent.withOpacity(.08)
+                            : Colors.white,
+                        borderRadius:
+                            BorderRadius.circular(9),
+                        child: InkWell(
+                          borderRadius:
+                              BorderRadius.circular(9),
+                          onTap: () {
+                            HapticFeedback
+                                .selectionClick();
+
+                            setState(() {
+                              _groupBy = group;
+                            });
+
+                            Navigator.pop(context);
+                          },
+                          child: Container(
+                            height: 44,
+                            padding:
+                                const EdgeInsets.symmetric(
+                              horizontal: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius:
+                                  BorderRadius.circular(9),
+                              border: Border.all(
+                                color: selected
+                                    ? accent.withOpacity(.22)
+                                    : Colors.black.withOpacity(.045),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    _groupTitle(group),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: selected
+                                          ? accent
+                                          : Colors.black87,
+                                      fontWeight:
+                                          FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+
+                                if (selected)
+                                  const Icon(
+                                    Icons
+                                        .check_circle_rounded,
+                                    color: accent,
+                                    size: 18,
+                                  ),
+                              ],
+                            ),
+                          ),
                         ),
-                        trailing: selected ? const Icon(Icons.check_circle, color: accent) : null,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setState(() => _groupBy = g);
-                          Navigator.pop(context);
-                        },
                       );
                     },
                   ),
@@ -228,112 +467,103 @@ String _fmtInt(num? v) => _nf.format((v ?? 0).round());
     );
   }
 
-  // ----------------------------
-  // UI
-  // ----------------------------
+  // ============================================================
+  // BUILD
+  // ============================================================
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: bg,
-      appBar: AppBar(
-        title: const Text("Hasat Raporu"),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        foregroundColor: Colors.black87,
-        actions: [
-          IconButton(
-            onPressed: _loading ? null : _fetch,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-            _topBar(),
-            const SizedBox(height: 10),
-           _loading ? const _KpiSkeletonRow() : _kpiRow(),
-            const SizedBox(height: 10),
-            _groupByPickerTile(),
-            const SizedBox(height: 8),
-            Expanded(child: _body()),
-          ],
-        ),
-      ),
+    final scaler =
+        MediaQuery.textScalerOf(context).clamp(
+      maxScaleFactor: 1.06,
     );
-  }
 
-  Widget _topBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Row(
-        children: [
-          Expanded(
-            child: InkWell(
-              borderRadius: BorderRadius.circular(18),
-              onTap: _pickRange,
-              child: _card(
-                child: Row(
-                  children: [
-                    _iconBadge(Icons.date_range),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        "${_fmtDate(_ilk)}  →  ${_fmtDate(_son)}",
-                        style: const TextStyle(fontWeight: FontWeight.w900),
-                      ),
-                    ),
-                    const Icon(Icons.chevron_right),
-                  ],
-                ),
-              ),
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        textScaler: scaler,
+      ),
+      child: Scaffold(
+        backgroundColor: bg,
+
+        appBar: AppBar(
+          toolbarHeight: 48,
+          title: const Text(
+            'Hasat Raporu',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _kpiRow() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Row(
-        children: [
-          Expanded(child: _KpiCard(title: "Brüt KG", value: _sumBrut)),
-          const SizedBox(width: 8),
-          Expanded(child: _KpiCard(title: "Net KG", value: _sumNet)),
-          const SizedBox(width: 8),
-          Expanded(child: _KpiCard(title: "Dara", value: _sumDara)),
-        ],
-      ),
-    );
-  }
-
-  Widget _groupByPickerTile() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: _openGroupBySheet,
-        child: _card(
-          child: Row(
-            children: [
-              _iconBadge(Icons.pivot_table_chart_outlined),
-              const SizedBox(width: 10),
-              const Text("Filtre", style: TextStyle(color: Colors.black54)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  _groupTitle(_groupBy),
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
-                ),
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          foregroundColor: Colors.black87,
+          actions: [
+            IconButton(
+              tooltip: 'Bugün',
+              visualDensity: VisualDensity.compact,
+              onPressed: _loading
+                  ? null
+                  : _setTodayAndFetch,
+              icon: const Icon(
+                Icons.today_rounded,
+                size: 20,
               ),
-         
-              const SizedBox(width: 8),
-              const Icon(Icons.keyboard_arrow_down),
+            ),
+
+            IconButton(
+              tooltip: 'Yenile',
+              visualDensity: VisualDensity.compact,
+              onPressed:
+                  _loading ? null : _fetch,
+              icon: const Icon(
+                Icons.refresh_rounded,
+                size: 20,
+              ),
+            ),
+          ],
+        ),
+
+        body: SafeArea(
+          child: Column(
+            children: [
+              _topPanel(),
+
+              Padding(
+                padding:
+                    const EdgeInsets.fromLTRB(
+                  9,
+                  6,
+                  9,
+                  0,
+                ),
+                child: _loading
+                    ? const _KpiSkeletonRow()
+                    : _kpiRow(),
+              ),
+
+              const SizedBox(height: 6),
+
+              _groupByPickerTile(),
+
+              if (_err != null)
+                Padding(
+                  padding:
+                      const EdgeInsets.fromLTRB(
+                    9,
+                    6,
+                    9,
+                    0,
+                  ),
+                  child: _ErrorBox(
+                    text: _err!,
+                  ),
+                ),
+
+              Expanded(
+                child: _body(),
+              ),
             ],
           ),
         ),
@@ -341,201 +571,480 @@ String _fmtInt(num? v) => _nf.format((v ?? 0).round());
     );
   }
 
-  Widget _body() {
-    if (_loading) return const _HasatSkeleton();
+  // ============================================================
+  // ÜST PANEL
+  // ============================================================
 
-    if (_err != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(_err!, textAlign: TextAlign.center),
-        ),
-      );
-    }
-
-    if (_rows.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.inventory_2_outlined, size: 44, color: Colors.grey),
-            SizedBox(height: 10),
-            Text("Kayıt yok"),
-          ],
-        ),
-      );
-    }
-
-    final groups = _grouped.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
-
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
-      itemCount: groups.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) {
-        final key = groups[i].key;
-        final items = groups[i].value;
-
-        final brut = items.fold(0.0, (p, e) => p + (e.brutKg ?? 0));
-        final net = items.fold(0.0, (p, e) => p + (e.netKg ?? 0));
-        final dara = items.fold(0.0, (p, e) => p + (e.dara ?? 0));
-
-        return InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: () => _openGroup(key, items),
-          child: _card(
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: accent.withOpacity(.10),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(Icons.folder_open, color: accent),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(key,
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
-                          overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 6),
-                      Text(
-                        "Net ${_fmtInt(net)} • Brüt ${_fmtInt(brut)} • Dara ${_fmtInt(dara)}",
-                        style: const TextStyle(color: Colors.black54),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right),
-              ],
+  Widget _topPanel() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(
+        9,
+        7,
+        9,
+        7,
+      ),
+      child: InkWell(
+        borderRadius:
+            BorderRadius.circular(9),
+        onTap:
+            _loading ? null : _pickRange,
+        child: Container(
+          height: 46,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 9,
+          ),
+          decoration: BoxDecoration(
+            color: const Color(
+              0xFFF7F7F9,
+            ),
+            borderRadius:
+                BorderRadius.circular(9),
+            border: Border.all(
+              color:
+                  Colors.black.withOpacity(.05),
             ),
           ),
-        );
-      },
+          child: Row(
+            children: [
+              Container(
+                width: 29,
+                height: 29,
+                decoration: BoxDecoration(
+                  color:
+                      accent.withOpacity(.09),
+                  borderRadius:
+                      BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.date_range_rounded,
+                  size: 17,
+                  color: accent,
+                ),
+              ),
+
+              const SizedBox(width: 7),
+
+              Expanded(
+                child: Column(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tarih Aralığı',
+                      style: TextStyle(
+                        fontSize: 8.5,
+                        color: Colors.black38,
+                        fontWeight:
+                            FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      '${_fmtDate(_ilk)}  →  ${_fmtDate(_son)}',
+                      maxLines: 1,
+                      overflow:
+                          TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight:
+                            FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 19,
+                color: Colors.black38,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  // ----------------------------
-  // BottomSheet: Grup detay listesi
-  // ----------------------------
-  void _openGroup(String key, List<HasatRaporuDetayModel> items) {
+  // ============================================================
+  // KPI
+  // ============================================================
+
+  Widget _kpiRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: _KpiCard(
+            title: 'Brüt KG',
+            value: _sumBrut,
+            icon:
+                Icons.monitor_weight_outlined,
+          ),
+        ),
+
+        const SizedBox(width: 5),
+
+        Expanded(
+          child: _KpiCard(
+            title: 'Net KG',
+            value: _sumNet,
+            icon: Icons.scale_rounded,
+          ),
+        ),
+
+        const SizedBox(width: 5),
+
+        Expanded(
+          child: _KpiCard(
+            title: 'Dara',
+            value: _sumDara,
+            icon: Icons.remove_rounded,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // GROUP TILE
+  // ============================================================
+
+  Widget _groupByPickerTile() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 9,
+      ),
+      child: Material(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(9),
+        child: InkWell(
+          borderRadius:
+              BorderRadius.circular(9),
+          onTap: _openGroupBySheet,
+          child: Container(
+            height: 44,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 9,
+            ),
+            decoration: BoxDecoration(
+              borderRadius:
+                  BorderRadius.circular(9),
+              border: Border.all(
+                color:
+                    Colors.black.withOpacity(.05),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color:
+                        accent.withOpacity(.09),
+                    borderRadius:
+                        BorderRadius.circular(7),
+                  ),
+                  child: const Icon(
+                    Icons
+                        .pivot_table_chart_outlined,
+                    size: 16,
+                    color: accent,
+                  ),
+                ),
+
+                const SizedBox(width: 7),
+
+                const Text(
+                  'Grupla',
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: Colors.black45,
+                    fontWeight:
+                        FontWeight.w600,
+                  ),
+                ),
+
+                const SizedBox(width: 7),
+
+                Expanded(
+                  child: Text(
+                    _groupTitle(_groupBy),
+                    maxLines: 1,
+                    overflow:
+                        TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight:
+                          FontWeight.w900,
+                    ),
+                  ),
+                ),
+
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 18,
+                  color: Colors.black38,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // BODY
+  // ============================================================
+
+  Widget _body() {
+    if (_loading) {
+      return const _HasatSkeleton();
+    }
+
+    if (_rows.isEmpty) {
+      return ListView(
+        physics:
+            const AlwaysScrollableScrollPhysics(),
+        children: const [
+          SizedBox(height: 110),
+          Icon(
+            Icons.inventory_2_outlined,
+            size: 46,
+            color: Colors.black26,
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Kayıt bulunamadı',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.black45,
+              fontWeight:
+                  FontWeight.w800,
+            ),
+          ),
+        ],
+      );
+    }
+
+    final groups =
+        _grouped.entries.toList()
+          ..sort(
+            (a, b) =>
+                a.key.compareTo(b.key),
+          );
+
+    return RefreshIndicator(
+      color: accent,
+      onRefresh: _fetch,
+      child: ListView.separated(
+        physics:
+            const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(
+          9,
+          7,
+          9,
+          14,
+        ),
+        itemCount: groups.length,
+        separatorBuilder:
+            (_, __) =>
+                const SizedBox(
+          height: 6,
+        ),
+        itemBuilder: (_, index) {
+          final key = groups[index].key;
+          final items =
+              groups[index].value;
+
+          final brut = items.fold(
+            0.0,
+            (p, e) =>
+                p + (e.brutKg ?? 0),
+          );
+
+          final net = items.fold(
+            0.0,
+            (p, e) =>
+                p + (e.netKg ?? 0),
+          );
+
+          final dara = items.fold(
+            0.0,
+            (p, e) =>
+                p + (e.dara ?? 0),
+          );
+
+          return _GroupCard(
+            title: key,
+            count: items.length,
+            net: _fmtInt(net),
+            brut: _fmtInt(brut),
+            dara: _fmtInt(dara),
+            onTap: () {
+              _openGroup(
+                key,
+                items,
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  // ============================================================
+  // GRUP DETAY
+  // ============================================================
+
+  void _openGroup(
+    String key,
+    List<HasatRaporuDetayModel> items,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
+      backgroundColor:
+          Colors.transparent,
       builder: (_) {
+        final brut = items.fold(
+          0.0,
+          (p, e) =>
+              p + (e.brutKg ?? 0),
+        );
+
+        final net = items.fold(
+          0.0,
+          (p, e) =>
+              p + (e.netKg ?? 0),
+        );
+
         return DraggableScrollableSheet(
           expand: false,
-          initialChildSize: 0.85,
-          builder: (context, controller) {
-            final brut = items.fold(0.0, (p, e) => p + (e.brutKg ?? 0));
-            final net = items.fold(0.0, (p, e) => p + (e.netKg ?? 0));
-
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          key,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: accent.withOpacity(.10),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                       "Net ${_fmtInt(net)}",
-                          style: const TextStyle(color: accent, fontWeight: FontWeight.w900, fontSize: 12),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(.05),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                         "Brüt ${_fmtInt(brut)}",
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ),
+          initialChildSize: .82,
+          minChildSize: .45,
+          maxChildSize: .95,
+          builder:
+              (context, controller) {
+            return Container(
+              decoration:
+                  const BoxDecoration(
+                color: bg,
+                borderRadius:
+                    BorderRadius.vertical(
+                  top: Radius.circular(16),
                 ),
-                Expanded(
-                  child: ListView.separated(
-                    controller: controller,
-                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-                    itemCount: items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (_, i) {
-                      final r = items[i];
-                      final title = r.kutuTipi ?? "-";
-                      final dateStr = r.toplamaTarihi != null ? _fmtDate(r.toplamaTarihi!) : "-";
-                      final sub = "${r.toplayanPersonel ?? "-"} • ${r.tunel ?? "-"} • $dateStr";
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
 
-                      return InkWell(
-                        borderRadius: BorderRadius.circular(18),
-                        onTap: () => _openRow(r),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: Colors.grey.shade200),
-                            color: Colors.white,
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 42,
-                                height: 42,
-                                decoration: BoxDecoration(
-                                  color: accent.withOpacity(.10),
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                child: const Icon(Icons.qr_code_2, color: accent),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-                                    const SizedBox(height: 4),
-                                    Text(sub, style: const TextStyle(color: Colors.black54)),
-                                  ],
-                                ),
-                              ),
-                              Text(
-                                (r.netKg ?? 0).toStringAsFixed(2),
-                                style: const TextStyle(fontWeight: FontWeight.w900),
-                              ),
-                            ],
+                  Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius:
+                          BorderRadius.circular(99),
+                    ),
+                  ),
+
+                  Padding(
+                    padding:
+                        const EdgeInsets.fromLTRB(
+                      10,
+                      8,
+                      10,
+                      7,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            key,
+                            maxLines: 1,
+                            overflow:
+                                TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight:
+                                  FontWeight.w900,
+                            ),
                           ),
                         ),
-                      );
-                    },
+
+                        _SmallBadge(
+                          text:
+                              'Net ${_fmtInt(net)}',
+                          accent: true,
+                        ),
+
+                        const SizedBox(width: 5),
+
+                        _SmallBadge(
+                          text:
+                              'Brüt ${_fmtInt(brut)}',
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+
+                  Expanded(
+                    child: ListView.separated(
+                      controller: controller,
+                      padding:
+                          const EdgeInsets.fromLTRB(
+                        9,
+                        0,
+                        9,
+                        12,
+                      ),
+                      itemCount: items.length,
+                      separatorBuilder:
+                          (_, __) =>
+                              const SizedBox(
+                        height: 5,
+                      ),
+                      itemBuilder:
+                          (_, index) {
+                        final row =
+                            items[index];
+
+                        final title =
+                            row.kutuTipi ?? '-';
+
+                        final dateStr =
+                            row.toplamaTarihi != null
+                                ? _fmtDate(
+                                    row.toplamaTarihi!,
+                                  )
+                                : '-';
+
+                        final sub =
+                            '${row.toplayanPersonel ?? '-'}'
+                            ' • ${row.tunel ?? '-'}'
+                            ' • $dateStr';
+
+                        return _GroupRowCard(
+                          title: title,
+                          subtitle: sub,
+                          net:
+                              (row.netKg ?? 0)
+                                  .toStringAsFixed(2),
+                          onTap: () {
+                            _openRow(row);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             );
           },
         );
@@ -543,54 +1052,172 @@ String _fmtInt(num? v) => _nf.format((v ?? 0).round());
     );
   }
 
-  // ----------------------------
-  // BottomSheet: Satır detay
-  // ----------------------------
-  void _openRow(HasatRaporuDetayModel r) {
+  // ============================================================
+  // SATIR DETAY
+  // ============================================================
+
+  void _openRow(
+    HasatRaporuDetayModel r,
+  ) {
     showModalBottomSheet(
       context: context,
-      showDragHandle: true,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
+      backgroundColor:
+          Colors.transparent,
       builder: (_) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight:
+                MediaQuery.of(context).size.height *
+                    .88,
+          ),
+          decoration:
+              const BoxDecoration(
+            color: bg,
+            borderRadius:
+                BorderRadius.vertical(
+              top: Radius.circular(16),
+            ),
+          ),
+          child: SafeArea(
+            top: false,
             child: SingleChildScrollView(
+              padding:
+                  const EdgeInsets.fromLTRB(
+                10,
+                8,
+                10,
+                14,
+              ),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _detailHeader("Detay"),
+                  Container(
+                    width: 36,
+                    height: 4,
+                    decoration:
+                        BoxDecoration(
+                      color:
+                          Colors.black12,
+                      borderRadius:
+                          BorderRadius.circular(
+                              99),
+                    ),
+                  ),
+
                   const SizedBox(height: 8),
 
-                  _InfoRow("Toplayan", r.toplayanPersonel),
-                  _InfoRow("Toplanma Tarihi", r.toplamaTarihi != null ? _fmtDate(r.toplamaTarihi!) : null),
-                  _InfoRow("Bölüm", r.bolum),
-                  _InfoRow("Tünel", r.tunel),
-                  _InfoRow("Isıtma", r.isitmaSektoru),
-                  _InfoRow("Sulama", r.sulamaSektoru),
-                  _InfoRow("Yön", r.tunelYonu),
-                  _InfoRow("Kutu Tipi", r.kutuTipi),
-                  _InfoRow("Ürün Tipi", r.urunTipi),
-                  _InfoRow("Okutan", r.okutanPersonel),
-                  _InfoRow("Paketleyen", r.paketleyenPersonel),
-                  _InfoRow("Paketleme Tarihi", r.paketlemeTarihi != null ? _fmtDate(r.paketlemeTarihi!) : null),
+                  _detailHeader(
+                    'Hasat Detayı',
+                  ),
 
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 7),
+
+                  _InfoRow(
+                    'Toplayan',
+                    r.toplayanPersonel,
+                  ),
+
+                  _InfoRow(
+                    'Toplanma Tarihi',
+                    r.toplamaTarihi != null
+                        ? _fmtDate(
+                            r.toplamaTarihi!,
+                          )
+                        : null,
+                  ),
+
+                  _InfoRow(
+                    'Bölüm',
+                    r.bolum,
+                  ),
+
+                  _InfoRow(
+                    'Tünel',
+                    r.tunel,
+                  ),
+
+                  _InfoRow(
+                    'Isıtma',
+                    r.isitmaSektoru,
+                  ),
+
+                  _InfoRow(
+                    'Sulama',
+                    r.sulamaSektoru,
+                  ),
+
+                  _InfoRow(
+                    'Yön',
+                    r.tunelYonu,
+                  ),
+
+                  _InfoRow(
+                    'Kutu Tipi',
+                    r.kutuTipi,
+                  ),
+
+                  _InfoRow(
+                    'Ürün Tipi',
+                    r.urunTipi,
+                  ),
+
+                  _InfoRow(
+                    'Okutan',
+                    r.okutanPersonel,
+                  ),
+
+                  _InfoRow(
+                    'Paketleyen',
+                    r.paketleyenPersonel,
+                  ),
+
+                  _InfoRow(
+                    'Paketleme Tarihi',
+                    r.paketlemeTarihi != null
+                        ? _fmtDate(
+                            r.paketlemeTarihi!,
+                          )
+                        : null,
+                  ),
+
+                  const SizedBox(height: 7),
+
                   Row(
                     children: [
-                      Expanded(child: _miniKpi("Brüt", r.brutKg ?? 0)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _miniKpi("Net", r.netKg ?? 0)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _miniKpi("Dara", r.dara ?? 0)),
+                      Expanded(
+                        child: _miniKpi(
+                          'Brüt',
+                          r.brutKg ?? 0,
+                        ),
+                      ),
+
+                      const SizedBox(width: 5),
+
+                      Expanded(
+                        child: _miniKpi(
+                          'Net',
+                          r.netKg ?? 0,
+                          highlighted: true,
+                        ),
+                      ),
+
+                      const SizedBox(width: 5),
+
+                      Expanded(
+                        child: _miniKpi(
+                          'Dara',
+                          r.dara ?? 0,
+                        ),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  _InfoRow("Personel Tipi", r.personelTipi),
+
+                  const SizedBox(height: 7),
+
+                  _InfoRow(
+                    'Personel Tipi',
+                    r.personelTipi,
+                  ),
                 ],
               ),
             ),
@@ -600,119 +1227,103 @@ String _fmtInt(num? v) => _nf.format((v ?? 0).round());
     );
   }
 
-  Widget _miniKpi(String t, num v) {
+  Widget _detailHeader(
+    String title,
+  ) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      height: 44,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 9,
+      ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-        color: const Color(0xFFF6F7F9),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(t, style: const TextStyle(fontSize: 12, color: Colors.black54)),
-          const SizedBox(height: 6),
-          Text(NumberFormat.decimalPattern('tr_TR').format(v.round()), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
-        ],
-      ),
-    );
-  }
-
-  Widget _detailHeader(String title) {
-    return Row(
-      children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: accent.withOpacity(.10),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(Icons.info_outline, color: accent, size: 18),
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(9),
+        border: Border.all(
+          color:
+              Colors.black.withOpacity(.05),
         ),
-        const SizedBox(width: 10),
-        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
-      ],
-    );
-  }
-
-  Widget _card({required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
-        color: Colors.white,
       ),
-      child: child,
-    );
-  }
-
-  Widget _iconBadge(IconData icon) {
-    return Container(
-      width: 34,
-      height: 34,
-      decoration: BoxDecoration(
-        color: accent.withOpacity(.10),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Icon(icon, color: accent, size: 18),
-    );
-  }
-}
-
-class _KpiCard extends StatelessWidget {
-  final String title;
-  final double value;
-  const _KpiCard({required this.title, required this.value});
-
-  static const Color accent = Color(0xFF1E6F5C);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
-        color: Colors.white,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(title, style: const TextStyle(fontSize: 12, color: Colors.black54)),
-          const SizedBox(height: 6),
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color:
+                  accent.withOpacity(.09),
+              borderRadius:
+                  BorderRadius.circular(7),
+            ),
+            child: const Icon(
+              Icons.info_outline_rounded,
+              color: accent,
+              size: 16,
+            ),
+          ),
+
+          const SizedBox(width: 7),
+
           Text(
-            NumberFormat.decimalPattern('tr_TR').format(value.round()),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            title,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight:
+                  FontWeight.w900,
+            ),
           ),
         ],
       ),
     );
   }
-}
 
-class _InfoRow extends StatelessWidget {
-  final String k;
-  final String? v;
-  const _InfoRow(this.k, this.v);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _miniKpi(
+    String title,
+    num value, {
+    bool highlighted = false,
+  }) {
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 7,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(
+          0xFFF7F7F9,
+        ),
+        borderRadius:
+            BorderRadius.circular(8),
+        border: Border.all(
+          color:
+              Colors.black.withOpacity(.045),
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment:
+            MainAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 140,
-            child: Text(k, style: const TextStyle(color: Colors.black54)),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 8.5,
+              color: Colors.black45,
+            ),
           ),
-          Expanded(
+
+          const SizedBox(height: 2),
+
+          FittedBox(
+            fit: BoxFit.scaleDown,
             child: Text(
-              v ?? "-",
-              style: const TextStyle(fontWeight: FontWeight.w800),
+              _fmtInt(value),
+              style: TextStyle(
+                fontSize: 12.5,
+                color: highlighted
+                    ? accent
+                    : Colors.black87,
+                fontWeight:
+                    FontWeight.w900,
+              ),
             ),
           ),
         ],
@@ -720,6 +1331,616 @@ class _InfoRow extends StatelessWidget {
     );
   }
 }
+
+// ============================================================================
+// KPI CARD
+// ============================================================================
+
+class _KpiCard extends StatelessWidget {
+  const _KpiCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
+
+  final String title;
+  final double value;
+  final IconData icon;
+
+  static const Color accent =
+      Color(0xFF1E6F5C);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 52,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 7,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(9),
+        border: Border.all(
+          color:
+              Colors.black.withOpacity(.05),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 27,
+            height: 27,
+            decoration: BoxDecoration(
+              color:
+                  accent.withOpacity(.09),
+              borderRadius:
+                  BorderRadius.circular(7),
+            ),
+            child: Icon(
+              icon,
+              size: 15,
+              color: accent,
+            ),
+          ),
+
+          const SizedBox(width: 5),
+
+          Expanded(
+            child: Column(
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment:
+                      Alignment.centerLeft,
+                  child: Text(
+                    NumberFormat
+                            .decimalPattern(
+                                'tr_TR')
+                        .format(
+                      value.round(),
+                    ),
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: accent,
+                      fontWeight:
+                          FontWeight.w900,
+                    ),
+                  ),
+                ),
+
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow:
+                      TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 8,
+                    color: Colors.black45,
+                    fontWeight:
+                        FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// GROUP CARD
+// ============================================================================
+
+class _GroupCard extends StatelessWidget {
+  const _GroupCard({
+    required this.title,
+    required this.count,
+    required this.net,
+    required this.brut,
+    required this.dara,
+    required this.onTap,
+  });
+
+  final String title;
+  final int count;
+  final String net;
+  final String brut;
+  final String dara;
+  final VoidCallback onTap;
+
+  static const Color accent =
+      Color(0xFF1E6F5C);
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius:
+          BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius:
+            BorderRadius.circular(10),
+        onTap: onTap,
+        child: Container(
+          height: 72,
+          decoration: BoxDecoration(
+            borderRadius:
+                BorderRadius.circular(10),
+            border: Border.all(
+              color:
+                  Colors.black.withOpacity(.055),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 5,
+                decoration:
+                    const BoxDecoration(
+                  color: accent,
+                  borderRadius:
+                      BorderRadius.only(
+                    topLeft:
+                        Radius.circular(9),
+                    bottomLeft:
+                        Radius.circular(9),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 9),
+
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color:
+                      accent.withOpacity(.09),
+                  borderRadius:
+                      BorderRadius.circular(9),
+                ),
+                child: const Icon(
+                  Icons.folder_open_rounded,
+                  color: accent,
+                  size: 20,
+                ),
+              ),
+
+              const SizedBox(width: 9),
+
+              Expanded(
+                child: Column(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow:
+                                TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight:
+                                  FontWeight.w900,
+                            ),
+                          ),
+                        ),
+
+                        Text(
+                          '$count kayıt',
+                          style: const TextStyle(
+                            fontSize: 8.5,
+                            color: Colors.black38,
+                            fontWeight:
+                                FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 5),
+
+                    Row(
+                      children: [
+                        _InlineValue(
+                          label: 'Net',
+                          value: net,
+                          highlighted: true,
+                        ),
+
+                        const SizedBox(width: 7),
+
+                        _InlineValue(
+                          label: 'Brüt',
+                          value: brut,
+                        ),
+
+                        const SizedBox(width: 7),
+
+                        _InlineValue(
+                          label: 'Dara',
+                          value: dara,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 19,
+                color: Colors.black26,
+              ),
+
+              const SizedBox(width: 6),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// INLINE VALUE
+// ============================================================================
+
+class _InlineValue extends StatelessWidget {
+  const _InlineValue({
+    required this.label,
+    required this.value,
+    this.highlighted = false,
+  });
+
+  final String label;
+  final String value;
+  final bool highlighted;
+
+  static const Color accent =
+      Color(0xFF1E6F5C);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      '$label $value',
+      style: TextStyle(
+        fontSize: 9,
+        color: highlighted
+            ? accent
+            : Colors.black54,
+        fontWeight: highlighted
+            ? FontWeight.w900
+            : FontWeight.w700,
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// GROUP DETAY SATIRI
+// ============================================================================
+
+class _GroupRowCard extends StatelessWidget {
+  const _GroupRowCard({
+    required this.title,
+    required this.subtitle,
+    required this.net,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final String net;
+  final VoidCallback onTap;
+
+  static const Color accent =
+      Color(0xFF1E6F5C);
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius:
+          BorderRadius.circular(9),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius:
+            BorderRadius.circular(9),
+        child: Container(
+          height: 62,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 8,
+          ),
+          decoration: BoxDecoration(
+            borderRadius:
+                BorderRadius.circular(9),
+            border: Border.all(
+              color:
+                  Colors.black.withOpacity(.05),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 31,
+                height: 31,
+                decoration: BoxDecoration(
+                  color:
+                      accent.withOpacity(.09),
+                  borderRadius:
+                      BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.qr_code_2_rounded,
+                  color: accent,
+                  size: 17,
+                ),
+              ),
+
+              const SizedBox(width: 7),
+
+              Expanded(
+                child: Column(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow:
+                          TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight:
+                            FontWeight.w900,
+                      ),
+                    ),
+
+                    const SizedBox(height: 2),
+
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow:
+                          TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 8.8,
+                        color: Colors.black45,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Column(
+                mainAxisAlignment:
+                    MainAxisAlignment.center,
+                crossAxisAlignment:
+                    CrossAxisAlignment.end,
+                children: [
+                  const Text(
+                    'Net',
+                    style: TextStyle(
+                      fontSize: 8,
+                      color: Colors.black38,
+                    ),
+                  ),
+
+                  Text(
+                    net,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: accent,
+                      fontWeight:
+                          FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(width: 5),
+
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: Colors.black26,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// INFO ROW
+// ============================================================================
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow(
+    this.keyText,
+    this.value,
+  );
+
+  final String keyText;
+  final String? value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      
+      margin: const EdgeInsets.only(
+        bottom: 4,
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 9,
+        vertical: 7,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(8),
+        border: Border.all(
+          color:
+              Colors.black.withOpacity(.045),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment:
+            CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 112,
+            child: Text(
+              keyText,
+              style: const TextStyle(
+                fontSize: 9.5,
+                color: Colors.black45,
+                fontWeight:
+                    FontWeight.w600,
+              ),
+            ),
+          ),
+
+          Expanded(
+            child: Text(
+              (value ?? '-').trim().isEmpty
+                  ? '-'
+                  : value!,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.black87,
+                fontWeight:
+                    FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// SMALL BADGE
+// ============================================================================
+
+class _SmallBadge extends StatelessWidget {
+  const _SmallBadge({
+    required this.text,
+    this.accent = false,
+  });
+
+  final String text;
+  final bool accent;
+
+  static const Color green =
+      Color(0xFF1E6F5C);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 6,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: accent
+            ? green.withOpacity(.08)
+            : Colors.white,
+        borderRadius:
+            BorderRadius.circular(6),
+        border: Border.all(
+          color: accent
+              ? green.withOpacity(.17)
+              : Colors.black.withOpacity(.05),
+        ),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 8.5,
+          color: accent
+              ? green
+              : Colors.black54,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// ERROR
+// ============================================================================
+
+class _ErrorBox extends StatelessWidget {
+  const _ErrorBox({
+    required this.text,
+  });
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(9),
+      decoration: BoxDecoration(
+        color:
+            Colors.red.withOpacity(.05),
+        borderRadius:
+            BorderRadius.circular(9),
+        border: Border.all(
+          color:
+              Colors.red.withOpacity(.18),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            size: 17,
+            color: Colors.red,
+          ),
+
+          const SizedBox(width: 6),
+
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 9.5,
+                color: Colors.black54,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// SKELETON
+// ============================================================================
 
 class _HasatSkeleton extends StatelessWidget {
   const _HasatSkeleton();
@@ -727,129 +1948,185 @@ class _HasatSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
-        children: const [
-          _SkeletonGroupCard(),
-          SizedBox(height: 10),
-          _SkeletonGroupCard(),
-          SizedBox(height: 10),
-          _SkeletonGroupCard(),
-          SizedBox(height: 10),
-          _SkeletonGroupCard(),
-          SizedBox(height: 10),
-          _SkeletonGroupCard(),
-        ],
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(
+          9,
+          7,
+          9,
+          14,
+        ),
+        itemCount: 6,
+        separatorBuilder:
+            (_, __) =>
+                const SizedBox(
+          height: 6,
+        ),
+        itemBuilder: (_, __) {
+          return const _SkeletonGroupCard();
+        },
       ),
     );
   }
 }
 
-class _SkeletonGroupCard extends StatelessWidget {
+class _SkeletonGroupCard
+    extends StatelessWidget {
   const _SkeletonGroupCard();
 
   @override
   Widget build(BuildContext context) {
-    Widget bar({double w = 140, double h = 12}) => Container(
-          width: w,
-          height: h,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: Colors.black.withOpacity(0.06),
-          ),
-        );
-
     return Container(
-      padding: const EdgeInsets.all(14),
+      height: 72,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 9,
+      ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black12),
         color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(10),
+        border: Border.all(
+          color:
+              Colors.black.withOpacity(.04),
+        ),
       ),
       child: Row(
         children: [
-          // sol ikon kutusu
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: Colors.black.withOpacity(0.06),
-            ),
+          _sk(
+            36,
+            36,
           ),
-          const SizedBox(width: 12),
+
+          const SizedBox(width: 9),
 
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
-                bar(w: 180, h: 14),
-                const SizedBox(height: 10),
-                bar(w: 260, h: 12),
+                _sk(
+                  150,
+                  11,
+                ),
+
+                const SizedBox(height: 8),
+
+                _sk(
+                  220,
+                  9,
+                ),
               ],
             ),
           ),
-
-          const SizedBox(width: 10),
-
-          Container(
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
-              color: Colors.black.withOpacity(0.06),
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  static Widget _sk(
+    double width,
+    double height,
+  ) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color:
+            Colors.black.withOpacity(.06),
+        borderRadius:
+            BorderRadius.circular(6),
       ),
     );
   }
 }
-class _KpiSkeletonRow extends StatelessWidget {
+
+// ============================================================================
+// KPI SKELETON
+// ============================================================================
+
+class _KpiSkeletonRow
+    extends StatelessWidget {
   const _KpiSkeletonRow();
 
   @override
   Widget build(BuildContext context) {
-    Widget kpi() => Expanded(
-          child: Container(
-            height: 76,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.black12),
-              color: Colors.white,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _sk(70, 12),
-                const SizedBox(height: 10),
-                _sk(90, 18),
-              ],
+    Widget item() {
+      return Expanded(
+        child: Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 7,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius:
+                BorderRadius.circular(9),
+            border: Border.all(
+              color:
+                  Colors.black.withOpacity(.04),
             ),
           ),
-        );
+          child: Row(
+            children: [
+              _sk(
+                27,
+                27,
+              ),
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Row(
-        children: [
-          kpi(),
-          const SizedBox(width: 8),
-          kpi(),
-          const SizedBox(width: 8),
-          kpi(),
-        ],
-      ),
+              const SizedBox(width: 5),
+
+              Expanded(
+                child: Column(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    _sk(
+                      48,
+                      10,
+                    ),
+
+                    const SizedBox(height: 5),
+
+                    _sk(
+                      38,
+                      7,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        item(),
+        const SizedBox(width: 5),
+        item(),
+        const SizedBox(width: 5),
+        item(),
+      ],
     );
   }
 
-  static Widget _sk(double w, double h) => Container(
-        width: w,
-        height: h,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.black.withOpacity(0.06),
-        ),
-      );
+  static Widget _sk(
+    double width,
+    double height,
+  ) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color:
+            Colors.black.withOpacity(.06),
+        borderRadius:
+            BorderRadius.circular(6),
+      ),
+    );
+  }
 }

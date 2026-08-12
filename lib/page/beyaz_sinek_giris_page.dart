@@ -17,12 +17,13 @@ class BeyazSinekGirisPage extends StatefulWidget {
       _BeyazSinekGirisPageState();
 }
 
-class _BeyazSinekGirisPageState extends State<BeyazSinekGirisPage> {
+class _BeyazSinekGirisPageState
+    extends State<BeyazSinekGirisPage> {
   static const Color accent = Color(0xFF1E6F5C);
-  static const Color bg = Color(0xFFF5F7FA);
-  static const Color cardBg = Colors.white;
+  static const Color bg = Color(0xFFF5F6F8);
 
-  final BeyazSinekGirisApi _api = const BeyazSinekGirisApi();
+  final BeyazSinekGirisApi _api =
+      const BeyazSinekGirisApi();
 
   DateTime _selectedDate = DateTime.now();
 
@@ -38,21 +39,36 @@ class _BeyazSinekGirisPageState extends State<BeyazSinekGirisPage> {
     _loadData();
   }
 
+  // ============================================================
+  // MESAJ
+  // ============================================================
+
   void _snack(
     String mesaj, {
     bool error = false,
   }) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mesaj),
-        backgroundColor:
-            error ? Colors.red.shade700 : accent,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            mesaj,
+            style: const TextStyle(
+              fontSize: 11,
+            ),
+          ),
+          backgroundColor:
+              error ? Colors.red.shade700 : accent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
+
+  // ============================================================
+  // VERİ
+  // ============================================================
 
   Future<void> _loadData() async {
     setState(() {
@@ -60,7 +76,8 @@ class _BeyazSinekGirisPageState extends State<BeyazSinekGirisPage> {
     });
 
     try {
-      final result = await _api.beyazSinekGirisGetir(
+      final result =
+          await _api.beyazSinekGirisGetir(
         tarih: _selectedDate,
         personelKodu: widget.personelKodu,
       );
@@ -85,6 +102,10 @@ class _BeyazSinekGirisPageState extends State<BeyazSinekGirisPage> {
     }
   }
 
+  // ============================================================
+  // TARİH
+  // ============================================================
+
   Future<void> _pickDate() async {
     if (_isLoading || _isSaving) return;
 
@@ -98,7 +119,8 @@ class _BeyazSinekGirisPageState extends State<BeyazSinekGirisPage> {
     if (picked == null) return;
 
     if (_hasChange) {
-      final devamEt = await _tarihDegistirmeOnayi();
+      final devamEt =
+          await _tarihDegistirmeOnayi();
 
       if (!devamEt) return;
     }
@@ -114,29 +136,53 @@ class _BeyazSinekGirisPageState extends State<BeyazSinekGirisPage> {
     final result = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         title: const Text(
-          'Kaydedilmemiş değişiklik var',
+          'Kaydedilmemiş değişiklik',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         content: const Text(
-          'Tarihi değiştirirsen yaptığın değişiklikler '
-          'kaybolacak. Devam etmek istiyor musun?',
+          'Tarihi değiştirirsen yaptığın değişiklikler kaybolacak. Devam etmek istiyor musun?',
+          style: TextStyle(
+            fontSize: 11.5,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context, false);
+              Navigator.pop(
+                context,
+                false,
+              );
             },
-            child: const Text('Vazgeç'),
+            child: const Text(
+              'Vazgeç',
+              style: TextStyle(
+                fontSize: 11,
+              ),
+            ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
+          FilledButton(
+            style: FilledButton.styleFrom(
               backgroundColor: accent,
-              foregroundColor: Colors.white,
             ),
             onPressed: () {
-              Navigator.pop(context, true);
+              Navigator.pop(
+                context,
+                true,
+              );
             },
-            child: const Text('Devam Et'),
+            child: const Text(
+              'Devam Et',
+              style: TextStyle(
+                fontSize: 11,
+              ),
+            ),
           ),
         ],
       ),
@@ -144,6 +190,10 @@ class _BeyazSinekGirisPageState extends State<BeyazSinekGirisPage> {
 
     return result ?? false;
   }
+
+  // ============================================================
+  // KAYDET
+  // ============================================================
 
   Future<void> _save() async {
     if (_isSaving || _isLoading) return;
@@ -161,7 +211,8 @@ class _BeyazSinekGirisPageState extends State<BeyazSinekGirisPage> {
     });
 
     try {
-      final sonuc = await _api.beyazSinekGirisKaydet(
+      final sonuc =
+          await _api.beyazSinekGirisKaydet(
         tarih: _selectedDate,
         personelKodu: widget.personelKodu,
         rows: _rows,
@@ -201,36 +252,47 @@ class _BeyazSinekGirisPageState extends State<BeyazSinekGirisPage> {
     }
   }
 
-  Future<void> _openEditSheet(int index) async {
+  // ============================================================
+  // DÜZENLE
+  // ============================================================
+
+  Future<void> _openEditSheet(
+    int index,
+  ) async {
     if (_isLoading || _isSaving) return;
 
     final current = _rows[index];
 
     final updated =
-        await showModalBottomSheet<BeyazSinekRowModel>(
+        await showModalBottomSheet<
+            BeyazSinekRowModel>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (_) {
-        return FractionallySizedBox(
-          heightFactor: 0.80,
-          child: _BeyazSinekEditSheet(
-            key: ValueKey(current.sera),
-            row: current,
-            accent: accent,
-          ),
-        );
-      },
+      builder: (_) => FractionallySizedBox(
+        heightFactor: .78,
+        child: _BeyazSinekEditSheet(
+          key: ValueKey(current.sera),
+          row: current,
+          accent: accent,
+        ),
+      ),
     );
 
-    if (updated == null || !mounted) return;
+    if (updated == null || !mounted) {
+      return;
+    }
 
     setState(() {
       _rows[index] = updated;
       _hasChange = true;
     });
   }
+
+  // ============================================================
+  // TOPLAMLAR
+  // ============================================================
 
   int get _genelToplam {
     return _rows.fold<int>(
@@ -241,39 +303,73 @@ class _BeyazSinekGirisPageState extends State<BeyazSinekGirisPage> {
 
   int get _duzenlenenSeraSayisi {
     return _rows
-        .where((item) => item.doluAlanSayisi > 0)
+        .where(
+          (item) =>
+              item.doluAlanSayisi > 0,
+        )
         .length;
   }
 
+  // ============================================================
+  // GERİ
+  // ============================================================
+
   Future<bool> _onWillPop() async {
-    if (!_hasChange) return true;
+    if (!_hasChange) {
+      return true;
+    }
 
     final result = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         title: const Text(
-          'Kaydedilmemiş değişiklik var',
+          'Kaydedilmemiş değişiklik',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         content: const Text(
-          'Bu sayfadan çıkarsan yaptığın değişiklikler '
-          'kaybolabilir. Çıkmak istiyor musun?',
+          'Bu sayfadan çıkarsan yaptığın değişiklikler kaybolabilir. Çıkmak istiyor musun?',
+          style: TextStyle(
+            fontSize: 11.5,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context, false);
+              Navigator.pop(
+                context,
+                false,
+              );
             },
-            child: const Text('Vazgeç'),
+            child: const Text(
+              'Vazgeç',
+              style: TextStyle(
+                fontSize: 11,
+              ),
+            ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: accent,
-              foregroundColor: Colors.white,
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor:
+                  Colors.red.shade700,
             ),
             onPressed: () {
-              Navigator.pop(context, true);
+              Navigator.pop(
+                context,
+                true,
+              );
             },
-            child: const Text('Çık'),
+            child: const Text(
+              'Çık',
+              style: TextStyle(
+                fontSize: 11,
+              ),
+            ),
           ),
         ],
       ),
@@ -282,230 +378,279 @@ class _BeyazSinekGirisPageState extends State<BeyazSinekGirisPage> {
     return result ?? false;
   }
 
+  // ============================================================
+  // BUILD
+  // ============================================================
+
   @override
   Widget build(BuildContext context) {
-    final tarihText = DateFormat(
-      'dd.MM.yyyy',
-    ).format(_selectedDate);
+    final tarihText =
+        DateFormat('dd.MM.yyyy').format(
+      _selectedDate,
+    );
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
-      child: Scaffold(
-        backgroundColor: bg,
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black87,
-          centerTitle: false,
-          title: const Text(
-            'Beyaz Sinek Sayımı',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(
-                right: 12,
+    final scaler =
+        MediaQuery.textScalerOf(context).clamp(
+      maxScaleFactor: 1.06,
+    );
+
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        textScaler: scaler,
+      ),
+      child: WillPopScope(
+        onWillPop: _onWillPop,
+        child: Scaffold(
+          backgroundColor: bg,
+
+          // ======================================================
+          // APP BAR
+          // ======================================================
+
+          appBar: AppBar(
+            toolbarHeight: 48,
+            elevation: 0,
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black87,
+            centerTitle: true,
+            title: const Text(
+              'Beyaz Sinek Sayımı',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
               ),
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accent,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(12),
+            ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(
+                  right: 7,
+                ),
+                child: Center(
+                  child: SizedBox(
+                    height: 34,
+                    child: FilledButton.icon(
+                      style:
+                          FilledButton.styleFrom(
+                        backgroundColor: accent,
+                        foregroundColor:
+                            Colors.white,
+                        elevation: 0,
+                        padding:
+                            const EdgeInsets.symmetric(
+                          horizontal: 9,
+                        ),
+                        shape:
+                            RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(
+                                  8),
+                        ),
+                      ),
+                      onPressed:
+                          (_isLoading ||
+                                  _isSaving)
+                              ? null
+                              : _save,
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 13,
+                              height: 13,
+                              child:
+                                  CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color:
+                                    Colors.white,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.save_rounded,
+                              size: 16,
+                            ),
+                      label: Text(
+                        _isSaving
+                            ? 'Kaydediliyor'
+                            : 'Kaydet',
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight:
+                              FontWeight.w900,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                onPressed:
-                    (_isLoading || _isSaving)
-                        ? null
-                        : _save,
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child:
-                            CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(
-                        Icons.save_rounded,
-                      ),
-                label: Text(
-                  _isSaving
-                      ? 'Kaydediliyor'
-                      : 'Kaydet',
-                ),
-              ),
-            ),
-          ],
-        ),
-        body: RefreshIndicator(
-          color: accent,
-          onRefresh: _loadData,
-          child: Column(
-            children: [
-              _buildTopSection(tarihText),
-              Expanded(
-                child: _isLoading
-                    ? _buildLoadingList()
-                    : _rows.isEmpty
-                        ? _buildEmptyState()
-                        : ListView.builder(
-                            padding:
-                                const EdgeInsets.fromLTRB(
-                              16,
-                              8,
-                              16,
-                              24,
-                            ),
-                            itemCount: _rows.length,
-                            itemBuilder:
-                                (context, index) {
-                              final item =
-                                  _rows[index];
-
-                              return _buildSeraCard(
-                                item,
-                                index,
-                              );
-                            },
-                          ),
               ),
             ],
+          ),
+
+          // ======================================================
+          // BODY
+          // ======================================================
+
+          body: RefreshIndicator(
+            color: accent,
+            onRefresh: _loadData,
+            child: Column(
+              children: [
+                _buildTopSection(
+                  tarihText,
+                ),
+
+                Expanded(
+                  child: _isLoading
+                      ? _buildLoadingList()
+                      : _rows.isEmpty
+                          ? _buildEmptyState()
+                          : ListView.separated(
+                              physics:
+                                  const AlwaysScrollableScrollPhysics(),
+                              padding:
+                                  const EdgeInsets.fromLTRB(
+                                10,
+                                7,
+                                10,
+                                14,
+                              ),
+                              itemCount:
+                                  _rows.length,
+                              separatorBuilder:
+                                  (_, __) =>
+                                      const SizedBox(
+                                height: 6,
+                              ),
+                              itemBuilder:
+                                  (context, index) {
+                                return _buildSeraCard(
+                                  _rows[index],
+                                  index,
+                                );
+                              },
+                            ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  // ============================================================
+  // ÜST ALAN
+  // ============================================================
+
   Widget _buildTopSection(
     String tarihText,
   ) {
     return Container(
+      color: Colors.white,
       padding: const EdgeInsets.fromLTRB(
-        16,
-        14,
-        16,
-        12,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE9EDF2),
-          ),
-        ),
+        10,
+        8,
+        10,
+        8,
       ),
       child: Column(
         children: [
           InkWell(
-            borderRadius:
-                BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(10),
             onTap: _pickDate,
-            child: Ink(
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 14,
+            child: Container(
+              height: 46,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
               ),
               decoration: BoxDecoration(
-                color: const Color(
-                  0xFFF7F9FC,
-                ),
+                color:
+                    const Color(0xFFF7F7F9),
                 borderRadius:
-                    BorderRadius.circular(16),
+                    BorderRadius.circular(10),
                 border: Border.all(
-                  color: const Color(
-                    0xFFE4EAF1,
-                  ),
+                  color:
+                      Colors.black.withOpacity(.06),
                 ),
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 31,
+                    height: 31,
                     decoration: BoxDecoration(
                       color:
-                          accent.withOpacity(.12),
+                          accent.withOpacity(.10),
                       borderRadius:
-                          BorderRadius.circular(
-                        14,
-                      ),
+                          BorderRadius.circular(8),
                     ),
                     child: const Icon(
-                      Icons
-                          .calendar_month_rounded,
+                      Icons.calendar_month_rounded,
                       color: accent,
+                      size: 18,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Tarih',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color:
-                                Colors.black54,
-                          ),
-                        ),
-                      ],
+
+                  const SizedBox(width: 9),
+
+                  const Text(
+                    'Tarih',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.black45,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
+
+                  const Spacer(),
+
                   Text(
                     tarihText,
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 13,
                       fontWeight:
-                          FontWeight.w700,
+                          FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(width: 8),
+
+                  const SizedBox(width: 4),
+
                   const Icon(
-                    Icons
-                        .chevron_right_rounded,
+                    Icons.chevron_right_rounded,
+                    size: 19,
+                    color: Colors.black38,
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: 7),
+
           Row(
             children: [
               Expanded(
                 child: _buildInfoBox(
                   title: 'Toplam Sera',
-                  value: '${_rows.length}',
-                  icon:
-                      Icons.grid_view_rounded,
+                  value:
+                      '${_rows.length}',
                 ),
               ),
-              const SizedBox(width: 10),
+
+              const SizedBox(width: 6),
+
               Expanded(
                 child: _buildInfoBox(
                   title: 'Dolu Sera',
                   value:
                       '$_duzenlenenSeraSayisi',
-                  icon: Icons
-                      .check_circle_outline_rounded,
                 ),
               ),
-              const SizedBox(width: 10),
+
+              const SizedBox(width: 6),
+
               Expanded(
                 child: _buildInfoBox(
                   title: 'Genel Toplam',
-                  value: '$_genelToplam',
-                  icon:
-                      Icons.summarize_rounded,
+                  value:
+                      '$_genelToplam',
                 ),
               ),
             ],
@@ -518,43 +663,54 @@ class _BeyazSinekGirisPageState extends State<BeyazSinekGirisPage> {
   Widget _buildInfoBox({
     required String title,
     required String value,
-    required IconData icon,
   }) {
     return Container(
+      height: 50,
       padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 14,
+        horizontal: 8,
+        vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FC),
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFFF7F7F9),
+        borderRadius: BorderRadius.circular(9),
         border: Border.all(
-          color: const Color(0xFFE4EAF1),
+          color: Colors.black.withOpacity(.05),
         ),
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        mainAxisAlignment:
+            MainAxisAlignment.center,
+        mainAxisSize:
+            MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: accent,
-            size: 18,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: const TextStyle(
+                fontSize: 13.5,
+                height: 1,
+                fontWeight:
+                    FontWeight.w900,
+                color: accent,
+              ),
             ),
           ),
-          const SizedBox(height: 2),
+
+          const SizedBox(height: 3),
+
           Text(
             title,
+            maxLines: 1,
+            overflow:
+                TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 11,
-              color: Colors.black54,
+              fontSize: 9.5,
+              height: 1,
+              color: Colors.black45,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -562,137 +718,181 @@ class _BeyazSinekGirisPageState extends State<BeyazSinekGirisPage> {
     );
   }
 
+  // ============================================================
+  // SERA SATIRI
+  // ============================================================
+
   Widget _buildSeraCard(
     BeyazSinekRowModel item,
     int index,
   ) {
-    return Container(
-      margin: const EdgeInsets.only(
-        bottom: 12,
-      ),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    final dolu =
+        item.doluAlanSayisi > 0;
+
+    final durumRenk = dolu
+        ? Colors.green.shade700
+        : Colors.orange.shade700;
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
       child: InkWell(
-        borderRadius:
-            BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
         onTap: () {
           _openEditSheet(index);
         },
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            16,
-            16,
-            16,
-            16,
+        child: Container(
+          height: 72,
+          decoration: BoxDecoration(
+            borderRadius:
+                BorderRadius.circular(10),
+            border: Border.all(
+              color:
+                  Colors.black.withOpacity(.055),
+            ),
           ),
-          child: Column(
+          child: Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color:
-                          accent.withOpacity(.10),
-                      borderRadius:
-                          BorderRadius.circular(
-                        16,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.pest_control_rounded,
-                      color: accent,
-                      size: 26,
-                    ),
+              Container(
+                width: 5,
+                decoration: BoxDecoration(
+                  color: durumRenk,
+                  borderRadius:
+                      const BorderRadius.only(
+                    topLeft:
+                        Radius.circular(9),
+                    bottomLeft:
+                        Radius.circular(9),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
+                ),
+              ),
+
+              const SizedBox(width: 9),
+
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color:
+                      accent.withOpacity(.10),
+                  borderRadius:
+                      BorderRadius.circular(9),
+                ),
+                child: const Icon(
+                  Icons.pest_control_rounded,
+                  color: accent,
+                  size: 20,
+                ),
+              ),
+
+              const SizedBox(width: 9),
+
+              Expanded(
+                child: Column(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text(
                       item.sera,
+                      maxLines: 1,
+                      overflow:
+                          TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 17,
+                        fontSize: 13,
                         fontWeight:
-                            FontWeight.w800,
+                            FontWeight.w900,
                       ),
                     ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 7,
+
+                    const SizedBox(height: 4),
+
+                    Row(
+                      children: [
+                        Text(
+                          '${item.doluAlanSayisi}/${item.aktifAlanSayisi} alan',
+                          style:
+                              const TextStyle(
+                            fontSize: 10,
+                            color:
+                                Colors.black45,
+                            fontWeight:
+                                FontWeight.w600,
+                          ),
+                        ),
+
+                        const SizedBox(
+                            width: 8),
+
+                        Container(
+                          width: 3,
+                          height: 3,
+                          decoration:
+                              const BoxDecoration(
+                            color:
+                                Colors.black26,
+                            shape:
+                                BoxShape.circle,
+                          ),
+                        ),
+
+                        const SizedBox(
+                            width: 8),
+
+                        Text(
+                          dolu
+                              ? 'Dolu'
+                              : 'Boş',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight:
+                                FontWeight.w800,
+                            color: durumRenk,
+                          ),
+                        ),
+                      ],
                     ),
-                    decoration: BoxDecoration(
-                      color:
-                          item.doluAlanSayisi > 0
-                              ? Colors.green
-                                  .withOpacity(.10)
-                              : Colors.orange
-                                  .withOpacity(.10),
-                      borderRadius:
-                          BorderRadius.circular(
-                        999,
-                      ),
-                    ),
-                    child: Text(
-                      item.doluAlanSayisi > 0
-                          ? 'Dolu'
-                          : 'Boş',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight:
-                            FontWeight.w700,
-                        color:
-                            item.doluAlanSayisi >
-                                    0
-                                ? Colors
-                                    .green.shade700
-                                : Colors
-                                    .orange.shade700,
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 14),
-              Row(
+
+              Column(
+                mainAxisAlignment:
+                    MainAxisAlignment.center,
+                crossAxisAlignment:
+                    CrossAxisAlignment.end,
                 children: [
-                  Expanded(
-                    child: _buildMiniStat(
-                      'Toplam',
-                      '${item.toplam}',
-                      Icons.calculate_rounded,
+                  const Text(
+                    'Toplam',
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Colors.black38,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildMiniStat(
-                      'Dolu Alan',
-                      '${item.doluAlanSayisi}/${item.aktifAlanSayisi}',
-                      Icons
-                          .view_module_rounded,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildMiniStat(
-                      'İşlem',
-                      'Düzenle',
-                      Icons.edit_rounded,
+
+                  const SizedBox(height: 2),
+
+                  Text(
+                    '${item.toplam}',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight:
+                          FontWeight.w900,
                     ),
                   ),
                 ],
               ),
+
+              const SizedBox(width: 7),
+
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 19,
+                color: Colors.black26,
+              ),
+
+              const SizedBox(width: 6),
             ],
           ),
         ),
@@ -700,110 +900,68 @@ class _BeyazSinekGirisPageState extends State<BeyazSinekGirisPage> {
     );
   }
 
-  Widget _buildMiniStat(
-    String title,
-    String value,
-    IconData icon,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 12,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FC),
-        borderRadius:
-            BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFFE6ECF3),
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            color: accent,
-            size: 18,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.black54,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // ============================================================
+  // LOADING
+  // ============================================================
 
   Widget _buildLoadingList() {
-    return ListView.builder(
+    return ListView.separated(
       padding: const EdgeInsets.fromLTRB(
-        16,
-        8,
-        16,
-        24,
+        10,
+        7,
+        10,
+        14,
       ),
-      itemCount: 6,
+      itemCount: 7,
+      separatorBuilder:
+          (_, __) =>
+              const SizedBox(height: 6),
       itemBuilder: (_, __) {
         return Container(
-          height: 128,
-          margin: const EdgeInsets.only(
-            bottom: 12,
-          ),
+          height: 72,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius:
-                BorderRadius.circular(20),
+                BorderRadius.circular(10),
           ),
         );
       },
     );
   }
 
+  // ============================================================
+  // BOŞ
+  // ============================================================
+
   Widget _buildEmptyState() {
     return ListView(
       physics:
           const AlwaysScrollableScrollPhysics(),
       children: const [
-        SizedBox(height: 80),
-        Center(
-          child: Column(
-            children: [
-              Icon(
-                Icons.inbox_outlined,
-                size: 70,
-                color: Colors.black26,
-              ),
-              SizedBox(height: 12),
-              Text(
-                'Bu personele tanımlı sera bulunamadı',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight:
-                      FontWeight.w700,
-                ),
-              ),
-            ],
+        SizedBox(height: 110),
+        Icon(
+          Icons.inbox_outlined,
+          size: 45,
+          color: Colors.black26,
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Bu personele tanımlı sera bulunamadı',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.black45,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ],
     );
   }
 }
+
+// ============================================================================
+// BEYAZ SİNEK DÜZENLEME
+// ============================================================================
 
 class _BeyazSinekEditSheet
     extends StatefulWidget {
@@ -916,12 +1074,17 @@ class _BeyazSinekEditSheetState
   }
 
   int _parse(String text) {
-    return int.tryParse(text.trim()) ?? 0;
+    return int.tryParse(
+          text.trim(),
+        ) ??
+        0;
   }
 
   void _clearAll() {
-    for (final alan in widget.row.aktifAlanlar) {
-      _controllers[alan.index].text = '0';
+    for (final alan
+        in widget.row.aktifAlanlar) {
+      _controllers[alan.index].text =
+          '0';
     }
 
     setState(() {});
@@ -963,133 +1126,149 @@ class _BeyazSinekEditSheetState
           _parse(_controllers[15].text),
     );
 
-    Navigator.pop(context, updated);
+    Navigator.pop(
+      context,
+      updated,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final aktifAlanlar = widget.row.aktifAlanlar;
+    final aktifAlanlar =
+        widget.row.aktifAlanlar;
 
     return Container(
       decoration: const BoxDecoration(
-        color: Color(0xFFF5F7FA),
+        color: Color(0xFFF5F6F8),
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
+          top: Radius.circular(16),
         ),
       ),
       child: SafeArea(
         top: false,
         child: Padding(
           padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 14,
+            left: 10,
+            right: 10,
+            top: 8,
             bottom: MediaQuery.of(context)
                     .viewInsets
                     .bottom +
-                16,
+                8,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 44,
-                height: 5,
+                width: 36,
+                height: 4,
                 decoration: BoxDecoration(
                   color: Colors.black12,
                   borderRadius:
-                      BorderRadius.circular(999),
+                      BorderRadius.circular(99),
                 ),
               ),
-              const SizedBox(height: 14),
+
+              const SizedBox(height: 7),
+
               Row(
-                crossAxisAlignment:
-                    CrossAxisAlignment.center,
                 children: [
                   Expanded(
                     child: Text(
                       widget.row.sera,
+                      maxLines: 1,
+                      overflow:
+                          TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 20,
+                        fontSize: 15,
                         fontWeight:
-                            FontWeight.w800,
-                        height: 1.1,
+                            FontWeight.w900,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+
                   SizedBox(
-                    height: 40,
+                    height: 30,
                     child: TextButton.icon(
                       onPressed: _clearAll,
                       style:
                           TextButton.styleFrom(
                         padding:
-                            const EdgeInsets
-                                .symmetric(
-                          horizontal: 10,
-                          vertical: 0,
+                            const EdgeInsets.symmetric(
+                          horizontal: 6,
                         ),
-                        minimumSize:
-                            const Size(0, 40),
                         visualDensity:
                             VisualDensity.compact,
                       ),
                       icon: const Icon(
                         Icons.refresh_rounded,
-                        size: 18,
+                        size: 15,
                       ),
                       label: const Text(
                         'Sıfırla',
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight:
+                              FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+
+              const SizedBox(height: 2),
+
               const Align(
                 alignment:
                     Alignment.centerLeft,
                 child: Text(
-                  'Alanları düzenleyip uygula butonuna bas.',
+                  'Alanları düzenleyin.',
                   style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 13,
+                    color: Colors.black45,
+                    fontSize: 9.5,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 8),
+
               Flexible(
-                child: SingleChildScrollView(
+                child:
+                    SingleChildScrollView(
                   child: GridView.builder(
                     shrinkWrap: true,
                     physics:
                         const NeverScrollableScrollPhysics(),
-                    itemCount: aktifAlanlar.length,
+                    itemCount:
+                        aktifAlanlar.length,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      mainAxisExtent: 100,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
+                      mainAxisExtent: 78,
+                      crossAxisSpacing: 9,
+                      mainAxisSpacing: 9,
                     ),
                     itemBuilder:
                         (context, index) {
-                      final alan = aktifAlanlar[index];
-                      final controllerIndex = alan.index;
-                      final baslik = alan.isim;
+                      final alan =
+                          aktifAlanlar[index];
+
+                      final controllerIndex =
+                          alan.index;
+
+                      final baslik =
+                          alan.isim;
 
                       return Column(
                         crossAxisAlignment:
-                            CrossAxisAlignment
-                                .start,
+                            CrossAxisAlignment.start,
                         children: [
                           Padding(
                             padding:
-                                const EdgeInsets
-                                    .only(
-                              left: 4,
-                              bottom: 6,
+                                const EdgeInsets.only(
+                              left: 2,
+                              bottom: 3,
                             ),
                             child: Text(
                               baslik.isEmpty
@@ -1097,27 +1276,33 @@ class _BeyazSinekEditSheetState
                                   : baslik,
                               maxLines: 1,
                               overflow:
-                                  TextOverflow
-                                      .ellipsis,
+                                  TextOverflow.ellipsis,
                               style:
                                   const TextStyle(
-                                fontSize: 12,
+                                fontSize: 10,
                                 fontWeight:
-                                    FontWeight
-                                        .w600,
-                                color: Colors
-                                    .black54,
+                                    FontWeight.w700,
+                                color:
+                                    Colors.black54,
                               ),
                             ),
                           ),
+
                           Expanded(
                             child: TextField(
                               controller:
                                   _controllers[
                                       controllerIndex],
                               keyboardType:
-                                  TextInputType
-                                      .number,
+                                  TextInputType.number,
+                              textAlign:
+                                  TextAlign.center,
+                              style:
+                                  const TextStyle(
+                                fontSize: 14,
+                                fontWeight:
+                                    FontWeight.w800,
+                              ),
                               inputFormatters: [
                                 FilteringTextInputFormatter
                                     .digitsOnly,
@@ -1131,7 +1316,7 @@ class _BeyazSinekEditSheetState
                                         .text ==
                                     '0') {
                                   controller
-                                      .selection =
+                                          .selection =
                                       TextSelection(
                                     baseOffset: 0,
                                     extentOffset:
@@ -1144,22 +1329,20 @@ class _BeyazSinekEditSheetState
                               decoration:
                                   InputDecoration(
                                 hintText: '0',
+                                isDense: true,
                                 filled: true,
                                 fillColor:
                                     Colors.white,
                                 contentPadding:
-                                    const EdgeInsets
-                                        .symmetric(
-                                  horizontal: 12,
-                                  vertical: 14,
+                                    const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 10,
                                 ),
                                 border:
                                     OutlineInputBorder(
                                   borderRadius:
-                                      BorderRadius
-                                          .circular(
-                                    14,
-                                  ),
+                                      BorderRadius.circular(
+                                          8),
                                   borderSide:
                                       const BorderSide(
                                     color: Color(
@@ -1170,10 +1353,8 @@ class _BeyazSinekEditSheetState
                                 enabledBorder:
                                     OutlineInputBorder(
                                   borderRadius:
-                                      BorderRadius
-                                          .circular(
-                                    14,
-                                  ),
+                                      BorderRadius.circular(
+                                          8),
                                   borderSide:
                                       const BorderSide(
                                     color: Color(
@@ -1184,15 +1365,13 @@ class _BeyazSinekEditSheetState
                                 focusedBorder:
                                     OutlineInputBorder(
                                   borderRadius:
-                                      BorderRadius
-                                          .circular(
-                                    14,
-                                  ),
+                                      BorderRadius.circular(
+                                          8),
                                   borderSide:
                                       BorderSide(
-                                    color: widget
-                                        .accent,
-                                    width: 1.4,
+                                    color:
+                                        widget.accent,
+                                    width: 1.2,
                                   ),
                                 ),
                               ),
@@ -1204,35 +1383,36 @@ class _BeyazSinekEditSheetState
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 8),
+
               SizedBox(
                 width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
+                height: 44,
+                child: FilledButton.icon(
                   style:
-                      ElevatedButton.styleFrom(
+                      FilledButton.styleFrom(
                     backgroundColor:
                         widget.accent,
                     foregroundColor:
                         Colors.white,
-                    elevation: 0,
                     shape:
                         RoundedRectangleBorder(
                       borderRadius:
-                          BorderRadius.circular(
-                        16,
-                      ),
+                          BorderRadius.circular(9),
                     ),
                   ),
                   onPressed: _apply,
                   icon: const Icon(
                     Icons.check_rounded,
+                    size: 17,
                   ),
                   label: const Text(
-                    'Uygula',
+                    'UYGULA',
                     style: TextStyle(
+                      fontSize: 10.5,
                       fontWeight:
-                          FontWeight.w700,
+                          FontWeight.w900,
                     ),
                   ),
                 ),

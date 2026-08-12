@@ -2,27 +2,34 @@ import 'package:agronet/api/tuta_giris_kay%C4%B1t.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+
 import '../../models/tuta_giris_model.dart';
 
 class TutaGirisPage extends StatefulWidget {
-  const TutaGirisPage({super.key, required this.personelKodu});
+  const TutaGirisPage({
+    super.key,
+    required this.personelKodu,
+  });
+
   final String personelKodu;
 
   @override
-  State<TutaGirisPage> createState() => _TutaGirisPageState();
+  State<TutaGirisPage> createState() =>
+      _TutaGirisPageState();
 }
 
 class _TutaGirisPageState extends State<TutaGirisPage> {
   static const Color accent = Color(0xFF1E6F5C);
-  static const Color bg = Color(0xFFF5F7FA);
-  static const Color cardBg = Colors.white;
+  static const Color bg = Color(0xFFF5F6F8);
 
   final TutaGirisApi _api = const TutaGirisApi();
 
   DateTime _selectedDate = DateTime.now();
+
   bool _isLoading = true;
   bool _isSaving = false;
   bool _hasChange = false;
+
   List<TutaRowModel> _rows = [];
 
   @override
@@ -31,25 +38,47 @@ class _TutaGirisPageState extends State<TutaGirisPage> {
     _loadData();
   }
 
-  void _snack(String msg, {bool error = false}) {
+  // ============================================================
+  // MESAJ
+  // ============================================================
+
+  void _snack(
+    String msg, {
+    bool error = false,
+  }) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: error ? Colors.red.shade700 : accent,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            msg,
+            style: const TextStyle(
+              fontSize: 11,
+            ),
+          ),
+          backgroundColor:
+              error ? Colors.red.shade700 : accent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 
+  // ============================================================
+  // VERİ
+  // ============================================================
+
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       final result = await _api.tutaGirisGetir(
-  tarih: _selectedDate,
-  personelKodu: widget.personelKodu,
-);
+        tarih: _selectedDate,
+        personelKodu: widget.personelKodu,
+      );
 
       if (!mounted) return;
 
@@ -58,13 +87,22 @@ class _TutaGirisPageState extends State<TutaGirisPage> {
         _hasChange = false;
       });
     } catch (e) {
-      _snack('Veriler alınamadı: $e', error: true);
+      _snack(
+        'Veriler alınamadı: $e',
+        error: true,
+      );
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
+
+  // ============================================================
+  // TARİH
+  // ============================================================
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -83,10 +121,16 @@ class _TutaGirisPageState extends State<TutaGirisPage> {
     await _loadData();
   }
 
+  // ============================================================
+  // KAYDET
+  // ============================================================
+
   Future<void> _save() async {
     if (_isSaving) return;
 
-    setState(() => _isSaving = true);
+    setState(() {
+      _isSaving = true;
+    });
 
     try {
       final sonuc = await _api.tutaGirisKaydet(
@@ -96,73 +140,142 @@ class _TutaGirisPageState extends State<TutaGirisPage> {
       );
 
       if (sonuc.durum) {
-        setState(() => _hasChange = false);
-        _snack(sonuc.mesaj.isEmpty ? 'Kayıt başarılı.' : sonuc.mesaj);
+        setState(() {
+          _hasChange = false;
+        });
+
+        _snack(
+          sonuc.mesaj.isEmpty
+              ? 'Kayıt başarılı.'
+              : sonuc.mesaj,
+        );
       } else {
         _snack(
-          sonuc.mesaj.isEmpty ? 'Kayıt sırasında hata oluştu.' : sonuc.mesaj,
+          sonuc.mesaj.isEmpty
+              ? 'Kayıt sırasında hata oluştu.'
+              : sonuc.mesaj,
           error: true,
         );
       }
     } catch (e) {
-      _snack('Kaydetme hatası: $e', error: true);
+      _snack(
+        'Kaydetme hatası: $e',
+        error: true,
+      );
     } finally {
       if (mounted) {
-        setState(() => _isSaving = false);
+        setState(() {
+          _isSaving = false;
+        });
       }
     }
   }
-Future<void> _openEditSheet(int index) async {
-  final current = _rows[index];
 
-  final updated = await showModalBottomSheet<TutaRowModel>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => FractionallySizedBox(
-      heightFactor: 0.80,
-      child: _TutaEditSheet(
-        key: ValueKey(current.sera),
-        row: current,
-        accent: accent,
+  // ============================================================
+  // DÜZENLE
+  // ============================================================
+
+  Future<void> _openEditSheet(
+    int index,
+  ) async {
+    final current = _rows[index];
+
+    final updated =
+        await showModalBottomSheet<TutaRowModel>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: .78,
+        child: _TutaEditSheet(
+          key: ValueKey(current.sera),
+          row: current,
+          accent: accent,
+        ),
       ),
-    ),
-  );
+    );
 
-  if (updated != null && mounted) {
-    setState(() {
-      _rows[index] = updated;
-      _hasChange = true;
-    });
+    if (updated != null && mounted) {
+      setState(() {
+        _rows[index] = updated;
+        _hasChange = true;
+      });
+    }
   }
-}
+
+  // ============================================================
+  // TOPLAMLAR
+  // ============================================================
 
   int get _genelToplam =>
-      _rows.fold<int>(0, (sum, item) => sum + item.toplam);
+      _rows.fold<int>(
+        0,
+        (sum, item) => sum + item.toplam,
+      );
 
   int get _duzenlenenSeraSayisi =>
       _rows.where((e) => e.doluAlanSayisi > 0).length;
 
+  // ============================================================
+  // GERİ
+  // ============================================================
+
   Future<bool> _onWillPop() async {
-    if (!_hasChange) return true;
+    if (!_hasChange) {
+      return true;
+    }
 
     final result = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Kaydedilmemiş değişiklik var'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text(
+          'Kaydedilmemiş değişiklik',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
         content: const Text(
-          'Bu sayfadan çıkarsan yaptığın değişiklikler kaybolabilir. Çıkmak istiyor musun?',
+          'Yaptığınız değişiklikler kaybolabilir. Çıkmak istiyor musunuz?',
+          style: TextStyle(
+            fontSize: 11.5,
+          ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Vazgeç'),
+            onPressed: () {
+              Navigator.pop(
+                context,
+                false,
+              );
+            },
+            child: const Text(
+              'Vazgeç',
+              style: TextStyle(
+                fontSize: 11,
+              ),
+            ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: accent),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Çık'),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+            ),
+            onPressed: () {
+              Navigator.pop(
+                context,
+                true,
+              );
+            },
+            child: const Text(
+              'Çık',
+              style: TextStyle(
+                fontSize: 11,
+              ),
+            ),
           ),
         ],
       ),
@@ -171,459 +284,643 @@ Future<void> _openEditSheet(int index) async {
     return result ?? false;
   }
 
+  // ============================================================
+  // BUILD
+  // ============================================================
+
   @override
   Widget build(BuildContext context) {
-    final tarihText = DateFormat('dd.MM.yyyy').format(_selectedDate);
+    final tarihText =
+        DateFormat('dd.MM.yyyy').format(
+      _selectedDate,
+    );
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
-      child: Scaffold(
-        backgroundColor: bg,
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black87,
-          centerTitle: false,
-          title: const Text(
-            'Tuta Giriş',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accent,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+    final scaler =
+        MediaQuery.textScalerOf(context).clamp(
+      maxScaleFactor: 1.06,
+    );
+
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        textScaler: scaler,
+      ),
+      child: WillPopScope(
+        onWillPop: _onWillPop,
+        child: Scaffold(
+          backgroundColor: bg,
+
+          // ======================================================
+          // APPBAR
+          // ======================================================
+
+          appBar: AppBar(
+            toolbarHeight: 48,
+            elevation: 0,
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black87,
+            centerTitle: true,
+            title: const Text(
+              'Tuta Giriş',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(
+                  right: 7,
+                ),
+                child: Center(
+                  child: SizedBox(
+                    height: 34,
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: accent,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding:
+                            const EdgeInsets.symmetric(
+                          horizontal: 9,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed:
+                          (_isLoading || _isSaving)
+                              ? null
+                              : _save,
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 13,
+                              height: 13,
+                              child:
+                                  CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.save_rounded,
+                              size: 16,
+                            ),
+                      label: Text(
+                        _isSaving
+                            ? 'Kaydediliyor'
+                            : 'Kaydet',
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                onPressed: (_isLoading || _isSaving) ? null : _save,
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.save_rounded),
-                label: Text(_isSaving ? 'Kaydediliyor' : 'Kaydet'),
+              ),
+            ],
+          ),
+
+          body: RefreshIndicator(
+            color: accent,
+            onRefresh: _loadData,
+            child: Column(
+              children: [
+                _buildTopSection(
+                  tarihText,
+                ),
+
+                Expanded(
+                  child: _isLoading
+                      ? _buildLoadingList()
+                      : _rows.isEmpty
+                          ? _buildEmptyState()
+                          : ListView.separated(
+                              physics:
+                                  const AlwaysScrollableScrollPhysics(),
+                              padding:
+                                  const EdgeInsets.fromLTRB(
+                                7,
+                                5,
+                                7,
+                                12,
+                              ),
+                              itemCount: _rows.length,
+                              separatorBuilder:
+                                  (_, __) =>
+                                      const SizedBox(
+                                height: 4,
+                              ),
+                              itemBuilder:
+                                  (context, index) {
+                                return _buildSeraCard(
+                                  _rows[index],
+                                  index,
+                                );
+                              },
+                            ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // ÜST ALAN
+  // ============================================================
+
+Widget _buildTopSection(
+  String tarihText,
+) {
+  return Container(
+    color: Colors.white,
+    padding: const EdgeInsets.fromLTRB(
+      10,
+      8,
+      10,
+      8,
+    ),
+    child: Column(
+      children: [
+        InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: _pickDate,
+          child: Container(
+            height: 46,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7F7F9),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Colors.black.withOpacity(.06),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 31,
+                  height: 31,
+                  decoration: BoxDecoration(
+                    color: accent.withOpacity(.10),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.calendar_month_rounded,
+                    color: accent,
+                    size: 18,
+                  ),
+                ),
+
+                const SizedBox(width: 9),
+
+                const Text(
+                  'Tarih',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.black45,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                const Spacer(),
+
+                Text(
+                  tarihText,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+
+                const SizedBox(width: 4),
+
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 19,
+                  color: Colors.black38,
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 7),
+
+        Row(
+          children: [
+            Expanded(
+              child: _buildInfoBox(
+                title: 'Toplam Sera',
+                value: '${_rows.length}',
+              ),
+            ),
+
+            const SizedBox(width: 6),
+
+            Expanded(
+              child: _buildInfoBox(
+                title: 'Dolu Sera',
+                value: '$_duzenlenenSeraSayisi',
+              ),
+            ),
+
+            const SizedBox(width: 6),
+
+            Expanded(
+              child: _buildInfoBox(
+                title: 'Genel Toplam',
+                value: '$_genelToplam',
               ),
             ),
           ],
         ),
-        body: RefreshIndicator(
-          color: accent,
-          onRefresh: _loadData,
-          child: Column(
-            children: [
-              _buildTopSection(tarihText),
-              Expanded(
-                child: _isLoading
-                    ? _buildLoadingList()
-                    : _rows.isEmpty
-                        ? _buildEmptyState()
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                            itemCount: _rows.length,
-                            itemBuilder: (context, index) {
-                              final item = _rows[index];
-                              return _buildSeraCard(item, index);
-                            },
-                          ),
-              ),
-            ],
+      ],
+    ),
+  );
+}
+
+Widget _buildInfoBox({
+  required String title,
+  required String value,
+}) {
+  return Container(
+    height: 50,
+    padding: const EdgeInsets.symmetric(
+      horizontal: 8,
+      vertical: 4,
+    ),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF7F7F9),
+      borderRadius: BorderRadius.circular(9),
+      border: Border.all(
+        color: Colors.black.withOpacity(.05),
+      ),
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            maxLines: 1,
+            style: const TextStyle(
+              fontSize: 13.5,
+              height: 1.0,
+              fontWeight: FontWeight.w900,
+              color: accent,
+            ),
           ),
         ),
-      ),
-    );
-  }
 
-  Widget _buildTopSection(String tarihText) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE9EDF2)),
+        const SizedBox(height: 3),
+
+        Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 9.5,
+            height: 1.0,
+            color: Colors.black45,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: _pickDate,
-            child: Ink(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      ],
+    ),
+  );
+}
+
+  // ============================================================
+  // SERA SATIRI
+  // ============================================================
+
+Widget _buildSeraCard(
+  TutaRowModel item,
+  int index,
+) {
+  final dolu = item.doluAlanSayisi > 0;
+
+  final durumRenk = dolu
+      ? Colors.green.shade700
+      : Colors.orange.shade700;
+
+  return Material(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(10),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () => _openEditSheet(index),
+      child: Container(
+        height: 72,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: Colors.black.withOpacity(.055),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 5,
               decoration: BoxDecoration(
-                color: const Color(0xFFF7F9FC),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE4EAF1)),
+                color: durumRenk,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(9),
+                  bottomLeft: Radius.circular(9),
+                ),
               ),
-              child: Row(
+            ),
+
+            const SizedBox(width: 9),
+
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: accent.withOpacity(.10),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: const Icon(
+                Icons.energy_savings_leaf_rounded,
+                color: accent,
+                size: 20,
+              ),
+            ),
+
+            const SizedBox(width: 9),
+
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: accent.withOpacity(.12),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(
-                      Icons.calendar_month_rounded,
-                      color: accent,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Tarih',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                   Text(
-                    tarihText,
+                    item.sera,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.chevron_right_rounded),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildInfoBox(
-                  title: 'Toplam Sera',
-                  value: '${_rows.length}',
-                  icon: Icons.grid_view_rounded,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildInfoBox(
-                  title: 'Dolu Sera',
-                  value: '$_duzenlenenSeraSayisi',
-                  icon: Icons.check_circle_outline_rounded,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildInfoBox(
-                  title: 'Genel Toplam',
-                  value: '$_genelToplam',
-                  icon: Icons.summarize_rounded,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildInfoBox({
-    required String title,
-    required String value,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FC),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE4EAF1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: accent, size: 18),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.black54,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+                  const SizedBox(height: 4),
 
-  Widget _buildSeraCard(TutaRowModel item, int index) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () => _openEditSheet(index),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: accent.withOpacity(.10),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.energy_savings_leaf_rounded,
-                      color: accent,
-                      size: 26,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      item.sera,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
+                  Row(
+                    children: [
+                      Text(
+                        '${item.doluAlanSayisi}/${item.aktifAlanSayisi} alan',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.black45,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: item.doluAlanSayisi > 0
-                          ? Colors.green.withOpacity(.10)
-                          : Colors.orange.withOpacity(.10),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      item.doluAlanSayisi > 0 ? 'Dolu' : 'Boş',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: item.doluAlanSayisi > 0
-                            ? Colors.green.shade700
-                            : Colors.orange.shade700,
+
+                      const SizedBox(width: 8),
+
+                      Container(
+                        width: 3,
+                        height: 3,
+                        decoration: const BoxDecoration(
+                          color: Colors.black26,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
+
+                      const SizedBox(width: 8),
+
+                      Text(
+                        dolu ? 'Dolu' : 'Boş',
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                          color: durumRenk,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMiniStat(
-                      'Toplam',
-                      '${item.toplam}',
-                      Icons.calculate_rounded,
-                    ),
+            ),
+
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const Text(
+                  'Toplam',
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: Colors.black38,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildMiniStat(
-                      'Dolu Alan',
-                      '${item.doluAlanSayisi}/${item.aktifAlanSayisi}',
-                      Icons.view_module_rounded,
-                    ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${item.toplam}',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildMiniStat(
-                      'İşlem',
-                      'Düzenle',
-                      Icons.edit_rounded,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+
+            const SizedBox(width: 7),
+
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 19,
+              color: Colors.black26,
+            ),
+
+            const SizedBox(width: 6),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildMiniStat(String title, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE6ECF3)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: accent, size: 18),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.black54,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildLoadingList() {
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      itemCount: 6,
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(
+        7,
+        5,
+        7,
+        12,
+      ),
+      itemCount: 7,
+      separatorBuilder:
+          (_, __) =>
+              const SizedBox(height: 4),
       itemBuilder: (_, __) {
         return Container(
-          height: 128,
-          margin: const EdgeInsets.only(bottom: 12),
+          height: 58,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius:
+                BorderRadius.circular(8),
           ),
         );
       },
     );
   }
 
+  // ============================================================
+  // BOŞ
+  // ============================================================
+
   Widget _buildEmptyState() {
     return ListView(
+      physics:
+          const AlwaysScrollableScrollPhysics(),
       children: const [
-        SizedBox(height: 80),
-        Center(
-          child: Column(
-            children: [
-              Icon(
-                Icons.inbox_outlined,
-                size: 70,
-                color: Colors.black26,
-              ),
-              SizedBox(height: 12),
-              Text(
-                'Gösterilecek kayıt bulunamadı',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
+        SizedBox(height: 110),
+        Icon(
+          Icons.inbox_outlined,
+          size: 45,
+          color: Colors.black26,
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Gösterilecek kayıt bulunamadı',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.black45,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ],
     );
   }
 }
+
+// ============================================================================
+// TUTA DÜZENLEME
+// ============================================================================
+
 class _TutaEditSheet extends StatefulWidget {
   final TutaRowModel row;
   final Color accent;
 
   const _TutaEditSheet({
-    Key? key,
+    super.key,
     required this.row,
     required this.accent,
-  }) : super(key: key);
+  });
 
   @override
-  State<_TutaEditSheet> createState() => _TutaEditSheetState();
+  State<_TutaEditSheet> createState() =>
+      _TutaEditSheetState();
 }
 
 class _TutaEditSheetState extends State<_TutaEditSheet> {
- late List<TextEditingController> _controllers;
+  late List<TextEditingController> _controllers;
 
-@override
-void initState() {
-  super.initState();
-  _fillControllers();
-}
-
-void _fillControllers() {
-  _controllers = [
-    TextEditingController(text: widget.row.deger1.toString()),
-    TextEditingController(text: widget.row.deger2.toString()),
-    TextEditingController(text: widget.row.deger3.toString()),
-    TextEditingController(text: widget.row.deger4.toString()),
-    TextEditingController(text: widget.row.deger5.toString()),
-    TextEditingController(text: widget.row.deger6.toString()),
-    TextEditingController(text: widget.row.deger7.toString()),
-    TextEditingController(text: widget.row.deger8.toString()),
-    TextEditingController(text: widget.row.deger9.toString()),
-    TextEditingController(text: widget.row.deger10.toString()),
-    TextEditingController(text: widget.row.deger11.toString()),
-    TextEditingController(text: widget.row.deger12.toString()),
-    TextEditingController(text: widget.row.deger13.toString()),
-    TextEditingController(text: widget.row.deger14.toString()),
-    TextEditingController(text: widget.row.deger15.toString()),
-    TextEditingController(text: widget.row.deger16.toString()),
-  ];
-}
-@override
-void didUpdateWidget(covariant _TutaEditSheet oldWidget) {
-  super.didUpdateWidget(oldWidget);
-
-  if (oldWidget.row.sera != widget.row.sera) {
-    for (final c in _controllers) {
-      c.dispose();
-    }
+  @override
+  void initState() {
+    super.initState();
     _fillControllers();
-    setState(() {});
   }
-}
+
+  void _fillControllers() {
+    _controllers = [
+      TextEditingController(
+        text: widget.row.deger1.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger2.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger3.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger4.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger5.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger6.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger7.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger8.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger9.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger10.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger11.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger12.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger13.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger14.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger15.toString(),
+      ),
+      TextEditingController(
+        text: widget.row.deger16.toString(),
+      ),
+    ];
+  }
+
+  @override
+  void didUpdateWidget(
+    covariant _TutaEditSheet oldWidget,
+  ) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.row.sera != widget.row.sera) {
+      for (final c in _controllers) {
+        c.dispose();
+      }
+
+      _fillControllers();
+
+      setState(() {});
+    }
+  }
 
   @override
   void dispose() {
     for (final item in _controllers) {
       item.dispose();
     }
+
     super.dispose();
   }
 
-  int _parse(String text) => int.tryParse(text.trim()) ?? 0;
+  int _parse(String text) {
+    return int.tryParse(
+          text.trim(),
+        ) ??
+        0;
+  }
 
   void _clearAll() {
     for (final alan in widget.row.aktifAlanlar) {
@@ -653,184 +950,280 @@ void didUpdateWidget(covariant _TutaEditSheet oldWidget) {
       deger16: _parse(_controllers[15].text),
     );
 
-    Navigator.pop(context, updated);
+    Navigator.pop(
+      context,
+      updated,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final aktifAlanlar = widget.row.aktifAlanlar;
+    final aktifAlanlar =
+        widget.row.aktifAlanlar;
 
     return Container(
       decoration: const BoxDecoration(
-        color: Color(0xFFF5F7FA),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        color: Color(0xFFF5F6F8),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
+        ),
       ),
       child: SafeArea(
         top: false,
         child: Padding(
           padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 14,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            left: 10,
+            right: 10,
+            top: 8,
+            bottom:
+                MediaQuery.of(context).viewInsets.bottom +
+                    8,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 44,
-                height: 5,
+                width: 36,
+                height: 4,
                 decoration: BoxDecoration(
                   color: Colors.black12,
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius:
+                      BorderRadius.circular(99),
                 ),
               ),
-              const SizedBox(height: 14),
-          Row(
-  crossAxisAlignment: CrossAxisAlignment.center,
-  children: [
-    Expanded(
-      child: Text(
-        widget.row.sera,
-        style: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-          height: 1.1,
-        ),
-      ),
-    ),
-    const SizedBox(width: 8),
-    SizedBox(
-      height: 40,
-      child: TextButton.icon(
-        onPressed: _clearAll,
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-          minimumSize: const Size(0, 40),
-          visualDensity: VisualDensity.compact,
-        ),
-        icon: const Icon(Icons.refresh_rounded, size: 18),
-        label: const Text('Sıfırla'),
-      ),
-    ),
-  ],
-),
-              const SizedBox(height: 4),
+
+              const SizedBox(height: 7),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.row.sera,
+                      maxLines: 1,
+                      overflow:
+                          TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(
+                    height: 30,
+                    child: TextButton.icon(
+                      onPressed: _clearAll,
+                      style: TextButton.styleFrom(
+                        padding:
+                            const EdgeInsets.symmetric(
+                          horizontal: 6,
+                        ),
+                        visualDensity:
+                            VisualDensity.compact,
+                      ),
+                      icon: const Icon(
+                        Icons.refresh_rounded,
+                        size: 15,
+                      ),
+                      label: const Text(
+                        'Sıfırla',
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 2),
+
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Alanları düzenleyip uygula butonuna bas.',
+                  'Alanları düzenleyin.',
                   style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 13,
+                    color: Colors.black45,
+                    fontSize: 9.5,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 8),
+
               Flexible(
                 child: SingleChildScrollView(
                   child: GridView.builder(
                     shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: aktifAlanlar.length,
+                    physics:
+                        const NeverScrollableScrollPhysics(),
+                    itemCount:
+                        aktifAlanlar.length,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      mainAxisExtent: 100,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
+                      mainAxisExtent: 68,
+                      crossAxisSpacing: 7,
+                      mainAxisSpacing: 7,
                     ),
-                    itemBuilder: (context, index) {
-                      final alan = aktifAlanlar[index];
-                      final controllerIndex = alan.index;
+                    itemBuilder:
+                        (context, index) {
+                      final alan =
+                          aktifAlanlar[index];
+
+                      final controllerIndex =
+                          alan.index;
 
                       return Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 6),
-      child: Text(
-        alan.isim,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.black54,
-        ),
-      ),
-    ),
-    Expanded(
-      child: TextField(
-        controller: _controllers[controllerIndex],
-        keyboardType: TextInputType.number,
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-        ],
-        onTap: () {
-          final controller = _controllers[controllerIndex];
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding:
+                                const EdgeInsets.only(
+                              left: 2,
+                              bottom: 3,
+                            ),
+                            child: Text(
+                              alan.isim,
+                              maxLines: 1,
+                              overflow:
+                                  TextOverflow.ellipsis,
+                              style:
+                                  const TextStyle(
+                                fontSize: 9,
+                                fontWeight:
+                                    FontWeight.w700,
+                                color:
+                                    Colors.black54,
+                              ),
+                            ),
+                          ),
 
-          if (controller.text == '0') {
-            controller.selection = TextSelection(
-              baseOffset: 0,
-              extentOffset: controller.text.length,
-            );
-          }
-        },
-        decoration: InputDecoration(
-          hintText: '0',
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 14,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: Color(0xFFE2E8F0),
-            ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: Color(0xFFE2E8F0),
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: widget.accent,
-              width: 1.4,
-            ),
-          ),
-        ),
-      ),
-    ),
-  ],
-);
+                          Expanded(
+                            child: TextField(
+                              controller:
+                                  _controllers[
+                                      controllerIndex],
+                              keyboardType:
+                                  TextInputType.number,
+                              textAlign:
+                                  TextAlign.center,
+                              style:
+                                  const TextStyle(
+                                fontSize: 12,
+                                fontWeight:
+                                    FontWeight.w800,
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter
+                                    .digitsOnly,
+                              ],
+                              onTap: () {
+                                final controller =
+                                    _controllers[
+                                        controllerIndex];
+
+                                if (controller.text ==
+                                    '0') {
+                                  controller.selection =
+                                      TextSelection(
+                                    baseOffset: 0,
+                                    extentOffset:
+                                        controller
+                                            .text.length,
+                                  );
+                                }
+                              },
+                              decoration:
+                                  InputDecoration(
+                                hintText: '0',
+                                isDense: true,
+                                filled: true,
+                                fillColor:
+                                    Colors.white,
+                                contentPadding:
+                                    const EdgeInsets
+                                        .symmetric(
+                                  horizontal: 7,
+                                  vertical: 8,
+                                ),
+                                border:
+                                    OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius
+                                          .circular(8),
+                                  borderSide:
+                                      const BorderSide(
+                                    color: Color(
+                                      0xFFE2E8F0,
+                                    ),
+                                  ),
+                                ),
+                                enabledBorder:
+                                    OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius
+                                          .circular(8),
+                                  borderSide:
+                                      const BorderSide(
+                                    color: Color(
+                                      0xFFE2E8F0,
+                                    ),
+                                  ),
+                                ),
+                                focusedBorder:
+                                    OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius
+                                          .circular(8),
+                                  borderSide:
+                                      BorderSide(
+                                    color:
+                                        widget.accent,
+                                    width: 1.2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
                     },
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 8),
+
               SizedBox(
                 width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: widget.accent,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                height: 40,
+                child: FilledButton.icon(
+                  style:
+                      FilledButton.styleFrom(
+                    backgroundColor:
+                        widget.accent,
+                    foregroundColor:
+                        Colors.white,
+                    shape:
+                        RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(9),
                     ),
                   ),
                   onPressed: _apply,
-                  icon: const Icon(Icons.check_rounded),
+                  icon: const Icon(
+                    Icons.check_rounded,
+                    size: 17,
+                  ),
                   label: const Text(
-                    'Uygula',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                    'UYGULA',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ),
