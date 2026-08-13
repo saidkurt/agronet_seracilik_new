@@ -5,15 +5,19 @@ class LoginUserModel {
   final String? bileklikid;
   final int? tipid;
 
-  final bool seraraporlarigorebilir;
-  final bool kontrolcuraporlarigorebilir;
-  final bool yonetimraporlarigorebilir;
-  final bool deporaporlarinigorebilir;
-  final bool danismanraporlari;
-  final bool depopaketleme;
-
   final String? kullaniciadi;
   final String? tip;
+
+  /// Dinamik mobil menü yetkileri
+  ///
+  /// Örnek:
+  /// [
+  ///   "KONTROL",
+  ///   "DONGU_KONTROL",
+  ///   "PAKETLEME",
+  ///   "MOBIL_YETKI"
+  /// ]
+  final List<String> yetkiler;
 
   /// MikroDesktop.dbo.BSR_KULLANICILAR.id
   final int? bsrUserId;
@@ -37,14 +41,9 @@ class LoginUserModel {
     this.prosiskodu,
     this.bileklikid,
     this.tipid,
-    this.seraraporlarigorebilir = false,
-    this.kontrolcuraporlarigorebilir = false,
-    this.yonetimraporlarigorebilir = false,
-    this.deporaporlarinigorebilir = false,
-    this.danismanraporlari = false,
-    this.depopaketleme = false,
     this.kullaniciadi,
     this.tip,
+    this.yetkiler = const [],
     this.bsrUserId,
     this.erpUserNo,
     this.bsrKullaniciKodu,
@@ -52,72 +51,74 @@ class LoginUserModel {
     this.token,
   });
 
-  factory LoginUserModel.fromJson(Map<String, dynamic> json) {
+  factory LoginUserModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
     return LoginUserModel(
       kullanicikodu: _toString(
-        json['kullanicikodu'] ?? json['KullaniciKodu'],
-      ),
-      sifre: _toString(
-        json['sifre'] ?? json['Sifre'],
-      ),
-      prosiskodu: _toString(
-        json['prosiskodu'] ?? json['ProsisKodu'],
-      ),
-      bileklikid: _toString(
-        json['bileklikid'] ?? json['BileklikId'],
-      ),
-      tipid: _toInt(
-        json['tipid'] ?? json['TipId'],
+        json['kullanicikodu'] ??
+            json['KullaniciKodu'],
       ),
 
-      seraraporlarigorebilir: _toBool(
-        json['seraraporlarigorebilir'] ??
-            json['SeraRaporlariGorebilir'],
+      sifre: _toString(
+        json['sifre'] ??
+            json['Sifre'],
       ),
-      kontrolcuraporlarigorebilir: _toBool(
-        json['kontrolcuraporlarigorebilir'] ??
-            json['KontrolcuRaporlariGorebilir'],
+
+      prosiskodu: _toString(
+        json['prosiskodu'] ??
+            json['ProsisKodu'],
       ),
-      yonetimraporlarigorebilir: _toBool(
-        json['yonetimraporlarigorebilir'] ??
-            json['YonetimRaporlariGorebilir'],
+
+      bileklikid: _toString(
+        json['bileklikid'] ??
+            json['BileklikId'],
       ),
-      deporaporlarinigorebilir: _toBool(
-        json['deporaporlarinigorebilir'] ??
-            json['DepoRaporlariniGorebilir'],
-      ),
-      danismanraporlari: _toBool(
-        json['danismanraporlari'] ??
-            json['DanismanRaporlari'],
-      ),
-      depopaketleme: _toBool(
-        json['depopaketleme'] ??
-            json['DepoPaketleme'],
+
+      tipid: _toInt(
+        json['tipid'] ??
+            json['TipId'],
       ),
 
       kullaniciadi: _toString(
-        json['kullaniciadi'] ?? json['KullaniciAdi'],
+        json['kullaniciadi'] ??
+            json['KullaniciAdi'],
       ),
+
       tip: _toString(
-        json['tip'] ?? json['Tip'],
+        json['tip'] ??
+            json['Tip'],
+      ),
+
+      yetkiler: _toStringList(
+        json['yetkiler'] ??
+            json['Yetkiler'],
       ),
 
       bsrUserId: _toInt(
-        json['bsruserid'] ?? json['BsrUserId'],
+        json['bsruserid'] ??
+            json['BsrUserId'],
       ),
+
       erpUserNo: _toInt(
-        json['erpuserno'] ?? json['ErpUserNo'],
+        json['erpuserno'] ??
+            json['ErpUserNo'],
       ),
+
       bsrKullaniciKodu: _toString(
         json['bsKullaniciKodu'] ??
             json['bskullanicikodu'] ??
             json['BsrKullaniciKodu'],
       ),
+
       oturumId: _toInt(
-        json['oturumid'] ?? json['OturumId'],
+        json['oturumid'] ??
+            json['OturumId'],
       ),
+
       token: _toString(
-        json['token'] ?? json['Token'],
+        json['token'] ??
+            json['Token'],
       ),
     );
   }
@@ -129,28 +130,47 @@ class LoginUserModel {
       'prosiskodu': prosiskodu,
       'bileklikid': bileklikid,
       'tipid': tipid,
-      'seraraporlarigorebilir': seraraporlarigorebilir,
-      'kontrolcuraporlarigorebilir':
-          kontrolcuraporlarigorebilir,
-      'yonetimraporlarigorebilir':
-          yonetimraporlarigorebilir,
-      'deporaporlarinigorebilir':
-          deporaporlarinigorebilir,
-      'danismanraporlari': danismanraporlari,
-      'depopaketleme': depopaketleme,
+
       'kullaniciadi': kullaniciadi,
       'tip': tip,
+
+      'yetkiler': yetkiler,
+
       'bsruserid': bsrUserId,
       'erpuserno': erpUserNo,
       'bsKullaniciKodu': bsrKullaniciKodu,
+
       'oturumid': oturumId,
       'token': token,
     };
   }
 
-  /// Depo işlemlerinde kullanılacak gerçek Mikro kullanıcı kodu.
+  // ============================================================
+  // YETKİ KONTROL
+  // ============================================================
+
+  bool yetkisiVar(String kod) {
+    final aranan =
+        kod.trim().toUpperCase();
+
+    if (aranan.isEmpty) {
+      return false;
+    }
+
+    return yetkiler.any(
+      (e) =>
+          e.trim().toUpperCase() ==
+          aranan,
+    );
+  }
+
+  // ============================================================
+  // DEPO KULLANICI KODU
+  // ============================================================
+
   String get depoKullaniciKodu {
-    final bsrKod = bsrKullaniciKodu?.trim() ?? '';
+    final bsrKod =
+        bsrKullaniciKodu?.trim() ?? '';
 
     if (bsrKod.isNotEmpty) {
       return bsrKod;
@@ -159,37 +179,66 @@ class LoginUserModel {
     return prosiskodu?.trim() ?? '';
   }
 
+  // ============================================================
+  // OTURUM
+  // ============================================================
+
   bool get oturumGecerli {
     return (oturumId ?? 0) > 0 &&
         (token?.trim().isNotEmpty ?? false);
   }
 }
 
+// ============================================================
+// HELPERS
+// ============================================================
+
 String? _toString(dynamic value) {
   if (value == null) return null;
 
-  final text = value.toString();
+  final text =
+      value.toString().trim();
 
-  return text.isEmpty ? null : text;
+  return text.isEmpty
+      ? null
+      : text;
 }
 
 int? _toInt(dynamic value) {
   if (value == null) return null;
-  if (value is int) return value;
-  if (value is num) return value.toInt();
 
-  return int.tryParse(value.toString().trim());
+  if (value is int) {
+    return value;
+  }
+
+  if (value is num) {
+    return value.toInt();
+  }
+
+  return int.tryParse(
+    value.toString().trim(),
+  );
 }
 
-bool _toBool(dynamic value) {
-  if (value == null) return false;
-  if (value is bool) return value;
-  if (value is num) return value != 0;
+List<String> _toStringList(
+  dynamic value,
+) {
+  if (value == null) {
+    return const [];
+  }
 
-  final text = value.toString().trim().toLowerCase();
+  if (value is List) {
+    return value
+        .where((e) => e != null)
+        .map(
+          (e) =>
+              e.toString().trim(),
+        )
+        .where(
+          (e) => e.isNotEmpty,
+        )
+        .toList();
+  }
 
-  return text == '1' ||
-      text == 'true' ||
-      text == 'evet' ||
-      text == 'yes';
+  return const [];
 }

@@ -6,9 +6,11 @@ import 'package:agronet/page/beyaz_sinek_giris_page.dart';
 import 'package:agronet/page/depo_talep_onay.dart';
 import 'package:agronet/page/hasat_raporu.dart';
 import 'package:agronet/page/iskontrol/konrol_home.dart';
+import 'package:agronet/page/mobil_menu_yetki_page.dart';
 import 'package:agronet/page/paketleme.dart';
 import 'package:agronet/page/paketleme_raporu.dart';
 import 'package:agronet/page/personel_anlik_durum.dart';
+import 'package:agronet/page/personel_listesi_page.dart';
 import 'package:agronet/page/sera_is_tarihleri.dart';
 import 'package:agronet/page/tuta_giris.dart';
 import 'package:agronet/page/tuta_rapor.dart';
@@ -29,27 +31,6 @@ class HomeMenuPage extends StatelessWidget {
   static const Color background = Color(0xFFF5F6F8);
 
   String _roleLabel() {
-    if (user.yonetimraporlarigorebilir) {
-      return "Yönetici";
-    }
-
-    if (user.danismanraporlari) {
-      return "Danışman";
-    }
-
-    if (user.kontrolcuraporlarigorebilir) {
-      return "Kontrol";
-    }
-
-    if (user.depopaketleme ||
-        user.deporaporlarinigorebilir) {
-      return "Depo";
-    }
-
-    if (user.seraraporlarigorebilir) {
-      return "Seracı";
-    }
-
     final t = (user.tip ?? "").trim();
 
     return t.isEmpty
@@ -73,7 +54,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Kontrol",
         icon: Icons.fact_check_rounded,
-        visible: true,
+        visible: user.yetkisiVar("KONTROL"),
         onTap: () {
           Navigator.push(
             context,
@@ -92,7 +73,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Döngü Kontrol",
         icon: Icons.repeat_rounded,
-        visible: true,
+        visible: user.yetkisiVar("DONGU_KONTROL"),
         onTap: () {
           Navigator.push(
             context,
@@ -111,7 +92,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Tuta Sayımı",
         icon: Icons.bug_report_rounded,
-        visible: true,
+        visible: user.yetkisiVar("TUTA_SAYIMI"),
         onTap: () {
           Navigator.push(
             context,
@@ -128,7 +109,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Bitki Ölçüm Giriş",
         icon: Icons.straighten_rounded,
-        visible: true,
+        visible: user.yetkisiVar("BITKI_OLCUM"),
         onTap: () {
           Navigator.push(
             context,
@@ -148,7 +129,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Beyaz Sinek Sayımı",
         icon: Icons.pest_control_rounded,
-        visible: true,
+        visible: user.yetkisiVar("BEYAZ_SINEK"),
         onTap: () {
           Navigator.push(
             context,
@@ -172,7 +153,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Paketleme",
         icon: Icons.inventory_2_rounded,
-        visible: true,
+        visible: user.yetkisiVar("PAKETLEME"),
         onTap: () {
           Navigator.push(
             context,
@@ -191,7 +172,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Depo Talep Onay",
         icon: Icons.fact_check_rounded,
-        visible: true,
+        visible: user.yetkisiVar("DEPO_TALEP"),
         onTap: () {
           if (!user.oturumGecerli) {
             ScaffoldMessenger.of(context)
@@ -242,7 +223,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Barkod Kontrol",
         icon: Icons.qr_code_scanner_rounded,
-        visible: true,
+        visible: user.yetkisiVar("BARKOD_KONTROL"),
         onTap: () {
           Navigator.push(
             context,
@@ -263,7 +244,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Paletleme Raporu",
         icon: Icons.view_in_ar_rounded,
-        visible: true,
+        visible: user.yetkisiVar("PALETLEME_RAPORU"),
         onTap: () {
           Navigator.push(
             context,
@@ -278,7 +259,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Paketleme Raporları",
         icon: Icons.receipt_long_rounded,
-        visible: true,
+        visible: user.yetkisiVar("PAKETLEME_RAPORU"),
         onTap: () {
           Navigator.push(
             context,
@@ -293,7 +274,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Hasat Raporu",
         icon: Icons.agriculture_rounded,
-        visible: true,
+        visible: user.yetkisiVar("HASAT_RAPORU"),
         onTap: () {
           Navigator.push(
             context,
@@ -308,7 +289,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Tuta Raporu",
         icon: Icons.bug_report_outlined,
-        visible: true,
+        visible: user.yetkisiVar("TUTA_RAPORU"),
         onTap: () {
           Navigator.push(
             context,
@@ -323,7 +304,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Personel Anlık Durum",
         icon: Icons.person_search_outlined,
-        visible: true,
+        visible: user.yetkisiVar("PERSONEL_ANLIK"),
         onTap: () {
           Navigator.push(
             context,
@@ -338,7 +319,7 @@ class HomeMenuPage extends StatelessWidget {
       _MenuItem(
         title: "Depo Durum Raporu",
         icon: Icons.warehouse_rounded,
-        visible: true,
+        visible: user.yetkisiVar("DEPO_DURUM_RAPORU"),
         onTap: () {
           Navigator.push(
             context,
@@ -352,6 +333,39 @@ class HomeMenuPage extends StatelessWidget {
           );
         },
       ),
+    ];
+
+    // ============================================================
+    // YÖNETİM
+    // ============================================================
+
+    final yonetimItems = <_MenuItem>[
+      _MenuItem(
+        title: "Mobil Yetki",
+        icon: Icons.admin_panel_settings_rounded,
+        visible: user.yetkisiVar("MOBIL_YETKI"),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const MobilMenuYetkiPage(),
+            ),
+          );
+        },
+      ),
+      _MenuItem(
+  title: "Personel Listesi",
+  icon: Icons.groups_rounded,
+  visible: user.yetkisiVar("PERSONEL_LISTESI"),
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const PersonelListesiPage(),
+      ),
+    );
+  },
+),
     ];
 
     return MediaQuery(
@@ -444,6 +458,20 @@ class HomeMenuPage extends StatelessWidget {
               icon:
                   Icons.analytics_outlined,
               items: raporItems
+                  .where((e) => e.visible)
+                  .toList(),
+            ),
+
+            const SizedBox(height: 8),
+
+            // ====================================================
+            // YÖNETİM
+            // ====================================================
+
+            _SectionRow(
+              title: "Yönetim",
+              icon: Icons.admin_panel_settings_outlined,
+              items: yonetimItems
                   .where((e) => e.visible)
                   .toList(),
             ),
