@@ -11,7 +11,7 @@ class GunlukPaletApi {
 
   /// GET: /Serapaket/GunlukPalet
   Future<List<GunlukPalet>> gunlukPaletler() async {
-    final Uri uri = Uri.parse('${App.insideurl}/Serapaket/GunlukPalet');
+    final Uri uri = Uri.parse('${App.outsideurl}/Serapaket/GunlukPalet');
 
     try {
       final http.Response response = await _client.get(uri);

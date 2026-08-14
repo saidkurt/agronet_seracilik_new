@@ -12,6 +12,7 @@ import 'package:agronet/page/paketleme_raporu.dart';
 import 'package:agronet/page/personel_anlik_durum.dart';
 import 'package:agronet/page/personel_listesi_page.dart';
 import 'package:agronet/page/sera_is_tarihleri.dart';
+import 'package:agronet/page/seraa_olcum_giris.dart';
 import 'package:agronet/page/tuta_giris.dart';
 import 'package:agronet/page/tuta_rapor.dart';
 import 'package:agronet/widget/profile_header.dart';
@@ -69,6 +70,22 @@ class HomeMenuPage extends StatelessWidget {
           );
         },
       ),
+      _MenuItem(
+  title: "Ölçüm Giriş",
+  icon: Icons.monitor_weight_outlined,
+  visible: user.yetkisiVar("OLCUM_GIRIS"),
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SeraOlcumGirisSayfa(  personelKodu:
+                    user.kullanicikodu ?? "",
+                personelAdi:
+                    user.kullaniciadi ?? "",),
+      ),
+    );
+  },
+),
 
       _MenuItem(
         title: "Döngü Kontrol",

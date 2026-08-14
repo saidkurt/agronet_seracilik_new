@@ -16,7 +16,7 @@ class SeraIsTarihleriApi {
   // ============================================================
 
   Uri _uri(List<String> pathSegments) {
-    final base = Uri.parse(App.insideurl);
+    final base = Uri.parse(App.outsideurl);
 
     return base.replace(
       pathSegments: [
@@ -144,7 +144,7 @@ Future<List<DonguIsModel>> isler({
   required String bolumKodu,
 }) async {
   final String url =
-      '${App.insideurl}/Sera/DonguIsler/'
+      '${App.outsideurl}/Sera/DonguIsler/'
       '${Uri.encodeComponent(personelKodu.trim())}/'
       '${Uri.encodeComponent(bolumKodu.trim())}/';
 

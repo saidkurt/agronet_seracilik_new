@@ -9,7 +9,7 @@ class MobilYetkiApi {
   ///
   /// GET: /Sistem/MobilYetkiler
   Future<List<MobilYetkiModel>> yetkileriGetir() async {
-    final url = "${App.insideurl}/Sistem/MobilYetkiler";
+    final url = "${App.outsideurl}/Sistem/MobilYetkiler";
 
     final res = await http.get(
       Uri.parse(url),
@@ -55,7 +55,7 @@ class MobilYetkiApi {
     required List<MobilYetkiModel> menuler,
   }) async {
     final url =
-        "${App.insideurl}/Sistem/MobilYetkiler/Kaydet";
+        "${App.outsideurl}/Sistem/MobilYetkiler/Kaydet";
 
     final body = {
       "personeltipid": personelTipId,

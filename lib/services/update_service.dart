@@ -11,7 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UpdateService {
-  static  String baseUrl = App.insideurl;
+  static  String baseUrl = App.outsideurl;
 
   static const Color accent = Color(0xFF1E6F5C);
 

@@ -20,7 +20,7 @@ class TutaApi {
     final String son = _formatDate(sonTarih);
 
     final Uri uri = Uri.parse(
-      "${App.insideurl}/Tuta/Rapor/$sera/$ilk/$son",
+      "${App.outsideurl}/Tuta/Rapor/$sera/$ilk/$son",
     );
 
     try {
@@ -61,7 +61,7 @@ class TutaApi {
   Future<TutaIsimlerModel> isimleriGetir({
     required String sera,
   }) async {
-    final Uri uri = Uri.parse("${App.insideurl}/Tuta/Isimler/$sera");
+    final Uri uri = Uri.parse("${App.outsideurl}/Tuta/Isimler/$sera");
 
     try {
       final http.Response response = await _client.get(uri);
@@ -102,7 +102,7 @@ class TutaApi {
     final String son = _formatDate(sonTarih);
 
     final Uri uri = Uri.parse(
-      "${App.insideurl}/Tuta/Toplam/$ilk/$son",
+      "${App.outsideurl}/Tuta/Toplam/$ilk/$son",
     );
 
     try {
@@ -159,7 +159,7 @@ class TutaApi {
         '${sonTarih.year.toString().padLeft(4, '0')}-${sonTarih.month.toString().padLeft(2, '0')}-${sonTarih.day.toString().padLeft(2, '0')}';
 
     final uri = Uri.parse(
-      '${App.insideurl}/Tuta/ListeRapor/${Uri.encodeComponent(sera)}/$ilk/$son',
+      '${App.outsideurl}/Tuta/ListeRapor/${Uri.encodeComponent(sera)}/$ilk/$son',
     );
 
     final response = await http.get(uri);

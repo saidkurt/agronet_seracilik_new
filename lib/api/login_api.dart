@@ -25,12 +25,12 @@ class LoginApi {
       throw Exception('Şifre boş olamaz.');
     }
 
-    final base = App.insideurl.endsWith('/')
-        ? App.insideurl.substring(
+    final base = App.outsideurl.endsWith('/')
+        ? App.outsideurl.substring(
             0,
-            App.insideurl.length - 1,
+            App.outsideurl.length - 1,
           )
-        : App.insideurl;
+        : App.outsideurl;
 
     final uri = Uri.parse(
       '$base/Sistem/GirisTel/'
@@ -118,12 +118,12 @@ class LoginApi {
       return false;
     }
 
-    final base = App.insideurl.endsWith('/')
-        ? App.insideurl.substring(
+    final base = App.outsideurl.endsWith('/')
+        ? App.outsideurl.substring(
             0,
-            App.insideurl.length - 1,
+            App.outsideurl.length - 1,
           )
-        : App.insideurl;
+        : App.outsideurl;
 
     final uri = Uri.parse('$base/Sistem/Cikis');
 

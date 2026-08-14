@@ -10,7 +10,7 @@ class PaketlemeApi {
     DateTime ilkTarih,
     DateTime sonTarih,
   ) async {
-    final String baseUrl = '${App.insideurl}/Paket/Paketleme';
+    final String baseUrl = '${App.outsideurl}/Paket/Paketleme';
 
     String fmt(DateTime d) =>
         "${d.year.toString().padLeft(4, '0')}"

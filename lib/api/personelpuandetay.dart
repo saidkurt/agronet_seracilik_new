@@ -13,14 +13,14 @@ class PersonelPuanDetayApi {
   /// Eski kodda base url sabit:
   /// http://88.248.170.183:2626
   ///
-  /// Eğer bu endpoint App.insideurl altında değilse:
+  /// Eğer bu endpoint App.outsideurl altında değilse:
   /// baseUrlOverride ile ver.
   Future<List<Map<String, dynamic>>> personelPuanDetay({
     required String bileklikId,
     required String tip,
     String? baseUrlOverride,
   }) async {
-    final base = baseUrlOverride ?? App.insideurl;
+    final base = baseUrlOverride ?? App.outsideurl;
     final Uri uri = Uri.parse('$base/Sera/PerformansDetay/$bileklikId/$tip');
 
     try {

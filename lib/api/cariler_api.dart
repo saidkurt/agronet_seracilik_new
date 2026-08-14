@@ -6,10 +6,10 @@ import 'package:http/http.dart' as http;
 class CarilerApi {
   const CarilerApi();
 
-  /// API: GET {App.insideurl}/Kantar/Cariler
+  /// API: GET {App.outsideurl}/Kantar/Cariler
   ///
   Future<List<Map<String, dynamic>>> cariler() async {
-    final String url = '${App.insideurl}/Kantar/Cariler';
+    final String url = '${App.outsideurl}/Kantar/Cariler';
     final Uri uri = Uri.parse(url);
 
     try {

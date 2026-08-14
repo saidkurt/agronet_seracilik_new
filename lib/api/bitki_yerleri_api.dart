@@ -10,7 +10,7 @@ class BitkiSeraYerleriApi {
 
   Future<List<SeraYerModel>> getir() async {
     final String baseUrl =
-        '${App.insideurl}/Sera/BitkiYerleri';
+        '${App.outsideurl}/Sera/BitkiYerleri';
 
     final Uri uri = Uri.parse(baseUrl);
 
@@ -55,7 +55,7 @@ class BitkiSeraYerleriApi {
     }
 
     final Uri uri = Uri.parse(
-      '${App.insideurl}/Sera/ZorunluOlcumDurum',
+      '${App.outsideurl}/Sera/ZorunluOlcumDurum',
     ).replace(
       queryParameters: {
         'bitkiKodu': kod,
@@ -116,7 +116,7 @@ class BitkiSeraYerleriApi {
   required DateTime tarih,
 }) async {
   final uri = Uri.parse(
-    '${App.insideurl}/Sera/OlcumDegerGetir',
+    '${App.outsideurl}/Sera/OlcumDegerGetir',
   ).replace(
     queryParameters: {
       'bitkiKodu': bitkiKodu.trim(),

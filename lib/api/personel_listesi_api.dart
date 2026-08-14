@@ -8,7 +8,7 @@ import 'package:agronet/models/personel_listesi_model.dart';
 class PersonelListesiApi {
   /// GET: /PersonelBilgileri/Liste
   Future<List<PersonelListesiModel>> personelListesiGetir() async {
-    final url = "${App.insideurl}/PersonelBilgileri/Liste";
+    final url = "${App.outsideurl}/PersonelBilgileri/Liste";
 
     final res = await http.get(
       Uri.parse(url),

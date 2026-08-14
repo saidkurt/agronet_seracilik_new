@@ -5,7 +5,7 @@ import 'package:agronet/models/depo_talep_model.dart';
 import 'package:http/http.dart' as http;
 
 class DepoTalepApi {
-  static final String _base = App.insideurl;
+  static final String _base = App.outsideurl;
 
   /// Açık talep evrakları
   Future<List<DepoTalepEvrakModel>> talepEvraklariGetir() async {

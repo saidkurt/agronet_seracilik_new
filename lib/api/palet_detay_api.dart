@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:agronet/const/string.dart'; // App.insideurl
+import 'package:agronet/const/string.dart'; // App.outsideurl
 import 'package:agronet/models/paletleme_rapor_model.dart';
 import 'package:http/http.dart' as http;
 
@@ -9,7 +9,7 @@ class PaletDetayApi {
   Future<PaletlemeRaporModel> paletDetayGetir({
     required String paletkodu,
   }) async {
-    final uri = Uri.parse('${App.insideurl}/Palet/Detay/$paletkodu');
+    final uri = Uri.parse('${App.outsideurl}/Palet/Detay/$paletkodu');
 
     try {
       final http.Response response = await http.get(uri);

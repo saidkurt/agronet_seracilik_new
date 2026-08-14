@@ -43,13 +43,12 @@ class _BitkiOlcumSahaSayfaState
   final TextEditingController kalinlikCtrl =
       TextEditingController();
 
-  final TextEditingController degerCtrl =
-      TextEditingController();
+  final Map<int, TextEditingController> ekOlcumControllers = {};
 
   String? seciliSera;
   String? seciliBitkiKodu;
 
-  OlcumTipleriModel? seciliTip;
+  int? seciliSalkimNo;
 
   late Future<_InitData> _initFuture;
 
@@ -74,7 +73,11 @@ class _BitkiOlcumSahaSayfaState
     bitkiKoduCtrl.dispose();
     uzamaCtrl.dispose();
     kalinlikCtrl.dispose();
-    degerCtrl.dispose();
+
+    for (final controller in ekOlcumControllers.values) {
+      controller.dispose();
+    }
+    ekOlcumControllers.clear();
 
     super.dispose();
   }
@@ -112,8 +115,7 @@ class _BitkiOlcumSahaSayfaState
       bitkiBulundu &&
       seciliSera != null &&
       seciliBitkiKodu != null &&
-      seciliTip != null &&
-      degerCtrl.text.trim().isNotEmpty;
+      seciliSalkimNo != null;
 
   // ============================================================
   // BİTKİ KODU DEĞİŞTİ
@@ -153,8 +155,11 @@ class _BitkiOlcumSahaSayfaState
     uzamaCtrl.clear();
     kalinlikCtrl.clear();
 
-    seciliTip = null;
-    degerCtrl.clear();
+    seciliSalkimNo = null;
+
+    for (final controller in ekOlcumControllers.values) {
+      controller.clear();
+    }
   }
 
   // ============================================================
@@ -362,7 +367,7 @@ class _BitkiOlcumSahaSayfaState
     required int bildirildi,
   }) async {
     final uri = Uri.parse(
-      '${App.insideurl}/Sera/OlcumKaydet',
+      '${App.outsideurl}/Sera/OlcumKaydet',
     );
 
     final body =
@@ -496,75 +501,99 @@ class _BitkiOlcumSahaSayfaState
   }
 
   // ============================================================
-  // SEÇİLİ EK ÖLÇÜM DEĞERİ
+  // SALKIM BAZLI DİĞER ÖLÇÜMLER
   // ============================================================
 
-  Future<void>
-      _seciliOlcumDegeriniGetir(
+  int _tipKey(OlcumTipleriModel tip) {
+    final id = tip.id ?? 0;
+    if (id != 0) return id;
+    return (tip.isim ?? '').hashCode;
+  }
+
+  TextEditingController _controllerForTip(
     OlcumTipleriModel tip,
+  ) {
+    final key = _tipKey(tip);
+    return ekOlcumControllers.putIfAbsent(
+      key,
+      () => TextEditingController(),
+    );
+  }
+
+  String _salkimAlanAdi(String? tamAd, int salkimNo) {
+    var text = (tamAd ?? '').trim();
+
+    text = text.replaceFirst(
+      RegExp(
+        r'^\s*\d+\s*[.\-]?\s*(?:salk[ıi]m)?\s*[.\-:]?\s*',
+        caseSensitive: false,
+      ),
+      '',
+    );
+
+    if (text.isEmpty) {
+      return '$salkimNo. Salkım Ölçümü';
+    }
+
+    return text;
+  }
+
+  Future<void> _salkimSec(
+    int salkimNo,
+    List<OlcumTipleriModel> tipler,
   ) async {
-    final String? bitkiKodu =
-        seciliBitkiKodu;
+    if (!zorunluTamamlandi || loadingOlcumDeger) return;
 
-    final String tipAdi =
-        (tip.isim ?? '').trim();
-
-    if (bitkiKodu == null ||
-        bitkiKodu.trim().isEmpty) {
-      return;
-    }
-
-    if (tipAdi.isEmpty) {
-      setState(() {
-        degerCtrl.clear();
-      });
-
-      return;
-    }
+    final bitkiKodu = seciliBitkiKodu;
+    if (bitkiKodu == null || bitkiKodu.trim().isEmpty) return;
 
     setState(() {
+      seciliSalkimNo = salkimNo;
       loadingOlcumDeger = true;
 
-      degerCtrl.clear();
+      for (final tip in tipler) {
+        _controllerForTip(tip).clear();
+      }
     });
 
     try {
-      final sonuc =
-          await const BitkiSeraYerleriApi()
+      final sonuclar = await Future.wait(
+        tipler.map((tip) async {
+          final tipAdi = (tip.isim ?? '').trim();
+          if (tipAdi.isEmpty) {
+            return MapEntry<int, String>(_tipKey(tip), '');
+          }
+
+          final sonuc = await const BitkiSeraYerleriApi()
               .olcumDegerGetir(
-        bitkiKodu: bitkiKodu,
-        tip: tipAdi,
-        tarih: secilenTarih,
+            bitkiKodu: bitkiKodu,
+            tip: tipAdi,
+            tarih: secilenTarih,
+          );
+
+          return MapEntry<int, String>(
+            _tipKey(tip),
+            sonuc.bulundu ? (sonuc.deger ?? '') : '',
+          );
+        }),
       );
 
-      if (!mounted) return;
-
-      if (seciliTip != tip) {
-        return;
-      }
+      if (!mounted || seciliSalkimNo != salkimNo) return;
 
       setState(() {
-        degerCtrl.text =
-            sonuc.bulundu
-                ? (sonuc.deger ?? '')
-                : '';
+        for (final sonuc in sonuclar) {
+          ekOlcumControllers[sonuc.key]?.text = sonuc.value;
+        }
       });
     } catch (e) {
       if (!mounted) return;
 
-      if (seciliTip == tip) {
-        setState(() {
-          degerCtrl.clear();
-        });
-      }
-
       _mesajGoster(
-        'Ölçüm değeri alınamadı: $e',
+        '$salkimNo. salkım değerleri alınamadı: $e',
         hata: true,
       );
     } finally {
-      if (mounted &&
-          seciliTip == tip) {
+      if (mounted && seciliSalkimNo == salkimNo) {
         setState(() {
           loadingOlcumDeger = false;
         });
@@ -572,42 +601,63 @@ class _BitkiOlcumSahaSayfaState
     }
   }
 
-  // ============================================================
-  // EK ÖLÇÜM
-  // ============================================================
+  Future<void> _kaydetSalkim({
+    required int salkimNo,
+    required List<OlcumTipleriModel> tipler,
+    required bool sonrakiSalkimaGec,
+    required List<int> salkimSirasi,
+    required Map<int, List<OlcumTipleriModel>> salkimGruplari,
+  }) async {
+    if (!ekOlcumHazir || loadingEk || loadingOlcumDeger) return;
 
-  Future<void> _kaydetEkOlcum() async {
-    if (!ekOlcumHazir ||
-        loadingEk) {
+    final doluTipler = tipler.where((tip) {
+      return _controllerForTip(tip).text.trim().isNotEmpty;
+    }).toList();
+
+    if (doluTipler.isEmpty) {
+      _mesajGoster(
+        'En az bir ölçüm değeri girin.',
+        hata: true,
+      );
       return;
     }
+
+    FocusScope.of(context).unfocus();
 
     setState(() {
       loadingEk = true;
     });
 
     try {
-      await _postTekOlcum(
-        tarih: secilenTarih,
-        sera: seciliSera!,
-        bitkiKodu:
-            seciliBitkiKodu!,
-        tip: seciliTip!.isim ?? '',
-        deger:
-            degerCtrl.text.trim(),
-        bildirildi:
-            seciliTip!.bildir ?? 0,
-      );
+      for (final tip in doluTipler) {
+        await _postTekOlcum(
+          tarih: secilenTarih,
+          sera: seciliSera!,
+          bitkiKodu: seciliBitkiKodu!,
+          tip: tip.isim ?? '',
+          deger: _controllerForTip(tip).text.trim(),
+          bildirildi: tip.bildir ?? 0,
+        );
+      }
 
       if (!mounted) return;
 
-      setState(() {
-        degerCtrl.clear();
-      });
-
       _mesajGoster(
-        'Ölçüm kaydedildi.',
+        '$salkimNo. salkım ölçümleri kaydedildi.',
       );
+
+      if (sonrakiSalkimaGec) {
+        final index = salkimSirasi.indexOf(salkimNo);
+        if (index >= 0 && index < salkimSirasi.length - 1) {
+          final sonrakiNo = salkimSirasi[index + 1];
+          final sonrakiTipler =
+              salkimGruplari[sonrakiNo] ?? const <OlcumTipleriModel>[];
+
+          if (sonrakiTipler.isNotEmpty) {
+            await _salkimSec(sonrakiNo, sonrakiTipler);
+          }
+        }
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -841,6 +891,55 @@ class _BitkiOlcumSahaSayfaState
                 );
               },
             );
+
+            final Map<int, List<OlcumTipleriModel>>
+                salkimGruplari = {};
+
+            for (final tip in digerTipler) {
+              final isim = (tip.isim ?? '').trim();
+              final eslesme = RegExp(r'^\s*(\d+)').firstMatch(isim);
+
+              if (eslesme == null) continue;
+
+              final salkimNo = int.tryParse(eslesme.group(1) ?? '');
+              if (salkimNo == null) continue;
+
+              salkimGruplari
+                  .putIfAbsent(
+                    salkimNo,
+                    () => <OlcumTipleriModel>[],
+                  )
+                  .add(tip);
+            }
+
+            final salkimSirasi = salkimGruplari.keys.toList()..sort();
+
+            // Bitkinin zorunlu ölçümleri daha önce tamamlandıysa,
+            // ilk salkımı otomatik seç ve o salkıma ait kayıtlı
+            // değerleri ekrana getir.
+            if (zorunluTamamlandi &&
+                seciliSalkimNo == null &&
+                salkimSirasi.isNotEmpty &&
+                !loadingOlcumDeger &&
+                !loadingEk) {
+              final ilkSalkimNo = salkimSirasi.first;
+              final ilkSalkimTipleri =
+                  salkimGruplari[ilkSalkimNo] ??
+                      const <OlcumTipleriModel>[];
+
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted ||
+                    seciliSalkimNo != null ||
+                    !zorunluTamamlandi) {
+                  return;
+                }
+
+                _salkimSec(
+                  ilkSalkimNo,
+                  ilkSalkimTipleri,
+                );
+              });
+            }
 
             return ListView(
               physics:
@@ -1294,191 +1393,324 @@ class _BitkiOlcumSahaSayfaState
                               ),
 
                             // ====================================
-                            // DİĞER ÖLÇÜMLER
+                            // DİĞER ÖLÇÜMLER - SALKIM BAZLI
                             // ====================================
 
                             _sectionCard(
-                              title:
-                                  'Diğer Ölçümler',
-                              icon:
-                                  Icons.tune_rounded,
-                              muted:
-                                  !zorunluTamamlandi,
+                              title: 'Diğer Ölçümler',
+                              icon: Icons.tune_rounded,
+                              muted: !zorunluTamamlandi,
                               child: Column(
                                 crossAxisAlignment:
                                     CrossAxisAlignment.stretch,
                                 children: [
-                                  DropdownButtonFormField<
-                                      OlcumTipleriModel>(
-                                    value:
-                                        seciliTip,
-                                    isExpanded:
-                                        true,
-                                    style:
-                                        const TextStyle(
-                                      fontSize:
-                                          12,
-                                      color: Colors
-                                          .black87,
-                                      fontWeight:
-                                          FontWeight
-                                              .w700,
-                                    ),
-                                    items:
-                                        digerTipler
-                                            .map(
-                                              (tip) =>
-                                                  DropdownMenuItem(
-                                                value: tip,
-                                                child: Text(
-                                                  tip.isim ?? '',
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                            )
-                                            .toList(),
-                                    onChanged:
-                                        !zorunluTamamlandi ||
-                                                loadingOlcumDeger
-                                            ? null
-                                            : (tip) async {
-                                                setState(() {
-                                                  seciliTip = tip;
-                                                  degerCtrl.clear();
-                                                });
-
-                                                if (tip != null) {
-                                                  await _seciliOlcumDegeriniGetir(
-                                                    tip,
-                                                  );
-                                                }
-                                              },
-                                    decoration:
-                                        _dec(
-                                      label:
-                                          'Ölçüm tipi',
-                                      hint:
-                                          'Seçiniz',
-                                      icon: Icons
-                                          .list_alt_rounded,
-                                    ),
-                                  ),
-
-                                  const SizedBox(
-                                    height: 8,
-                                  ),
-
-                                  if (loadingOlcumDeger)
+                                  if (salkimSirasi.isEmpty)
                                     Container(
-                                      height:
-                                          46,
-                                      alignment:
-                                          Alignment.center,
-                                      decoration:
-                                          BoxDecoration(
-                                        color:
-                                            const Color(
-                                          0xFFF7F7F9,
-                                        ),
-                                        borderRadius:
-                                            BorderRadius.circular(9),
-                                        border:
-                                            Border.all(
-                                          color: Colors.black.withOpacity(.05),
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF7F7F9),
+                                        borderRadius: BorderRadius.circular(9),
+                                      ),
+                                      child: const Text(
+                                        'Salkım bazlı ölçüm tipi bulunamadı.',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.black45,
+                                          fontWeight: FontWeight.w700,
                                         ),
                                       ),
-                                      child:
-                                          const Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                    )
+                                  else ...[
+                                    const Text(
+                                      'Salkım seçin',
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        color: Colors.black45,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 7),
+
+                                    SizedBox(
+                                      height: 39,
+                                      child: ListView.separated(
+                                        scrollDirection: Axis.horizontal,
+                                        physics: const BouncingScrollPhysics(),
+                                        itemCount: salkimSirasi.length,
+                                        separatorBuilder: (_, __) =>
+                                            const SizedBox(width: 6),
+                                        itemBuilder: (context, index) {
+                                          final salkimNo = salkimSirasi[index];
+                                          final secili =
+                                              seciliSalkimNo == salkimNo;
+
+                                          return ChoiceChip(
+                                            selected: secili,
+                                            onSelected: !zorunluTamamlandi ||
+                                                    loadingOlcumDeger ||
+                                                    loadingEk
+                                                ? null
+                                                : (_) => _salkimSec(
+                                                      salkimNo,
+                                                      salkimGruplari[salkimNo] ??
+                                                          const <OlcumTipleriModel>[],
+                                                    ),
+                                            label: Text(
+                                              '$salkimNo. Salkım',
+                                              style: TextStyle(
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.w900,
+                                                color: secili
+                                                    ? Colors.white
+                                                    : Colors.black87,
+                                              ),
+                                            ),
+                                            selectedColor: accent,
+                                            backgroundColor:
+                                                const Color(0xFFF2F3F5),
+                                            side: BorderSide(
+                                              color: secili
+                                                  ? accent
+                                                  : Colors.black.withOpacity(.06),
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(9),
+                                            ),
+                                            showCheckmark: false,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 5,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 10),
+
+                                    if (seciliSalkimNo == null)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 16,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF7F7F9),
+                                          borderRadius: BorderRadius.circular(9),
+                                          border: Border.all(
+                                            color: Colors.black.withOpacity(.05),
+                                          ),
+                                        ),
+                                        child: const Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.touch_app_rounded,
+                                              size: 17,
+                                              color: Colors.black38,
+                                            ),
+                                            SizedBox(width: 7),
+                                            Text(
+                                              'Değer girmek için salkım seçin.',
+                                              style: TextStyle(
+                                                fontSize: 10.5,
+                                                color: Colors.black45,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    else if (loadingOlcumDeger)
+                                      Container(
+                                        height: 72,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF7F7F9),
+                                          borderRadius: BorderRadius.circular(9),
+                                          border: Border.all(
+                                            color: Colors.black.withOpacity(.05),
+                                          ),
+                                        ),
+                                        child: const Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            ),
+                                            SizedBox(width: 8),
+                                            Text(
+                                              'Salkım değerleri getiriliyor...',
+                                              style: TextStyle(
+                                                fontSize: 10.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    else ...[
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 8,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: accent.withOpacity(.07),
+                                          borderRadius: BorderRadius.circular(9),
+                                          border: Border.all(
+                                            color: accent.withOpacity(.12),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '$seciliSalkimNo. SALKIM',
+                                          style: const TextStyle(
+                                            color: accent,
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 8),
+
+                                      ...(
+                                        salkimGruplari[seciliSalkimNo] ??
+                                            const <OlcumTipleriModel>[]
+                                      ).map((tip) {
+                                        return Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 8),
+                                          child: _filledNumberField(
+                                            controller: _controllerForTip(tip),
+                                            label: _salkimAlanAdi(
+                                              tip.isim,
+                                              seciliSalkimNo!,
+                                            ),
+                                            hint: 'Değer girin',
+                                            enabled: zorunluTamamlandi &&
+                                                !loadingEk,
+                                            onChanged: (_) => setState(() {}),
+                                          ),
+                                        );
+                                      }),
+
+                                      const SizedBox(height: 1),
+
+                                      Row(
                                         children: [
-                                          SizedBox(
-                                            width: 15,
-                                            height: 15,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
+                                          Expanded(
+                                            child: SizedBox(
+                                              height: 44,
+                                              child: OutlinedButton.icon(
+                                                onPressed: loadingEk
+                                                    ? null
+                                                    : () => _kaydetSalkim(
+                                                          salkimNo:
+                                                              seciliSalkimNo!,
+                                                          tipler: salkimGruplari[
+                                                                  seciliSalkimNo] ??
+                                                              const <OlcumTipleriModel>[],
+                                                          sonrakiSalkimaGec:
+                                                              false,
+                                                          salkimSirasi:
+                                                              salkimSirasi,
+                                                          salkimGruplari:
+                                                              salkimGruplari,
+                                                        ),
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor: accent,
+                                                  side: const BorderSide(
+                                                    color: accent,
+                                                  ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(9),
+                                                  ),
+                                                ),
+                                                icon: const Icon(
+                                                  Icons.save_outlined,
+                                                  size: 17,
+                                                ),
+                                                label: const Text(
+                                                  'KAYDET',
+                                                  style: TextStyle(
+                                                    fontSize: 10.5,
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                          SizedBox(
-                                            width: 7,
-                                          ),
-                                          Text(
-                                            'Kayıtlı değer getiriliyor...',
-                                            style: TextStyle(
-                                              fontSize: 10.5,
+
+                                          const SizedBox(width: 7),
+
+                                          Expanded(
+                                            flex: 2,
+                                            child: SizedBox(
+                                              height: 44,
+                                              child: FilledButton.icon(
+                                                onPressed: loadingEk
+                                                    ? null
+                                                    : () => _kaydetSalkim(
+                                                          salkimNo:
+                                                              seciliSalkimNo!,
+                                                          tipler: salkimGruplari[
+                                                                  seciliSalkimNo] ??
+                                                              const <OlcumTipleriModel>[],
+                                                          sonrakiSalkimaGec:
+                                                              true,
+                                                          salkimSirasi:
+                                                              salkimSirasi,
+                                                          salkimGruplari:
+                                                              salkimGruplari,
+                                                        ),
+                                                style: FilledButton.styleFrom(
+                                                  backgroundColor: accent,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(9),
+                                                  ),
+                                                ),
+                                                icon: loadingEk
+                                                    ? const SizedBox(
+                                                        width: 15,
+                                                        height: 15,
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          color: Colors.white,
+                                                        ),
+                                                      )
+                                                    : const Icon(
+                                                        Icons
+                                                            .arrow_forward_rounded,
+                                                        size: 17,
+                                                      ),
+                                                label: Text(
+                                                  loadingEk
+                                                      ? 'KAYDEDİLİYOR...'
+                                                      : 'KAYDET + SONRAKİ',
+                                                  style: const TextStyle(
+                                                    fontSize: 10.5,
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                ),
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                    )
-                                  else
-                                    _filledNumberField(
-                                      controller:
-                                          degerCtrl,
-                                      label:
-                                          'Değer',
-                                      hint:
-                                          'Değer girin',
-                                      enabled:
-                                          zorunluTamamlandi &&
-                                              seciliTip != null,
-                                      onChanged:
-                                          (_) =>
-                                              setState(() {}),
-                                    ),
-
-                                  const SizedBox(
-                                    height: 9,
-                                  ),
-
-                                  SizedBox(
-                                    height: 44,
-                                    child:
-                                        FilledButton.icon(
-                                      onPressed:
-                                          !ekOlcumHazir ||
-                                                  loadingEk ||
-                                                  loadingOlcumDeger
-                                              ? null
-                                              : _kaydetEkOlcum,
-                                      style:
-                                          FilledButton.styleFrom(
-                                        backgroundColor:
-                                            accent,
-                                        shape:
-                                            RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(9),
-                                        ),
-                                      ),
-                                      icon: loadingEk
-                                          ? const SizedBox(
-                                              width: 15,
-                                              height: 15,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: Colors.white,
-                                              ),
-                                            )
-                                          : const Icon(
-                                              Icons.add_task_rounded,
-                                              size: 17,
-                                            ),
-                                      label:
-                                          Text(
-                                        loadingEk
-                                            ? 'KAYDEDİLİYOR...'
-                                            : 'ÖLÇÜMÜ KAYDET',
-                                        style:
-                                            const TextStyle(
-                                          fontSize:
-                                              10.5,
-                                          fontWeight:
-                                              FontWeight.w900,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                                    ],
+                                  ],
                                 ],
                               ),
                             ),

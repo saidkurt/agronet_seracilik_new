@@ -8,7 +8,7 @@ class BostaOlanlarApi {
   const BostaOlanlarApi();
 
   Future<List<BostaOlanlar>> personelBos() async {
-    final String baseUrl = '${App.insideurl}/Bos/Giris';
+    final String baseUrl = '${App.outsideurl}/Bos/Giris';
     final Uri uri = Uri.parse('$baseUrl/X');
 
     try {

@@ -7,7 +7,7 @@ import 'package:agronet/models/kontrol_personel_model.dart';
 import 'package:http/http.dart' as http;
 
 class KontrolApi {
-  static final String _base = App.insideurl;
+  static final String _base = App.outsideurl;
 
   // GET: /Kontrol/Personeller/{kontrolEdenPersonelKodu}
   static Future<List<KontrolPersonelModel>> personelleriGetir(

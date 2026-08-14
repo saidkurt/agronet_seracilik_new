@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 class KoliBarkodApi {
   // ✅ Senin sunucu (istersen burayı const String.baseUrl'dan da aldırırız)
-  static final String _base = App.insideurl;
+  static final String _base = App.outsideurl;
 
   // GET: /Qr/Koli/{barkod}  -> JSON ARRAY
   static Future<List<KoliBarkodModel>> getir(String barkod) async {
