@@ -3,17 +3,23 @@ import 'package:flutter/services.dart';
 
 import 'package:agronet/api/depo_talep_api.dart';
 import 'package:agronet/models/depo_talep_model.dart';
-
 class DepoTalepOnayPage extends StatefulWidget {
   final String kullaniciKodu;
   final int oturumId;
   final String token;
+
+  // Bildirimden gelirse dolu olacak.
+  // Ana menüden gelirse null kalacak.
+  final String? ilkSeri;
+  final int? ilkSira;
 
   const DepoTalepOnayPage({
     super.key,
     required this.kullaniciKodu,
     required this.oturumId,
     required this.token,
+    this.ilkSeri,
+    this.ilkSira,
   });
 
   @override
@@ -45,11 +51,14 @@ class _DepoTalepOnayPageState
   // INIT
   // ============================================================
 
-  @override
-  void initState() {
-    super.initState();
-    _evraklariGetir();
-  }
+@override
+void initState() {
+  super.initState();
+
+  _evraklariGetir(
+    bildirimEvrakiniAc: true,
+  );
+}
 
   @override
   void dispose() {
@@ -71,38 +80,87 @@ class _DepoTalepOnayPageState
     _secimler.clear();
   }
 
+
+  
+
   // ============================================================
   // EVRAKLAR
   // ============================================================
 
-  Future<void> _evraklariGetir() async {
+  Future<void> _evraklariGetir({
+  bool bildirimEvrakiniAc = false,
+}) async {
+  setState(() {
+    _evraklarYukleniyor = true;
+  });
+
+  try {
+    final sonuc =
+        await _api.talepEvraklariGetir();
+
+    if (!mounted) return;
+
     setState(() {
-      _evraklarYukleniyor = true;
+      _evraklar = sonuc;
     });
 
-    try {
-      final sonuc =
-          await _api.talepEvraklariGetir();
+    // ============================================================
+    // BİLDİRİMDEN GELDİYSE İLGİLİ EVRAKI OTOMATİK AÇ
+    // ============================================================
 
-      if (!mounted) return;
+    if (bildirimEvrakiniAc) {
+      final seri =
+          widget.ilkSeri?.trim() ?? '';
 
-      setState(() {
-        _evraklar = sonuc;
-      });
-    } catch (e) {
-      if (!mounted) return;
+      final sira =
+          widget.ilkSira ?? 0;
 
-      _hataGoster(
-        'Evraklar getirilemedi.\n$e',
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _evraklarYukleniyor = false;
-        });
+      // Ana menüden geldiyse bunlar boş olur.
+      // O zaman hiçbir şey yapmadan listeyi gösterir.
+      if (seri.isNotEmpty && sira > 0) {
+        DepoTalepEvrakModel? bulunanEvrak;
+
+        for (final evrak in _evraklar) {
+          final evrakSeri =
+              (evrak.seri ?? '')
+                  .trim();
+
+          final evrakSira =
+              evrak.sira ?? 0;
+
+          if (evrakSeri.toUpperCase() ==
+                  seri.toUpperCase() &&
+              evrakSira == sira) {
+            bulunanEvrak = evrak;
+            break;
+          }
+        }
+
+        if (bulunanEvrak != null) {
+          await _evrakSec(
+            bulunanEvrak,
+          );
+        } else {
+          _hataGoster(
+            '$seri-$sira numaralı talep açık talepler arasında bulunamadı.',
+          );
+        }
       }
     }
+  } catch (e) {
+    if (!mounted) return;
+
+    _hataGoster(
+      'Evraklar getirilemedi.\n$e',
+    );
+  } finally {
+    if (mounted) {
+      setState(() {
+        _evraklarYukleniyor = false;
+      });
+    }
   }
+}
 
   // ============================================================
   // EVRAK SEÇ

@@ -1,12 +1,14 @@
 class SeraOlcumEkranModel {
   final bool success;
   final String tarih;
+  final String personelKodu;
   final List<String> tipler;
   final List<SeraOlcumYerModel> yerler;
 
   const SeraOlcumEkranModel({
     required this.success,
     required this.tarih,
+    required this.personelKodu,
     required this.tipler,
     required this.yerler,
   });
@@ -15,6 +17,7 @@ class SeraOlcumEkranModel {
     return SeraOlcumEkranModel(
       success: _toBool(json['success']),
       tarih: _toString(json['tarih']),
+      personelKodu: _toString(json['personelKodu']),
       tipler: (json['tipler'] as List? ?? [])
           .map((e) => e.toString())
           .toList(),

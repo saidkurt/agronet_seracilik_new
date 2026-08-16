@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "491824124414",
+    "project_id": "agronet-ed157",
+    "storage_bucket": "agronet-ed157.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:491824124414:android:4175837da0e970a03770af",
+        "android_client_info": {
+          "package_name": "com.example.agronet_seracilik"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_tv_zmqIuhlkB-yXOOrMAsj19grIvUw8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,7 +1,6 @@
 import 'package:agronet/api/login_api.dart';
 import 'package:agronet/page/Homepage/home_page.dart';
 import 'package:agronet/page/LoginPage/otp_dogrulama_page.dart';
-import 'package:agronet/services/update_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,9 +30,14 @@ class _LoginPageViewState extends State<LoginPageView> {
   bool _isLoading = false;
   bool _obscure = true;
 
+  // Uygulama ilk açıldığında kayıtlı kullanıcı kontrol edilir.
+  // Bu sırada login formunu göstermiyoruz.
+  bool _ilkKontrol = true;
+
   @override
   void initState() {
     super.initState();
+
     _loadPref();
   }
 
@@ -41,6 +45,7 @@ class _LoginPageViewState extends State<LoginPageView> {
   void dispose() {
     _telCtrl.dispose();
     _sifreCtrl.dispose();
+
     super.dispose();
   }
 
@@ -66,7 +71,9 @@ class _LoginPageViewState extends State<LoginPageView> {
           ),
           behavior: SnackBarBehavior.floating,
           backgroundColor:
-              success ? accent : Colors.red.shade600,
+              success
+                  ? accent
+                  : Colors.red.shade600,
         ),
       );
   }
@@ -89,9 +96,10 @@ class _LoginPageViewState extends State<LoginPageView> {
       return '';
     }
 
-    final x = d.length > 10
-        ? d.substring(0, 10)
-        : d;
+    final x =
+        d.length > 10
+            ? d.substring(0, 10)
+            : d;
 
     final sb = StringBuffer();
 
@@ -107,25 +115,29 @@ class _LoginPageViewState extends State<LoginPageView> {
   }
 
   bool _isValidTel(String digits) {
-    return RegExp(r'^\d{10}$').hasMatch(
-      digits,
-    );
+    return RegExp(
+      r'^\d{10}$',
+    ).hasMatch(digits);
   }
 
   // ============================================================
-  // LOGIN
+  // MANUEL LOGIN
   // ============================================================
 
   Future<void> _login() async {
     FocusScope.of(context).unfocus();
 
     final ok =
-        _formKey.currentState?.validate() ?? false;
+        _formKey.currentState
+                ?.validate() ??
+            false;
 
     if (!ok) return;
 
     final telDigits =
-        _digitsOnly(_telCtrl.text.trim());
+        _digitsOnly(
+          _telCtrl.text.trim(),
+        );
 
     final sifre =
         _sifreCtrl.text.trim();
@@ -135,19 +147,27 @@ class _LoginPageViewState extends State<LoginPageView> {
     });
 
     try {
-      final users = await _api.girisTel(
+      final users =
+          await _api.girisTel(
         telefon: telDigits,
         sifre: sifre,
       );
+
+      if (!mounted) return;
 
       if (users.isEmpty) {
         _snack(
           "Kullanıcı bulunamadı",
         );
+
         return;
       }
 
       final u = users.first;
+
+      // ========================================================
+      // BENİ HATIRLA
+      // ========================================================
 
       if (_rememberMe) {
         await _savePref(
@@ -160,12 +180,10 @@ class _LoginPageViewState extends State<LoginPageView> {
 
       if (!mounted) return;
 
-      await UpdateService.cihazKaydet(
-        personelKodu:
-            u.bsrKullaniciKodu,
-      );
-
-      if (!mounted) return;
+      // ========================================================
+      // ANA SAYFA
+      // Cihaz kaydı + update kontrolü artık HomeMenu'da.
+      // ========================================================
 
       Navigator.pushReplacement(
         context,
@@ -200,7 +218,8 @@ class _LoginPageViewState extends State<LoginPageView> {
     String sifre,
   ) async {
     final prefs =
-        await SharedPreferences.getInstance();
+        await SharedPreferences
+            .getInstance();
 
     await prefs.setString(
       'TEL',
@@ -215,7 +234,8 @@ class _LoginPageViewState extends State<LoginPageView> {
 
   Future<void> _clearPref() async {
     final prefs =
-        await SharedPreferences.getInstance();
+        await SharedPreferences
+            .getInstance();
 
     await prefs.setString(
       'TEL',
@@ -228,19 +248,48 @@ class _LoginPageViewState extends State<LoginPageView> {
     );
   }
 
+  // ============================================================
+  // KAYITLI KULLANICI / OTOMATİK LOGIN
+  // ============================================================
+
   Future<void> _loadPref() async {
-    final prefs =
-        await SharedPreferences.getInstance();
+    try {
+      final prefs =
+          await SharedPreferences
+              .getInstance();
 
-    final telDigits =
-        prefs.getString('TEL') ?? '';
+      final telDigits =
+          prefs.getString('TEL') ??
+              '';
 
-    final sifre =
-        prefs.getString('Sifre') ?? '';
+      final sifre =
+          prefs.getString('Sifre') ??
+              '';
 
-    if (telDigits.isNotEmpty) {
+      // ========================================================
+      // KAYITLI KULLANICI YOK
+      // ========================================================
+
+      if (telDigits.trim().isEmpty ||
+          sifre.trim().isEmpty) {
+        if (!mounted) return;
+
+        setState(() {
+          _rememberMe = false;
+          _ilkKontrol = false;
+        });
+
+        return;
+      }
+
+      // ========================================================
+      // KAYITLI KULLANICI VAR
+      // ========================================================
+
       _telCtrl.text =
-          _formatTr10(telDigits);
+          _formatTr10(
+        telDigits,
+      );
 
       _sifreCtrl.text =
           sifre;
@@ -250,12 +299,74 @@ class _LoginPageViewState extends State<LoginPageView> {
           _rememberMe = true;
         });
       }
-    } else {
-      if (mounted) {
+
+      debugPrint(
+        'Otomatik giriş deneniyor...',
+      );
+
+      // Backend'de yeni oturum / token oluşturması için
+      // normal giriş endpoint'ini tekrar çağırıyoruz.
+      final users =
+          await _api.girisTel(
+        telefon: telDigits,
+        sifre: sifre,
+      );
+
+      if (!mounted) return;
+
+      // ========================================================
+      // KAYITLI BİLGİ GEÇERSİZ
+      // ========================================================
+
+      if (users.isEmpty) {
+        await _clearPref();
+
+        if (!mounted) return;
+
         setState(() {
           _rememberMe = false;
+          _ilkKontrol = false;
+
+          _telCtrl.clear();
+          _sifreCtrl.clear();
         });
+
+        return;
       }
+
+      final u = users.first;
+
+      debugPrint(
+        'Otomatik giriş başarılı.',
+      );
+
+      if (!mounted) return;
+
+      // ========================================================
+      // DİREKT ANA SAYFAYA GİT
+      // ========================================================
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              HomeMenuPage(
+            user: u,
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint(
+        'Otomatik giriş hatası: $e',
+      );
+
+      if (!mounted) return;
+
+      // İnternet/API problemi varsa
+      // kullanıcıya normal login ekranını göster.
+      setState(() {
+        _ilkKontrol = false;
+      });
     }
   }
 
@@ -301,7 +412,9 @@ class _LoginPageViewState extends State<LoginPageView> {
       suffixIcon: suffix,
       filled: true,
       fillColor:
-          const Color(0xFFF7F7F9),
+          const Color(
+        0xFFF7F7F9,
+      ),
       isDense: true,
       contentPadding:
           const EdgeInsets.symmetric(
@@ -313,15 +426,20 @@ class _LoginPageViewState extends State<LoginPageView> {
             BorderRadius.circular(10),
         borderSide: BorderSide(
           color:
-              Colors.black.withOpacity(.07),
+              Colors.black.withOpacity(
+            .07,
+          ),
         ),
       ),
-      enabledBorder: OutlineInputBorder(
+      enabledBorder:
+          OutlineInputBorder(
         borderRadius:
             BorderRadius.circular(10),
         borderSide: BorderSide(
           color:
-              Colors.black.withOpacity(.07),
+              Colors.black.withOpacity(
+            .07,
+          ),
         ),
       ),
       focusedBorder:
@@ -335,11 +453,13 @@ class _LoginPageViewState extends State<LoginPageView> {
           width: 1.3,
         ),
       ),
-      errorBorder: OutlineInputBorder(
+      errorBorder:
+          OutlineInputBorder(
         borderRadius:
             BorderRadius.circular(10),
         borderSide: BorderSide(
-          color: Colors.red.shade400,
+          color:
+              Colors.red.shade400,
         ),
       ),
       focusedErrorBorder:
@@ -347,7 +467,8 @@ class _LoginPageViewState extends State<LoginPageView> {
         borderRadius:
             BorderRadius.circular(10),
         borderSide: BorderSide(
-          color: Colors.red.shade400,
+          color:
+              Colors.red.shade400,
           width: 1.3,
         ),
       ),
@@ -359,28 +480,58 @@ class _LoginPageViewState extends State<LoginPageView> {
   // ============================================================
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
+    // ==========================================================
+    // KAYITLI KULLANICI KONTROL EDİLİYOR
+    // Login formunu göstermiyoruz.
+    // ==========================================================
+
+    if (_ilkKontrol) {
+      return const Scaffold(
+        backgroundColor: bg,
+        body: SafeArea(
+          child: Center(
+            child: Image(
+              image: AssetImage(
+                'assets/agronet.png',
+              ),
+              width: 150,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+      );
+    }
+
     final scaler =
-        MediaQuery.textScalerOf(context)
-            .clamp(
-      maxScaleFactor: 1.06,
-    );
+        MediaQuery.textScalerOf(
+          context,
+        ).clamp(
+          maxScaleFactor: 1.06,
+        );
 
     return MediaQuery(
       data:
-          MediaQuery.of(context).copyWith(
-        textScaler: scaler,
-      ),
+          MediaQuery.of(
+            context,
+          ).copyWith(
+            textScaler: scaler,
+          ),
       child: Scaffold(
         backgroundColor: bg,
-        resizeToAvoidBottomInset: true,
+        resizeToAvoidBottomInset:
+            true,
         body: SafeArea(
           child: Center(
-            child: SingleChildScrollView(
+            child:
+                SingleChildScrollView(
               physics:
                   const BouncingScrollPhysics(),
               padding:
-                  const EdgeInsets.fromLTRB(
+                  const EdgeInsets
+                      .fromLTRB(
                 18,
                 14,
                 18,
@@ -398,60 +549,71 @@ class _LoginPageViewState extends State<LoginPageView> {
                         CrossAxisAlignment
                             .stretch,
                     children: [
-                      // ==================================================
+                      // ========================================
                       // LOGO
-                      // ==================================================
+                      // ========================================
 
                       Center(
-                        child: Image.asset(
+                        child:
+                            Image.asset(
                           "assets/agronet.png",
                           height: 82,
-                          fit: BoxFit.contain,
+                          fit:
+                              BoxFit.contain,
                         ),
                       ),
 
                       const SizedBox(
-                          height: 11),
+                        height: 11,
+                      ),
 
-                      // ==================================================
+                      // ========================================
                       // BAŞLIK
-                      // ==================================================
+                      // ========================================
 
                       const Text(
                         "Agronet'e Hoş Geldiniz",
                         textAlign:
                             TextAlign.center,
-                        style: TextStyle(
+                        style:
+                            TextStyle(
                           fontSize: 18,
                           fontWeight:
-                              FontWeight.w900,
+                              FontWeight
+                                  .w900,
                           color:
-                              Colors.black87,
+                              Colors
+                                  .black87,
                         ),
                       ),
 
                       const SizedBox(
-                          height: 3),
+                        height: 3,
+                      ),
 
                       const Text(
                         "Hesabınıza giriş yapın",
                         textAlign:
                             TextAlign.center,
-                        style: TextStyle(
+                        style:
+                            TextStyle(
                           fontSize: 11.5,
                           color:
-                              Colors.black45,
+                              Colors
+                                  .black45,
                           fontWeight:
-                              FontWeight.w600,
+                              FontWeight
+                                  .w600,
                         ),
                       ),
 
                       const SizedBox(
-                          height: 18),
+                        height: 18,
+                      ),
 
-                      // ==================================================
+                      // ========================================
                       // LOGIN CARD
-                      // ==================================================
+                      // ========================================
 
                       Container(
                         width:
@@ -466,16 +628,20 @@ class _LoginPageViewState extends State<LoginPageView> {
                         ),
                         decoration:
                             BoxDecoration(
-                          color: cardBg,
+                          color:
+                              cardBg,
                           borderRadius:
                               BorderRadius
-                                  .circular(14),
+                                  .circular(
+                            14,
+                          ),
                           border:
                               Border.all(
                             color: Colors
                                 .black
                                 .withOpacity(
-                                    .05),
+                              .05,
+                            ),
                           ),
                         ),
                         child: Column(
@@ -491,21 +657,25 @@ class _LoginPageViewState extends State<LoginPageView> {
                                 fontWeight:
                                     FontWeight
                                         .w900,
-                                color: Colors
-                                    .black87,
+                                color:
+                                    Colors
+                                        .black87,
                               ),
                             ),
 
                             const SizedBox(
-                                height: 3),
+                              height: 3,
+                            ),
 
                             const Text(
                               "Telefon ve şifrenizi girin.",
                               style:
                                   TextStyle(
-                                fontSize: 10.5,
-                                color: Colors
-                                    .black45,
+                                fontSize:
+                                    10.5,
+                                color:
+                                    Colors
+                                        .black45,
                                 fontWeight:
                                     FontWeight
                                         .w600,
@@ -513,11 +683,12 @@ class _LoginPageViewState extends State<LoginPageView> {
                             ),
 
                             const SizedBox(
-                                height: 11),
+                              height: 11,
+                            ),
 
-                            // ==============================================
+                            // ==================================
                             // TELEFON
-                            // ==============================================
+                            // ==================================
 
                             TextFormField(
                               controller:
@@ -532,7 +703,8 @@ class _LoginPageViewState extends State<LoginPageView> {
                                       .next,
                               style:
                                   const TextStyle(
-                                fontSize: 12.5,
+                                fontSize:
+                                    12.5,
                                 fontWeight:
                                     FontWeight
                                         .w600,
@@ -563,7 +735,8 @@ class _LoginPageViewState extends State<LoginPageView> {
                                 }
 
                                 if (!_isValidTel(
-                                    digits)) {
+                                  digits,
+                                )) {
                                   return "Telefon 10 hane olmalı";
                                 }
 
@@ -572,11 +745,12 @@ class _LoginPageViewState extends State<LoginPageView> {
                             ),
 
                             const SizedBox(
-                                height: 9),
+                              height: 9,
+                            ),
 
-                            // ==============================================
+                            // ==================================
                             // ŞİFRE
-                            // ==============================================
+                            // ==================================
 
                             TextFormField(
                               controller:
@@ -593,7 +767,8 @@ class _LoginPageViewState extends State<LoginPageView> {
                                       .done,
                               style:
                                   const TextStyle(
-                                fontSize: 12.5,
+                                fontSize:
+                                    12.5,
                                 fontWeight:
                                     FontWeight
                                         .w600,
@@ -610,7 +785,8 @@ class _LoginPageViewState extends State<LoginPageView> {
                               ],
                               decoration:
                                   _dec(
-                                hint: "Şifre",
+                                hint:
+                                    "Şifre",
                                 icon: Icons
                                     .lock_outline_rounded,
                                 suffix:
@@ -623,20 +799,24 @@ class _LoginPageViewState extends State<LoginPageView> {
                                           ? null
                                           : () {
                                               setState(
-                                                  () {
-                                                _obscure =
-                                                    !_obscure;
-                                              });
+                                                () {
+                                                  _obscure =
+                                                      !_obscure;
+                                                },
+                                              );
                                             },
-                                  icon: Icon(
+                                  icon:
+                                      Icon(
                                     _obscure
                                         ? Icons
                                             .visibility_outlined
                                         : Icons
                                             .visibility_off_outlined,
-                                    size: 19,
-                                    color: Colors
-                                        .black45,
+                                    size:
+                                        19,
+                                    color:
+                                        Colors
+                                            .black45,
                                   ),
                                 ),
                               ),
@@ -645,14 +825,16 @@ class _LoginPageViewState extends State<LoginPageView> {
                                     (v ?? '')
                                         .trim();
 
-                                if (s.isEmpty) {
+                                if (s
+                                    .isEmpty) {
                                   return "Şifre boş olamaz";
                                 }
 
                                 if (!RegExp(
-                                        r'^\d+$')
-                                    .hasMatch(
-                                        s)) {
+                                  r'^\d+$',
+                                ).hasMatch(
+                                  s,
+                                )) {
                                   return "Şifre sadece rakamlardan oluşmalı";
                                 }
 
@@ -661,11 +843,12 @@ class _LoginPageViewState extends State<LoginPageView> {
                             ),
 
                             const SizedBox(
-                                height: 7),
+                              height: 7,
+                            ),
 
-                            // ==============================================
+                            // ==================================
                             // HATIRLA + ŞİFREMİ UNUTTUM
-                            // ==============================================
+                            // ==================================
 
                             Row(
                               children: [
@@ -673,7 +856,8 @@ class _LoginPageViewState extends State<LoginPageView> {
                                   borderRadius:
                                       BorderRadius
                                           .circular(
-                                              7),
+                                    7,
+                                  ),
                                   onTap:
                                       _isLoading
                                           ? null
@@ -697,7 +881,8 @@ class _LoginPageViewState extends State<LoginPageView> {
                                               .min,
                                       children: [
                                         SizedBox(
-                                          width: 28,
+                                          width:
+                                              28,
                                           height:
                                               28,
                                           child:
@@ -707,24 +892,32 @@ class _LoginPageViewState extends State<LoginPageView> {
                                             activeColor:
                                                 accent,
                                             visualDensity:
-                                                VisualDensity.compact,
+                                                VisualDensity
+                                                    .compact,
                                             shape:
                                                 RoundedRectangleBorder(
                                               borderRadius:
-                                                  BorderRadius.circular(4),
+                                                  BorderRadius.circular(
+                                                4,
+                                              ),
                                             ),
-                                            onChanged: _isLoading
-                                                ? null
-                                                : (v) {
-                                                    _onRememberChanged(
-                                                      v ?? false,
-                                                    );
-                                                  },
+                                            onChanged:
+                                                _isLoading
+                                                    ? null
+                                                    : (v) {
+                                                        _onRememberChanged(
+                                                          v ??
+                                                              false,
+                                                        );
+                                                      },
                                           ),
                                         ),
+
                                         const SizedBox(
-                                            width:
-                                                1),
+                                          width:
+                                              1,
+                                        ),
+
                                         const Text(
                                           "Beni Hatırla",
                                           style:
@@ -774,14 +967,17 @@ class _LoginPageViewState extends State<LoginPageView> {
                                                 _snack(
                                                   "Telefon giriniz",
                                                 );
+
                                                 return;
                                               }
 
                                               Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
-                                                  builder: (_) => OtpDogrulamaPage(
-                                                    telefon: tel,
+                                                  builder: (_) =>
+                                                      OtpDogrulamaPage(
+                                                    telefon:
+                                                        tel,
                                                   ),
                                                 ),
                                               );
@@ -793,8 +989,9 @@ class _LoginPageViewState extends State<LoginPageView> {
                                         TextStyle(
                                       fontSize:
                                           10.8,
-                                      color: Colors
-                                          .black45,
+                                      color:
+                                          Colors
+                                              .black45,
                                       fontWeight:
                                           FontWeight
                                               .w700,
@@ -805,16 +1002,18 @@ class _LoginPageViewState extends State<LoginPageView> {
                             ),
 
                             const SizedBox(
-                                height: 6),
+                              height: 6,
+                            ),
 
-                            // ==============================================
+                            // ==================================
                             // GİRİŞ BUTONU
-                            // ==============================================
+                            // ==================================
 
                             SizedBox(
                               width:
                                   double.infinity,
-                              height: 43,
+                              height:
+                                  43,
                               child:
                                   ElevatedButton
                                       .icon(
@@ -825,34 +1024,44 @@ class _LoginPageViewState extends State<LoginPageView> {
                                 style:
                                     ElevatedButton
                                         .styleFrom(
-                                  elevation: 0,
+                                  elevation:
+                                      0,
                                   backgroundColor:
                                       accent,
                                   foregroundColor:
-                                      Colors.white,
+                                      Colors
+                                          .white,
                                   shape:
                                       RoundedRectangleBorder(
                                     borderRadius:
-                                        BorderRadius.circular(
-                                            10),
+                                        BorderRadius
+                                            .circular(
+                                      10,
+                                    ),
                                   ),
                                 ),
                                 icon:
                                     _isLoading
                                         ? const SizedBox(
-                                            width: 15,
-                                            height: 15,
+                                            width:
+                                                15,
+                                            height:
+                                                15,
                                             child:
                                                 CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2,
+                                              color:
+                                                  Colors.white,
+                                              strokeWidth:
+                                                  2,
                                             ),
                                           )
                                         : const Icon(
                                             Icons.login_rounded,
-                                            size: 18,
+                                            size:
+                                                18,
                                           ),
-                                label: Text(
+                                label:
+                                    Text(
                                   _isLoading
                                       ? "Giriş Yapılıyor..."
                                       : "Giriş Yap",
@@ -872,22 +1081,25 @@ class _LoginPageViewState extends State<LoginPageView> {
                       ),
 
                       const SizedBox(
-                          height: 13),
+                        height: 13,
+                      ),
 
-                      // ==================================================
+                      // ========================================
                       // FOOTER
-                      // ==================================================
+                      // ========================================
 
                       Center(
                         child: Text(
                           "Agronet Seracılık A.Ş",
                           style:
                               TextStyle(
-                            fontSize: 9.5,
+                            fontSize:
+                                9.5,
                             color: Colors
                                 .black
                                 .withOpacity(
-                                    .28),
+                              .28,
+                            ),
                             fontWeight:
                                 FontWeight
                                     .w600,
@@ -923,24 +1135,33 @@ class TrPhoneFormatter10
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final digits = newValue.text
-        .replaceAll(
+    final digits =
+        newValue.text.replaceAll(
       RegExp(r'[^0-9]'),
       '',
     );
 
-    final d = digits.length > 10
-        ? digits.substring(0, 10)
-        : digits;
+    final d =
+        digits.length > 10
+            ? digits.substring(
+                0,
+                10,
+              )
+            : digits;
 
-    final sb = StringBuffer();
+    final sb =
+        StringBuffer();
 
-    for (int i = 0; i < d.length; i++) {
+    for (int i = 0;
+        i < d.length;
+        i++) {
       if (i == 3) sb.write(' ');
       if (i == 6) sb.write(' ');
       if (i == 8) sb.write(' ');
 
-      sb.write(d[i]);
+      sb.write(
+        d[i],
+      );
     }
 
     final text =
@@ -950,7 +1171,8 @@ class TrPhoneFormatter10
       text: text,
       selection:
           TextSelection.collapsed(
-        offset: text.length,
+        offset:
+            text.length,
       ),
     );
   }

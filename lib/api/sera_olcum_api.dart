@@ -16,52 +16,53 @@ class SeraOlcumApi {
   // GET /SeraOlcum/Ekran?tarih=2026-08-14
   // ============================================================
 
-  Future<SeraOlcumEkranModel> ekranGetir({
-    required DateTime tarih,
-  }) async {
-    final uri = Uri.parse(
-      '${App.outsideurl}/SeraOlcum/Ekran',
-    ).replace(
-      queryParameters: {
-        'tarih': _yyyyMmDd(tarih),
-      },
+ Future<SeraOlcumEkranModel> ekranGetir({
+  required DateTime tarih,
+  required String personelKodu,
+}) async {
+  final uri = Uri.parse(
+    '${App.outsideurl}/SeraOlcum/Ekran',
+  ).replace(
+    queryParameters: {
+      'tarih': _yyyyMmDd(tarih),
+      'personelKodu': personelKodu,
+    },
+  );
+
+  final response = await _client.get(
+    uri,
+    headers: const {
+      'Accept': 'application/json',
+    },
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception(
+      'Ölçüm ekranı alınamadı. '
+      'Status: ${response.statusCode} '
+      'Body: ${response.body}',
     );
-
-    final response = await _client.get(
-      uri,
-      headers: const {
-        'Accept': 'application/json',
-      },
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception(
-        'Ölçüm ekranı alınamadı. '
-        'Status: ${response.statusCode} '
-        'Body: ${response.body}',
-      );
-    }
-
-    final decoded = jsonDecode(response.body);
-
-    if (decoded is! Map) {
-      throw Exception(
-        'Geçersiz sunucu cevabı.',
-      );
-    }
-
-    final json = Map<String, dynamic>.from(decoded);
-
-    if (json['success'] == false) {
-      throw Exception(
-        json['message']?.toString() ??
-            'Ölçüm ekranı alınamadı.',
-      );
-    }
-
-    return SeraOlcumEkranModel.fromJson(json);
   }
 
+  final decoded = jsonDecode(response.body);
+
+  if (decoded is! Map) {
+    throw Exception(
+      'Geçersiz sunucu cevabı.',
+    );
+  }
+
+  final json = Map<String, dynamic>.from(decoded);
+
+  if (json['success'] == false) {
+    throw Exception(
+      json['message']?.toString() ??
+          'Ölçüm ekranı alınamadı.',
+    );
+  }
+
+  return SeraOlcumEkranModel.fromJson(json);
+}
   // ============================================================
   // TARİHLER
   // GET /SeraOlcum/Tarihler

@@ -81,6 +81,38 @@ class _SeraOlcumGirisSayfaState
     return '$sera|||$vana|||$tip';
   }
 
+  bool _mobildeGosterilecekOlcum(String tip) {
+  final t = tip
+      .toLowerCase()
+      .replaceAll('ı', 'i')
+      .replaceAll('İ', 'i')
+      .trim();
+
+  // Otomasyon ile başlayanların tamamını gizle
+  if (t.startsWith('otomasyon')) {
+    return false;
+  }
+
+
+
+  // Jull gizle
+  if (t.contains('jull')) {
+    return false;
+  }
+
+  // Hat Basıncı gizle
+  if (t.contains('hat basinci')) {
+    return false;
+  }
+
+  // SLAP ile ilgili tüm ölçümleri gizle
+  if (t.contains('slap')) {
+    return false;
+  }
+
+  return true;
+}
+
   // ============================================================
   // EKRANI YÜKLE
   // ============================================================
@@ -94,9 +126,10 @@ class _SeraOlcumGirisSayfaState
     });
 
     try {
-      final sonuc = await _api.ekranGetir(
-        tarih: _tarih,
-      );
+   final sonuc = await _api.ekranGetir(
+  tarih: _tarih,
+  personelKodu: widget.personelKodu,
+);
 
       // Eski controller / focusları temizle
       for (final item in _editStates.values) {
@@ -107,22 +140,28 @@ class _SeraOlcumGirisSayfaState
       _editStates.clear();
 
       // Backend'den gelen bütün sera/vana/tipleri state'e al.
-      for (final yer in sonuc.yerler) {
-        for (final olcum in yer.olcumler) {
-          final key = _key(
-            yer.sera,
-            yer.vana,
-            olcum.tip,
-          );
+    for (final yer in sonuc.yerler) {
+  for (final olcum in yer.olcumler) {
 
-          _editStates[key] = _OlcumEditState(
-            sera: yer.sera,
-            vana: yer.vana,
-            tip: olcum.tip,
-            deger: olcum.deger,
-          );
-        }
-      }
+    // Mobilde gösterilmeyecek ölçümleri atla
+    if (!_mobildeGosterilecekOlcum(olcum.tip)) {
+      continue;
+    }
+
+    final key = _key(
+      yer.sera,
+      yer.vana,
+      olcum.tip,
+    );
+
+    _editStates[key] = _OlcumEditState(
+      sera: yer.sera,
+      vana: yer.vana,
+      tip: olcum.tip,
+      deger: olcum.deger,
+    );
+  }
+}
 
       final seralar = sonuc.yerler
           .map((e) => e.sera.trim())
@@ -297,79 +336,18 @@ int _olcumSira(String tip) {
       .replaceAll('İ', 'i')
       .trim();
 
-  if (t == 'drip ph') return 1;
-  if (t == 'drip ec') return 2;
-
-  if (t == 'drenaj ph') return 3;
-  if (t == 'drenaj ec') return 4;
-
-  if (t.contains('otomasyon') &&
-      t.contains('drenaj') &&
-      t.contains('ph')) {
-    return 5;
+  // D ile başlayanlar önce
+  if (t.startsWith('d')) {
+    return 1;
   }
 
-  if (t.contains('otomasyon') &&
-      t.contains('drenaj') &&
-      t.contains('ec')) {
-    return 6;
+  // Diğer ölçümler ortada
+  if (t != 'sulama cc') {
+    return 2;
   }
 
-  if (t == 'sulama cc') return 7;
-
-  if (t.contains('otomasyon') &&
-      t.contains('sulama') &&
-      t.contains('cc')) {
-    return 8;
-  }
-
-  if (t.contains('otomasyon') &&
-      t.contains('sulama') &&
-      (t.contains('sn') ||
-          t.contains('sure'))) {
-    return 9;
-  }
-
-  if (t.contains('otomasyon') &&
-      t.contains('toplam') &&
-      t.contains('sulama')) {
-    return 10;
-  }
-
-  if (t.contains('slap') &&
-      t.contains('agirlik') &&
-      t.contains('sabah')) {
-    return 11;
-  }
-
-  if (t.contains('otomasyon') &&
-      t.contains('drenaj') &&
-      t.contains('cc')) {
-    return 12;
-  }
-
-  if (t == 'drenaj %' ||
-      (t.contains('drenaj') &&
-          t.contains('%'))) {
-    return 13;
-  }
-
-  if (t.contains('hat basinci')) {
-    return 14;
-  }
-
-  if (t == 'jull' ||
-      t.contains('jull')) {
-    return 15;
-  }
-
-  if (t.contains('slap') &&
-      t.contains('agirlik') &&
-      t.contains('gece')) {
-    return 16;
-  }
-
-  return 999;
+  // Sulama CC her zaman en son
+  return 3;
 }
 
   // ============================================================
@@ -422,70 +400,6 @@ int _olcumSira(String tip) {
     setState(() {
       _seciliVana = vana;
     });
-  }
-
-  // ============================================================
-  // SONRAKİ VANA
-  // ============================================================
-
-  void _sonrakiVana() {
-    final vanalar = _vanalar;
-
-    if (_seciliVana == null ||
-        vanalar.isEmpty) {
-      return;
-    }
-
-    final index =
-        vanalar.indexOf(_seciliVana!);
-
-    if (index < 0) return;
-
-    // Aynı serada sonraki vana
-    if (index < vanalar.length - 1) {
-      _vanaSec(
-        vanalar[index + 1],
-      );
-
-      return;
-    }
-
-    // Seranın son vanasıysa sonraki sera
-    final seralar = _seralar;
-
-    if (_seciliSera == null) return;
-
-    final seraIndex =
-        seralar.indexOf(_seciliSera!);
-
-    if (seraIndex >= 0 &&
-        seraIndex < seralar.length - 1) {
-      _seraSec(
-        seralar[seraIndex + 1],
-      );
-    }
-  }
-
-  // ============================================================
-  // ÖNCEKİ VANA
-  // ============================================================
-
-  void _oncekiVana() {
-    final vanalar = _vanalar;
-
-    if (_seciliVana == null ||
-        vanalar.isEmpty) {
-      return;
-    }
-
-    final index =
-        vanalar.indexOf(_seciliVana!);
-
-    if (index > 0) {
-      _vanaSec(
-        vanalar[index - 1],
-      );
-    }
   }
 
   // ============================================================
@@ -637,10 +551,6 @@ int _olcumSira(String tip) {
                 ? _hataEkrani()
                 : _icerik(),
 
-        bottomNavigationBar:
-            _loading || _hata != null
-                ? null
-                : _altKaydet(),
       ),
     );
   }
@@ -651,47 +561,35 @@ int _olcumSira(String tip) {
 
   Widget _icerik() {
     return ListView(
-      physics:
-          const BouncingScrollPhysics(),
-      padding:
-          const EdgeInsets.fromLTRB(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(
         10,
         9,
         10,
-        100,
+        20,
       ),
       children: [
         _personelBilgisi(),
 
-        const SizedBox(
-          height: 7,
-        ),
+        const SizedBox(height: 7),
 
         _tarihKart(),
 
-        const SizedBox(
-          height: 7,
-        ),
+        const SizedBox(height: 7),
 
         _seraKart(),
 
-        const SizedBox(
-          height: 7,
-        ),
+        const SizedBox(height: 7),
 
         _vanaKart(),
 
-        const SizedBox(
-          height: 7,
-        ),
+        const SizedBox(height: 7),
 
         _olcumlerKart(),
 
-        const SizedBox(
-          height: 7,
-        ),
+        const SizedBox(height: 9),
 
-        _vanaGezinti(),
+        _kaydetKart(),
       ],
     );
   }
@@ -1359,323 +1257,93 @@ Widget _olcumSatiri(
 }
 
   // ============================================================
-  // VANA GEZİNTİ
+  // KAYDET KARTI
   // ============================================================
 
-  Widget _vanaGezinti() {
-    if (_seciliVana == null) {
-      return const SizedBox.shrink();
-    }
-
-    final vanalar = _vanalar;
-
-    final index =
-        vanalar.indexOf(
-      _seciliVana!,
-    );
-
-    final oncekiVar =
-        index > 0;
-
-    final sonrakiVar =
-        index >= 0 &&
-            index <
-                vanalar.length - 1;
-
-    final sonrakiSeraVar =
-        _seciliSera != null &&
-            _seralar.indexOf(
-                  _seciliSera!,
-                ) <
-                _seralar.length - 1;
+  Widget _kaydetKart() {
+    final toplamDolu = _editStates.values
+        .where(
+          (e) => e.controller.text.trim().isNotEmpty,
+        )
+        .length;
 
     return Container(
-      padding:
-          const EdgeInsets.all(9),
-      decoration:
-          BoxDecoration(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(11),
         border: Border.all(
-          color:
-              Colors.black.withOpacity(
-            .05,
-          ),
+          color: Colors.black.withOpacity(.05),
         ),
       ),
       child: Row(
         children: [
           Expanded(
-            child:
-                OutlinedButton.icon(
-              onPressed:
-                  oncekiVar
-                      ? _oncekiVana
-                      : null,
-              style:
-                  OutlinedButton
-                      .styleFrom(
-                foregroundColor:
-                    accent,
-                minimumSize:
-                    const Size(
-                  0,
-                  41,
-                ),
-                side: BorderSide(
-                  color: accent
-                      .withOpacity(
-                    .20,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$toplamDolu ölçüm girildi',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-                shape:
-                    RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius
-                          .circular(
-                    9,
+                const SizedBox(height: 2),
+                Text(
+                  '${_seciliSera ?? '-'}  •  ${_seciliVana ?? '-'}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 9.5,
+                    color: Colors.black45,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-              icon: const Icon(
-                Icons
-                    .chevron_left_rounded,
-                size: 18,
-              ),
-              label:
-                  const Text(
-                'ÖNCEKİ',
-                style:
-                    TextStyle(
-                  fontSize: 9.5,
-                  fontWeight:
-                      FontWeight
-                          .w900,
-                ),
-              ),
+              ],
             ),
           ),
-
-          const SizedBox(
-            width: 7,
-          ),
-
-          Expanded(
-            child:
-                FilledButton.icon(
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 145,
+            height: 44,
+            child: FilledButton.icon(
               onPressed:
-                  sonrakiVar ||
-                          sonrakiSeraVar
-                      ? _sonrakiVana
-                      : null,
-              style:
-                  FilledButton
-                      .styleFrom(
-                backgroundColor:
-                    accent,
-                minimumSize:
-                    const Size(
-                  0,
-                  41,
-                ),
-                shape:
-                    RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius
-                          .circular(
-                    9,
-                  ),
+                  _saving || toplamDolu == 0
+                      ? null
+                      : _kaydet,
+              style: FilledButton.styleFrom(
+                backgroundColor: accent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
+              icon: _saving
+                  ? const SizedBox(
+                      width: 15,
+                      height: 15,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.save_rounded,
+                      size: 17,
+                    ),
               label: Text(
-                sonrakiVar
-                    ? 'SONRAKİ VANA'
-                    : sonrakiSeraVar
-                        ? 'SONRAKİ SERA'
-                        : 'SON',
-                style:
-                    const TextStyle(
-                  fontSize: 9.5,
-                  fontWeight:
-                      FontWeight
-                          .w900,
+                _saving
+                    ? 'KAYDEDİLİYOR'
+                    : 'KAYDET',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
                 ),
-              ),
-              icon: const Icon(
-                Icons
-                    .chevron_right_rounded,
-                size: 18,
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // ALT KAYDET
-  // ============================================================
-
-  Widget _altKaydet() {
-    final toplamDolu =
-        _editStates.values
-            .where(
-              (e) =>
-                  e.controller.text
-                      .trim()
-                      .isNotEmpty,
-            )
-            .length;
-
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding:
-            const EdgeInsets.fromLTRB(
-          10,
-          8,
-          10,
-          9,
-        ),
-        decoration:
-            BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            top: BorderSide(
-              color: Colors.black
-                  .withOpacity(
-                .05,
-              ),
-            ),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black
-                  .withOpacity(
-                .04,
-              ),
-              blurRadius: 12,
-              offset:
-                  const Offset(
-                0,
-                -3,
-              ),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment
-                        .start,
-                mainAxisSize:
-                    MainAxisSize.min,
-                children: [
-                  Text(
-                    '$toplamDolu ölçüm girildi',
-                    style:
-                        const TextStyle(
-                      fontSize: 11,
-                      fontWeight:
-                          FontWeight
-                              .w900,
-                    ),
-                  ),
-
-                  const SizedBox(
-                    height: 2,
-                  ),
-
-                  Text(
-                    '${_seciliSera ?? '-'}  •  '
-                    '${_seciliVana ?? '-'}',
-                    maxLines: 1,
-                    overflow:
-                        TextOverflow
-                            .ellipsis,
-                    style:
-                        const TextStyle(
-                      fontSize: 9.5,
-                      color:
-                          Colors.black45,
-                      fontWeight:
-                          FontWeight
-                              .w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(
-              width: 10,
-            ),
-
-            SizedBox(
-              width: 145,
-              height: 44,
-              child:
-                  FilledButton.icon(
-                onPressed:
-                    _saving ||
-                            toplamDolu ==
-                                0
-                        ? null
-                        : _kaydet,
-
-                style:
-                    FilledButton
-                        .styleFrom(
-                  backgroundColor:
-                      accent,
-                  shape:
-                      RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius
-                            .circular(
-                      10,
-                    ),
-                  ),
-                ),
-
-                icon: _saving
-                    ? const SizedBox(
-                        width: 15,
-                        height: 15,
-                        child:
-                            CircularProgressIndicator(
-                          strokeWidth:
-                              2,
-                          color:
-                              Colors.white,
-                        ),
-                      )
-                    : const Icon(
-                        Icons
-                            .save_rounded,
-                        size: 17,
-                      ),
-
-                label: Text(
-                  _saving
-                      ? 'KAYDEDİLİYOR'
-                      : 'KAYDET',
-                  style:
-                      const TextStyle(
-                    fontSize: 10,
-                    fontWeight:
-                        FontWeight
-                            .w900,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
