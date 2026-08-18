@@ -284,112 +284,113 @@ Future<void> _guncellemeKontrolEt() async {
         },
       ),
 
-      _MenuItem(
-        title: "Depo Talep Fişi",
-        icon: Icons.playlist_add_rounded,
-        visible:
-            user.yetkisiVar("DEPO_TALEP_FISI"),
-        onTap: () {
-          if (!user.oturumGecerli) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(
-              const SnackBar(
-                content: Text(
-                  "Mobil oturum bilgisi bulunamadı. "
-                  "Tekrar giriş yapın.",
-                ),
-              ),
-            );
+  
+_MenuItem(
+  title: "Depo Talep Fişi",
+  icon: Icons.playlist_add_rounded,
+  visible: user.yetkisiVar("DEPO_TALEP_FISI"),
+  onTap: () {
+    // Mobil oturum kontrolü
+    if (!user.oturumGecerli) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Mobil oturum bilgisi bulunamadı. "
+            "Tekrar giriş yapın.",
+          ),
+        ),
+      );
+      return;
+    }
 
-            return;
-          }
+    // ========================================================
+    // ÖNEMLİ:
+    // Burada artık depoKullaniciKodu kullanılmıyor.
+    // Gerçek Prosis personel kodu kullanılıyor.
+    //
+    // Örnek:
+    // P0024
+    // P0036
+    // P0160
+    // ========================================================
 
-          final kullaniciKodu =
-              user.depoKullaniciKodu.trim();
+    final kullaniciKodu =
+        (user.prosiskodu ?? '').trim();
 
-          if (kullaniciKodu.isEmpty) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(
-              const SnackBar(
-                content: Text(
-                  "Kullanıcı kodu bulunamadı.",
-                ),
-              ),
-            );
+    if (kullaniciKodu.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Prosis kullanıcı kodu bulunamadı. "
+            "Tekrar giriş yapın.",
+          ),
+        ),
+      );
+      return;
+    }
 
-            return;
-          }
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-                  DepoTalepFisiPage(
-                kullaniciKodu:
-                    kullaniciKodu,
-                oturumId:
-                    user.oturumId ?? 0,
-                token:
-                    user.token ?? '',
-              ),
-            ),
-          );
-        },
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DepoTalepFisiPage(
+          kullaniciKodu: kullaniciKodu,
+          oturumId: user.oturumId ?? 0,
+          token: user.token ?? '',
+        ),
       ),
+    );
+  },
+),
 
-      _MenuItem(
-        title: "Depo Talep Onay",
-        icon: Icons.fact_check_rounded,
-        visible:
-            user.yetkisiVar("DEPO_TALEP"),
-        onTap: () {
-          if (!user.oturumGecerli) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(
-              const SnackBar(
-                content: Text(
-                  "Mobil oturum bilgisi bulunamadı. "
-                  "Tekrar giriş yapın.",
-                ),
-              ),
-            );
+_MenuItem(
+  title: "Depo Talep Onay",
+  icon: Icons.fact_check_rounded,
+  visible: user.yetkisiVar("DEPO_TALEP"),
+  onTap: () {
+    // Mobil oturum kontrolü
+    if (!user.oturumGecerli) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Mobil oturum bilgisi bulunamadı. "
+            "Tekrar giriş yapın.",
+          ),
+        ),
+      );
+      return;
+    }
 
-            return;
-          }
+    // ========================================================
+    // Onay işlemlerinde de gerçek Prosis kodu gönderiliyor.
+    // ========================================================
 
-          final kullaniciKodu =
-              user.depoKullaniciKodu.trim();
+    final kullaniciKodu =
+        (user.prosiskodu ?? '').trim();
 
-          if (kullaniciKodu.isEmpty) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(
-              const SnackBar(
-                content: Text(
-                  "Mikro kullanıcı kodu bulunamadı.",
-                ),
-              ),
-            );
+    if (kullaniciKodu.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Prosis kullanıcı kodu bulunamadı. "
+            "Tekrar giriş yapın.",
+          ),
+        ),
+      );
+      return;
+    }
 
-            return;
-          }
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-                  DepoTalepOnayPage(
-                kullaniciKodu:
-                    kullaniciKodu,
-                oturumId:
-                    user.oturumId ?? 0,
-                token:
-                    user.token ?? '',
-              ),
-            ),
-          );
-        },
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DepoTalepOnayPage(
+          kullaniciKodu: kullaniciKodu,
+          oturumId: user.oturumId ?? 0,
+          token: user.token ?? '',
+        ),
       ),
-
+    );
+  },
+),
       _MenuItem(
         title: "Barkod Kontrol",
         icon:

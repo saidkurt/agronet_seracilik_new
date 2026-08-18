@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:agronet/models/login_user_model.dart';
 import 'package:agronet/page/depo_talep_onay.dart';
+import 'package:agronet/page/Homepage/home_page.dart';
+import 'package:agronet/page/talep_detay_page.dart';
 
 class BildirimNavigationService {
   BildirimNavigationService._();
@@ -22,17 +24,21 @@ class BildirimNavigationService {
   ) {
     _aktifUser = user;
 
-    // Uygulama kapalıyken bildirime basıldıysa
-    // listener önce çalışmış olabilir.
-    // HomeMenu açılınca bekleyen bildirimi aç.
+    // Uygulama tamamen kapalıyken bildirime basılırsa
+    // OneSignal listener HomeMenu oluşmadan önce çalışabilir.
+    //
+    // Kullanıcı yüklendikten sonra bekleyen bildirim yeniden açılır.
     Future.delayed(
-      const Duration(milliseconds: 300),
+      const Duration(
+        milliseconds: 350,
+      ),
       _bekleyenBildirimiAc,
     );
   }
 
   static void kullaniciyiTemizle() {
     _aktifUser = null;
+    _bekleyenBildirim = null;
   }
 
   // ============================================================
@@ -42,7 +48,8 @@ class BildirimNavigationService {
   static void bildirimTiklandi(
     Map<String, dynamic>? data,
   ) {
-    if (data == null || data.isEmpty) {
+    if (data == null ||
+        data.isEmpty) {
       return;
     }
 
@@ -51,7 +58,9 @@ class BildirimNavigationService {
     );
 
     _bekleyenBildirim =
-        Map<String, dynamic>.from(data);
+        Map<String, dynamic>.from(
+      data,
+    );
 
     _bekleyenBildirimiAc();
   }
@@ -61,10 +70,14 @@ class BildirimNavigationService {
   // ============================================================
 
   static void _bekleyenBildirimiAc() {
-    final data = _bekleyenBildirim;
-    final user = _aktifUser;
+    final data =
+        _bekleyenBildirim;
 
-    if (data == null || user == null) {
+    final user =
+        _aktifUser;
+
+    if (data == null ||
+        user == null) {
       return;
     }
 
@@ -75,30 +88,52 @@ class BildirimNavigationService {
       return;
     }
 
-    final tur =
-        data['tur']?.toString().trim() ?? '';
+    // ==========================================================
+    // BİLDİRİM TÜRÜ
+    // ==========================================================
 
-    if (tur != 'DEPO_TALEP') {
-      return;
-    }
+    final tur =
+        data['tur']
+                ?.toString()
+                .trim()
+                .toUpperCase() ??
+            '';
+
+    // ==========================================================
+    // EVRAK BİLGİLERİ
+    // ==========================================================
 
     final seri =
-        data['seri']?.toString().trim() ?? '';
+        data['seri']
+                ?.toString()
+                .trim() ??
+            '';
 
     final sira =
         int.tryParse(
-          data['sira']?.toString() ?? '',
-        ) ??
-        0;
+              data['sira']
+                      ?.toString()
+                      .trim() ??
+                  '',
+            ) ??
+            0;
 
-    if (seri.isEmpty || sira <= 0) {
+    if (seri.isEmpty ||
+        sira <= 0) {
       debugPrint(
-        'Bildirim evrak bilgisi geçersiz: $seri-$sira',
+        'Bildirim evrak bilgisi geçersiz: '
+        '$seri-$sira',
       );
 
-      _bekleyenBildirim = null;
+      _bekleyenBildirim =
+          null;
+
       return;
     }
+
+    // ==========================================================
+    // KULLANICI / OTURUM BİLGİLERİ
+    // ==========================================================
 
     final kullaniciKodu =
         user.depoKullaniciKodu.trim();
@@ -109,37 +144,163 @@ class BildirimNavigationService {
     final token =
         user.token?.trim() ?? '';
 
-    if (kullaniciKodu.isEmpty ||
-        oturumId <= 0 ||
-        token.isEmpty) {
+    // ==========================================================
+    // 1) YENİ DEPO TALEBİ
+    //
+    // ESKİ DAVRANIŞ AYNEN KALIR.
+    //
+    // Yeni talep bildirimi:
+    //
+    // DEPO_TALEP
+    //      ↓
+    // DepoTalepOnayPage
+    //
+    // Kullanıcı talebi direkt onaylayabilir.
+    // ==========================================================
+
+    if (tur == 'DEPO_TALEP') {
+      if (kullaniciKodu.isEmpty ||
+          oturumId <= 0 ||
+          token.isEmpty) {
+        debugPrint(
+          'Depo talep bildirimi açılamadı: '
+          'oturum bilgisi eksik.',
+        );
+
+        // Oturum henüz oluşmamış olabilir.
+        // Bekleyen bildirimi silmiyoruz.
+        // kullaniciAyarla tekrar çağrılınca yeniden denenecek.
+        return;
+      }
+
       debugPrint(
-        'Bildirim açılamadı: oturum bilgisi eksik.',
+        'Depo talep onay ekranı açılıyor: '
+        '$seri-$sira',
+      );
+
+      // Aynı bildirim ikinci kez açılmasın.
+      _bekleyenBildirim =
+          null;
+
+      navigator.push(
+        MaterialPageRoute(
+          builder: (_) =>
+              DepoTalepOnayPage(
+            kullaniciKodu:
+                kullaniciKodu,
+
+            oturumId:
+                oturumId,
+
+            token:
+                token,
+
+            // Bildirimden gelen fiş
+            ilkSeri:
+                seri,
+
+            ilkSira:
+                sira,
+          ),
+        ),
       );
 
       return;
     }
 
-    // Aynı bildirimi ikinci kez açma.
-    _bekleyenBildirim = null;
+    // ==========================================================
+    // 2) TALEP TAMAMEN ONAYLANDI
+    //
+    // Yeni davranış:
+    //
+    // DEPO_TALEP_ONAYLANDI
+    //      ↓
+    // Ana Sayfa
+    //      ↓
+    // TalepDetayPage
+    //
+    // TalepDetayPage'den geri basılırsa
+    // direkt Ana Sayfa gelir.
+    // ==========================================================
 
-    navigator.push(
-      MaterialPageRoute(
-        builder: (_) =>
-            DepoTalepOnayPage(
-          kullaniciKodu:
-              kullaniciKodu,
-          oturumId:
-              oturumId,
-          token:
-              token,
+    if (tur ==
+        'DEPO_TALEP_ONAYLANDI') {
+      debugPrint(
+        'Onaylanan talep detay ekranı açılıyor: '
+        '$seri-$sira',
+      );
 
-          // Bildirimden gelen fiş
-          ilkSeri:
-              seri,
-          ilkSira:
-              sira,
+      // Aynı bildirim ikinci kez açılmasın.
+      _bekleyenBildirim =
+          null;
+
+      // ========================================================
+      // ÖNCE NAVIGATION STACK'İ TEMİZLE
+      //
+      // Sadece HomeMenu bırak.
+      // ========================================================
+
+      navigator.pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) =>
+              HomeMenuPage(
+            user: user,
+          ),
         ),
-      ),
+        (route) => false,
+      );
+
+      // ========================================================
+      // HomeMenu route'u yerleştikten sonra TalepDetay aç.
+      //
+      // Stack:
+      //
+      // HomeMenu
+      //    ↓
+      // TalepDetayPage
+      //
+      // Geri = HomeMenu
+      // ========================================================
+
+      Future.delayed(
+        const Duration(
+          milliseconds: 150,
+        ),
+        () {
+          final nav =
+              navigatorKey.currentState;
+
+          if (nav == null) {
+            return;
+          }
+
+          nav.push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  TalepDetayPage(
+                seri:
+                    seri,
+
+                sira:
+                    sira,
+              ),
+            ),
+          );
+        },
+      );
+
+      return;
+    }
+
+    // ==========================================================
+    // DESTEKLENMEYEN BİLDİRİM
+    // ==========================================================
+
+    debugPrint(
+      'Desteklenmeyen bildirim türü: $tur',
     );
+
+    _bekleyenBildirim =
+        null;
   }
 }

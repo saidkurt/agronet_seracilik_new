@@ -11,23 +11,68 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UpdateService {
-  static  String baseUrl = App.outsideurl;
+  static String baseUrl = App.outsideurl;
 
-  static const Color accent = Color(0xFF1E6F5C);
+  static const Color accent =
+      Color(0xFF1E6F5C);
 
-  static Future<String> _cihazIdGetir() async {
-    final prefs = await SharedPreferences.getInstance();
+  // ============================================================
+  // VERSION CODE DÜZELT
+  //
+  // Android bazı cihaz/build durumlarında:
+  //
+  // 2048 -> 48
+  // 2049 -> 49
+  // 2050 -> 50
+  //
+  // şeklinde dönebiliyor.
+  //
+  // Agronet içerisinde gerçek sürüm numarasını kullanıyoruz.
+  // ============================================================
 
-    var cihazId = prefs.getString('agronet_cihaz_id');
+  static int _versionCodeDuzelt(
+    String buildNumber,
+  ) {
+    var versionCode =
+        int.tryParse(
+          buildNumber.trim(),
+        ) ??
+        0;
 
-    if (cihazId != null && cihazId.isNotEmpty) {
+    if (versionCode >= 2000 &&
+        versionCode < 3000) {
+      versionCode -= 2000;
+    }
+
+    return versionCode;
+  }
+
+  // ============================================================
+  // CİHAZ ID
+  // ============================================================
+
+  static Future<String>
+      _cihazIdGetir() async {
+    final prefs =
+        await SharedPreferences
+            .getInstance();
+
+    var cihazId =
+        prefs.getString(
+      'agronet_cihaz_id',
+    );
+
+    if (cihazId != null &&
+        cihazId.isNotEmpty) {
       return cihazId;
     }
 
-    final random = Random.secure();
+    final random =
+        Random.secure();
 
     cihazId =
-        '${DateTime.now().millisecondsSinceEpoch}-${random.nextInt(999999999)}';
+        '${DateTime.now().millisecondsSinceEpoch}-'
+        '${random.nextInt(999999999)}';
 
     await prefs.setString(
       'agronet_cihaz_id',
@@ -37,14 +82,21 @@ class UpdateService {
     return cihazId;
   }
 
+  // ============================================================
+  // CİHAZI BACKEND'E KAYDET
+  // POST /Update/Device
+  // ============================================================
+
   static Future<void> cihazKaydet({
     String? personelKodu,
   }) async {
     try {
       final packageInfo =
-          await PackageInfo.fromPlatform();
+          await PackageInfo
+              .fromPlatform();
 
-      final deviceInfo = DeviceInfoPlugin();
+      final deviceInfo =
+          DeviceInfoPlugin();
 
       final androidInfo =
           await deviceInfo.androidInfo;
@@ -52,24 +104,37 @@ class UpdateService {
       final cihazId =
           await _cihazIdGetir();
 
+      // --------------------------------------------------------
+      // RAW Android build numarasını Agronet sürümüne çevir.
+      //
+      // Ör:
+      // 2049 -> 49
+      // --------------------------------------------------------
+
       final versionCode =
-          int.tryParse(
-            packageInfo.buildNumber,
-          ) ??
-          0;
+          _versionCodeDuzelt(
+        packageInfo.buildNumber,
+      );
 
       final data = {
-        'cihazId': cihazId,
+        'cihazId':
+            cihazId,
+
         'cihazAdi':
             '${androidInfo.manufacturer} ${androidInfo.model}',
+
         'personelKodu':
             personelKodu ?? '',
+
         'marka':
             androidInfo.manufacturer,
+
         'model':
             androidInfo.model,
+
         'versionName':
             packageInfo.version,
+
         'versionCode':
             versionCode,
       };
@@ -81,7 +146,9 @@ class UpdateService {
 
       debugPrint(
         'Cihaz kaydedildi: '
-        '${packageInfo.version}+${packageInfo.buildNumber}',
+        '${packageInfo.version}+'
+        '${packageInfo.buildNumber} '
+        '(Agronet versionCode: $versionCode)',
       );
     } catch (e) {
       debugPrint(
@@ -90,28 +157,46 @@ class UpdateService {
     }
   }
 
-  static Future<void> guncellemeKontrolEt(
+  // ============================================================
+  // GÜNCELLEME KONTROL
+  // GET /Update/Version
+  // ============================================================
+
+  static Future<void>
+      guncellemeKontrolEt(
     BuildContext context,
   ) async {
     try {
       final packageInfo =
-          await PackageInfo.fromPlatform();
+          await PackageInfo
+              .fromPlatform();
+
+      // --------------------------------------------------------
+      // Telefonda görünen gerçek Android build numarasını
+      // Agronet versionCode formatına çevir.
+      //
+      // Ö:
+      // Telefon RAW = 2049
+      // Agronet      = 49
+      // --------------------------------------------------------
 
       final mevcutVersionCode =
-          int.tryParse(
-            packageInfo.buildNumber,
-          ) ??
-          0;
+          _versionCodeDuzelt(
+        packageInfo.buildNumber,
+      );
 
-      final response = await Dio().get(
+      final response =
+          await Dio().get(
         '$baseUrl/Update/Version',
       );
 
-      final data = response.data;
+      final data =
+          response.data;
 
       final yeniVersionCode =
           int.tryParse(
-            data['versionCode'].toString(),
+            data['versionCode']
+                .toString(),
           ) ??
           0;
 
@@ -129,10 +214,14 @@ class UpdateService {
               '';
 
       debugPrint(
-        'Telefon: $mevcutVersionCode - '
+        'Güncelleme kontrolü -> '
+        'Telefon RAW: ${packageInfo.buildNumber} | '
+        'Telefon: $mevcutVersionCode | '
         'Sunucu: $yeniVersionCode',
       );
 
+      // Sunucudaki versionCode telefondakinden büyük değilse
+      // güncelleme yok.
       if (yeniVersionCode <=
           mevcutVersionCode) {
         return;
@@ -146,8 +235,10 @@ class UpdateService {
         context: context,
         yeniVersionName:
             yeniVersionName,
-        zorunlu: zorunlu,
-        apkUrl: apkUrl,
+        zorunlu:
+            zorunlu,
+        apkUrl:
+            apkUrl,
       );
     } catch (e) {
       debugPrint(
@@ -168,41 +259,70 @@ class UpdateService {
     required String apkUrl,
   }) async {
     await showDialog(
-      context: context,
-      barrierDismissible: !zorunlu,
-      builder: (dialogContext) {
+      context:
+          context,
+
+      barrierDismissible:
+          !zorunlu,
+
+      builder: (
+        dialogContext,
+      ) {
         return PopScope(
-          canPop: !zorunlu,
+          canPop:
+              !zorunlu,
+
           child: Dialog(
             backgroundColor:
                 Colors.transparent,
+
             insetPadding:
-                const EdgeInsets.symmetric(
+                const EdgeInsets
+                    .symmetric(
               horizontal: 28,
             ),
+
             child: Container(
               padding:
-                  const EdgeInsets.fromLTRB(
+                  const EdgeInsets
+                      .fromLTRB(
                 18,
                 18,
                 18,
                 14,
               ),
-              decoration: BoxDecoration(
-                color: Colors.white,
+
+              decoration:
+                  BoxDecoration(
+                color:
+                    Colors.white,
+
                 borderRadius:
-                    BorderRadius.circular(
+                    BorderRadius
+                        .circular(
                   18,
                 ),
-                border: Border.all(
-                  color: Colors.black
-                      .withOpacity(.04),
+
+                border:
+                    Border.all(
+                  color: Colors
+                      .black
+                      .withOpacity(
+                    .04,
+                  ),
                 ),
+
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black
-                        .withOpacity(.10),
-                    blurRadius: 24,
+                    color: Colors
+                        .black
+                        .withOpacity(
+                      .10,
+                    ),
+
+                    blurRadius:
+                        24,
+
                     offset:
                         const Offset(
                       0,
@@ -211,28 +331,43 @@ class UpdateService {
                   ),
                 ],
               ),
+
               child: Column(
                 mainAxisSize:
                     MainAxisSize.min,
+
                 children: [
                   Container(
-                    width: 48,
-                    height: 48,
+                    width:
+                        48,
+
+                    height:
+                        48,
+
                     decoration:
                         BoxDecoration(
                       color: accent
-                          .withOpacity(.10),
+                          .withOpacity(
+                        .10,
+                      ),
+
                       borderRadius:
                           BorderRadius
                               .circular(
                         14,
                       ),
                     ),
-                    child: const Icon(
+
+                    child:
+                        const Icon(
                       Icons
                           .system_update_alt_rounded,
-                      color: accent,
-                      size: 26,
+
+                      color:
+                          accent,
+
+                      size:
+                          26,
                     ),
                   ),
 
@@ -242,10 +377,15 @@ class UpdateService {
 
                   const Text(
                     'Yeni Güncelleme',
-                    style: TextStyle(
-                      fontSize: 17,
+
+                    style:
+                        TextStyle(
+                      fontSize:
+                          17,
+
                       fontWeight:
-                          FontWeight.w900,
+                          FontWeight
+                              .w900,
                     ),
                   ),
 
@@ -255,14 +395,25 @@ class UpdateService {
 
                   Text(
                     'Agronet $yeniVersionName sürümü hazır.',
+
                     textAlign:
-                        TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12.5,
+                        TextAlign
+                            .center,
+
+                    style:
+                        TextStyle(
+                      fontSize:
+                          12.5,
+
                       fontWeight:
-                          FontWeight.w600,
-                      color: Colors.black
-                          .withOpacity(.55),
+                          FontWeight
+                              .w600,
+
+                      color: Colors
+                          .black
+                          .withOpacity(
+                        .55,
+                      ),
                     ),
                   ),
 
@@ -274,15 +425,28 @@ class UpdateService {
                     zorunlu
                         ? 'Devam etmek için uygulamayı güncellemeniz gerekiyor.'
                         : 'Yeni sürümü şimdi yükleyebilirsiniz.',
+
                     textAlign:
-                        TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      height: 1.3,
+                        TextAlign
+                            .center,
+
+                    style:
+                        TextStyle(
+                      fontSize:
+                          10.5,
+
+                      height:
+                          1.3,
+
                       fontWeight:
-                          FontWeight.w500,
-                      color: Colors.black
-                          .withOpacity(.38),
+                          FontWeight
+                              .w500,
+
+                      color: Colors
+                          .black
+                          .withOpacity(
+                        .38,
+                      ),
                     ),
                   ),
 
@@ -296,29 +460,35 @@ class UpdateService {
                         Expanded(
                           child:
                               OutlinedButton(
-                            onPressed: () {
+                            onPressed:
+                                () {
                               Navigator.pop(
                                 dialogContext,
                               );
                             },
+
                             style:
                                 OutlinedButton
                                     .styleFrom(
                               foregroundColor:
                                   Colors
                                       .black87,
-                              side: BorderSide(
+
+                              side:
+                                  BorderSide(
                                 color: Colors
                                     .black
                                     .withOpacity(
                                   .10,
                                 ),
                               ),
+
                               minimumSize:
                                   const Size
                                       .fromHeight(
                                 42,
                               ),
+
                               shape:
                                   RoundedRectangleBorder(
                                 borderRadius:
@@ -328,15 +498,19 @@ class UpdateService {
                                 ),
                               ),
                             ),
+
                             child:
                                 const Text(
                               'Daha Sonra',
+
                               style:
                                   TextStyle(
                                 fontWeight:
                                     FontWeight
                                         .w800,
-                                fontSize: 12,
+
+                                fontSize:
+                                    12,
                               ),
                             ),
                           ),
@@ -349,8 +523,10 @@ class UpdateService {
 
                       Expanded(
                         child:
-                            FilledButton.icon(
-                          onPressed: () async {
+                            FilledButton
+                                .icon(
+                          onPressed:
+                              () async {
                             Navigator.pop(
                               dialogContext,
                             );
@@ -360,19 +536,26 @@ class UpdateService {
                               apkUrl,
                             );
                           },
+
                           style:
                               FilledButton
                                   .styleFrom(
                             backgroundColor:
                                 accent,
+
                             foregroundColor:
-                                Colors.white,
+                                Colors
+                                    .white,
+
                             minimumSize:
                                 const Size
                                     .fromHeight(
                               42,
                             ),
-                            elevation: 0,
+
+                            elevation:
+                                0,
+
                             shape:
                                 RoundedRectangleBorder(
                               borderRadius:
@@ -382,20 +565,28 @@ class UpdateService {
                               ),
                             ),
                           ),
-                          icon: const Icon(
+
+                          icon:
+                              const Icon(
                             Icons
                                 .download_rounded,
-                            size: 18,
+
+                            size:
+                                18,
                           ),
+
                           label:
                               const Text(
                             'Güncelle',
+
                             style:
                                 TextStyle(
                               fontWeight:
                                   FontWeight
                                       .w900,
-                              fontSize: 12,
+
+                              fontSize:
+                                  12,
                             ),
                           ),
                         ),
@@ -422,12 +613,14 @@ class UpdateService {
     BuildContext? dialogContext;
 
     try {
-      var url = apkUrl;
+      var url =
+          apkUrl.trim();
 
       if (!url.startsWith(
         'http',
       )) {
-        url = '$baseUrl$url';
+        url =
+            '$baseUrl$url';
       }
 
       final directory =
@@ -437,7 +630,9 @@ class UpdateService {
           '${directory.path}/agronet_update.apk';
 
       final apkFile =
-          File(apkPath);
+          File(
+        apkPath,
+      );
 
       if (await apkFile.exists()) {
         await apkFile.delete();
@@ -447,19 +642,30 @@ class UpdateService {
         return;
       }
 
-      double progress = 0.0;
+      double progress =
+          0.0;
 
-      int receivedBytes = 0;
-      int totalBytes = 0;
+      int receivedBytes =
+          0;
+
+      int totalBytes =
+          0;
 
       StateSetter?
           dialogSetState;
 
       showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) {
-          dialogContext = ctx;
+        context:
+            context,
+
+        barrierDismissible:
+            false,
+
+        builder: (
+          ctx,
+        ) {
+          dialogContext =
+              ctx;
 
           return StatefulBuilder(
             builder: (
@@ -471,7 +677,8 @@ class UpdateService {
 
               final int yuzde =
                   totalBytes > 0
-                      ? (progress * 100)
+                      ? (progress *
+                              100)
                           .round()
                       : 0;
 
@@ -481,10 +688,11 @@ class UpdateService {
                           1024 /
                           1024)
                       .toStringAsFixed(
-                    1,
-                  );
+                1,
+              );
 
-              final String toplamMb =
+              final String
+                  toplamMb =
                   totalBytes > 0
                       ? (totalBytes /
                               1024 /
@@ -495,17 +703,24 @@ class UpdateService {
                       : '...';
 
               return PopScope(
-                canPop: false,
-                child: Dialog(
+                canPop:
+                    false,
+
+                child:
+                    Dialog(
                   backgroundColor:
                       Colors
                           .transparent,
+
                   insetPadding:
                       const EdgeInsets
                           .symmetric(
-                    horizontal: 28,
+                    horizontal:
+                        28,
                   ),
-                  child: Container(
+
+                  child:
+                      Container(
                     padding:
                         const EdgeInsets
                             .fromLTRB(
@@ -514,21 +729,29 @@ class UpdateService {
                       18,
                       16,
                     ),
+
                     decoration:
                         BoxDecoration(
-                      color: Colors.white,
+                      color:
+                          Colors
+                              .white,
+
                       borderRadius:
                           BorderRadius
                               .circular(
                         18,
                       ),
-                      border: Border.all(
+
+                      border:
+                          Border
+                              .all(
                         color: Colors
                             .black
                             .withOpacity(
                           .04,
                         ),
                       ),
+
                       boxShadow: [
                         BoxShadow(
                           color: Colors
@@ -536,8 +759,10 @@ class UpdateService {
                               .withOpacity(
                             .10,
                           ),
+
                           blurRadius:
                               24,
+
                           offset:
                               const Offset(
                             0,
@@ -546,35 +771,47 @@ class UpdateService {
                         ),
                       ],
                     ),
-                    child: Column(
+
+                    child:
+                        Column(
                       mainAxisSize:
                           MainAxisSize
                               .min,
+
                       children: [
                         Row(
                           children: [
                             Container(
-                              width: 40,
-                              height: 40,
+                              width:
+                                  40,
+
+                              height:
+                                  40,
+
                               decoration:
                                   BoxDecoration(
                                 color: accent
                                     .withOpacity(
                                   .10,
                                 ),
+
                                 borderRadius:
                                     BorderRadius
                                         .circular(
                                   12,
                                 ),
                               ),
+
                               child:
                                   const Icon(
                                 Icons
                                     .downloading_rounded,
+
                                 color:
                                     accent,
-                                size: 22,
+
+                                size:
+                                    22,
                               ),
                             ),
 
@@ -588,31 +825,39 @@ class UpdateService {
                                 crossAxisAlignment:
                                     CrossAxisAlignment
                                         .start,
+
                                 children: [
                                   const Text(
                                     'Güncelleme İndiriliyor',
+
                                     style:
                                         TextStyle(
                                       fontSize:
                                           14,
+
                                       fontWeight:
                                           FontWeight
                                               .w900,
                                     ),
                                   ),
+
                                   const SizedBox(
                                     height:
                                         2,
                                   ),
+
                                   Text(
                                     'Lütfen bekleyin...',
+
                                     style:
                                         TextStyle(
                                       fontSize:
                                           10.5,
+
                                       fontWeight:
                                           FontWeight
                                               .w600,
+
                                       color: Colors
                                           .black
                                           .withOpacity(
@@ -630,30 +875,38 @@ class UpdateService {
                                       .symmetric(
                                 horizontal:
                                     9,
+
                                 vertical:
                                     5,
                               ),
+
                               decoration:
                                   BoxDecoration(
                                 color: accent
                                     .withOpacity(
                                   .08,
                                 ),
+
                                 borderRadius:
                                     BorderRadius
                                         .circular(
                                   20,
                                 ),
                               ),
-                              child: Text(
+
+                              child:
+                                  Text(
                                 '%$yuzde',
+
                                 style:
                                     const TextStyle(
                                   fontSize:
                                       11,
+
                                   fontWeight:
                                       FontWeight
                                           .w900,
+
                                   color:
                                       accent,
                                 ),
@@ -672,6 +925,7 @@ class UpdateService {
                                   .circular(
                             20,
                           ),
+
                           child:
                               LinearProgressIndicator(
                             value:
@@ -679,12 +933,17 @@ class UpdateService {
                                         0
                                     ? progress
                                     : null,
-                            minHeight: 8,
+
+                            minHeight:
+                                8,
+
                             backgroundColor:
-                                Colors.black
+                                Colors
+                                    .black
                                     .withOpacity(
                               .06,
                             ),
+
                             valueColor:
                                 const AlwaysStoppedAnimation<
                                     Color>(
@@ -701,16 +960,20 @@ class UpdateService {
                           mainAxisAlignment:
                               MainAxisAlignment
                                   .spaceBetween,
+
                           children: [
                             Text(
                               '$indirilenMb MB indirildi',
+
                               style:
                                   TextStyle(
                                 fontSize:
                                     10.5,
+
                                 fontWeight:
                                     FontWeight
                                         .w700,
+
                                 color: Colors
                                     .black
                                     .withOpacity(
@@ -721,13 +984,16 @@ class UpdateService {
 
                             Text(
                               '$toplamMb MB',
+
                               style:
                                   TextStyle(
                                 fontSize:
                                     10.5,
+
                                 fontWeight:
                                     FontWeight
                                         .w700,
+
                                 color: Colors
                                     .black
                                     .withOpacity(
@@ -750,12 +1016,15 @@ class UpdateService {
       await Dio().download(
         url,
         apkPath,
-        options: Options(
+
+        options:
+            Options(
           receiveTimeout:
               const Duration(
             minutes: 10,
           ),
         ),
+
         onReceiveProgress: (
           received,
           total,
@@ -818,7 +1087,9 @@ class UpdateService {
             behavior:
                 SnackBarBehavior
                     .floating,
-            content: Text(
+
+            content:
+                Text(
               'Güncelleme indirilemedi: $e',
             ),
           ),
@@ -840,12 +1111,19 @@ class UpdateService {
     }
 
     await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
+      context:
+          context,
+
+      barrierDismissible:
+          false,
+
+      builder: (
+        dialogContext,
+      ) {
         Future.delayed(
           const Duration(
-            milliseconds: 850,
+            milliseconds:
+                850,
           ),
           () {
             if (dialogContext
@@ -858,31 +1136,56 @@ class UpdateService {
         );
 
         return PopScope(
-          canPop: false,
-          child: Dialog(
+          canPop:
+              false,
+
+          child:
+              Dialog(
             backgroundColor:
-                Colors.transparent,
+                Colors
+                    .transparent,
+
             insetPadding:
-                const EdgeInsets.symmetric(
-              horizontal: 42,
+                const EdgeInsets
+                    .symmetric(
+              horizontal:
+                  42,
             ),
-            child: Container(
+
+            child:
+                Container(
               padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: 18,
+                  const EdgeInsets
+                      .symmetric(
+                horizontal:
+                    18,
+
+                vertical:
+                    18,
               ),
-              decoration: BoxDecoration(
-                color: Colors.white,
+
+              decoration:
+                  BoxDecoration(
+                color:
+                    Colors.white,
+
                 borderRadius:
-                    BorderRadius.circular(
+                    BorderRadius
+                        .circular(
                   18,
                 ),
+
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black
-                        .withOpacity(.10),
-                    blurRadius: 24,
+                    color: Colors
+                        .black
+                        .withOpacity(
+                      .10,
+                    ),
+
+                    blurRadius:
+                        24,
+
                     offset:
                         const Offset(
                       0,
@@ -891,53 +1194,87 @@ class UpdateService {
                   ),
                 ],
               ),
-              child: Column(
+
+              child:
+                  Column(
                 mainAxisSize:
-                    MainAxisSize.min,
+                    MainAxisSize
+                        .min,
+
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width:
+                        44,
+
+                    height:
+                        44,
+
                     decoration:
                         BoxDecoration(
                       color: accent
-                          .withOpacity(.10),
+                          .withOpacity(
+                        .10,
+                      ),
+
                       shape:
-                          BoxShape.circle,
+                          BoxShape
+                              .circle,
                     ),
-                    child: const Icon(
+
+                    child:
+                        const Icon(
                       Icons
                           .check_rounded,
-                      color: accent,
-                      size: 25,
+
+                      color:
+                          accent,
+
+                      size:
+                          25,
                     ),
                   ),
 
                   const SizedBox(
-                    height: 10,
+                    height:
+                        10,
                   ),
 
                   const Text(
                     'İndirme Tamamlandı',
-                    style: TextStyle(
-                      fontSize: 14,
+
+                    style:
+                        TextStyle(
+                      fontSize:
+                          14,
+
                       fontWeight:
-                          FontWeight.w900,
+                          FontWeight
+                              .w900,
                     ),
                   ),
 
                   const SizedBox(
-                    height: 3,
+                    height:
+                        3,
                   ),
 
                   Text(
                     'Kurulum hazırlanıyor...',
-                    style: TextStyle(
-                      fontSize: 10.5,
+
+                    style:
+                        TextStyle(
+                      fontSize:
+                          10.5,
+
                       fontWeight:
-                          FontWeight.w600,
-                      color: Colors.black
-                          .withOpacity(.45),
+                          FontWeight
+                              .w600,
+
+                      color: Colors
+                          .black
+                          .withOpacity(
+                        .45,
+                      ),
                     ),
                   ),
                 ],

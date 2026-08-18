@@ -109,6 +109,9 @@ class DepoTalepApi {
   // POST /Depo/TalepKaydet
   // ============================================================
 
+
+  
+
   Future<DepoTalepIslemSonucModel> talepKaydet(
     DepoTalepKaydetModel model,
   ) async {
@@ -373,5 +376,77 @@ class DepoTalepApi {
     } catch (_) {
       return '$varsayilanMesaj: ${response.body}';
     }
+  }
+    // ============================================================
+  // BİLDİRİMDEN AÇILAN TALEP DETAYI
+  // GET /Depo/TalepBildirimDetay
+  //
+  // Açık / tamamlanmış / iptal edilmiş fişi göstermek için.
+  // Normal TalepDetay ekranından bağımsızdır.
+  // ============================================================
+
+  Future<DepoTalepBildirimDetayModel?>
+      talepBildirimDetayGetir({
+    required String seri,
+    required int sira,
+  }) async {
+    final temizSeri = seri.trim();
+
+    if (temizSeri.isEmpty) {
+      throw Exception(
+        'Evrak seri bilgisi boş.',
+      );
+    }
+
+    if (sira <= 0) {
+      throw Exception(
+        'Evrak sıra numarası geçersiz.',
+      );
+    }
+
+    final uri = Uri.parse(
+      '$_base/Depo/TalepBildirimDetay',
+    ).replace(
+      queryParameters: {
+        'seri': temizSeri,
+        'sira': sira.toString(),
+      },
+    );
+
+    final response = await http.get(
+      uri,
+      headers: const {
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 404) {
+      return null;
+    }
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        _hataMesajiGetir(response),
+      );
+    }
+
+    if (response.body.trim().isEmpty) {
+      throw Exception(
+        'Talep detay cevabı boş.',
+      );
+    }
+
+    final decoded =
+        jsonDecode(response.body);
+
+    if (decoded is! Map) {
+      throw Exception(
+        'Talep bildirim detay cevabı geçersiz.',
+      );
+    }
+
+    return DepoTalepBildirimDetayModel.fromJson(
+      Map<String, dynamic>.from(decoded),
+    );
   }
 }

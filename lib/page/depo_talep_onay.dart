@@ -806,6 +806,23 @@ void initState() {
     return '$gun.$ay.${tarih.year}';
   }
 
+  String _talepEdenMetni(
+    String? ad,
+    String? prosisKodu,
+  ) {
+    final isim = (ad ?? '').trim();
+    final kod = (prosisKodu ?? '').trim();
+
+    final parcalar = <String>[
+      if (isim.isNotEmpty) isim,
+      if (kod.isNotEmpty) '($kod)',
+    ];
+
+    return parcalar.isEmpty
+        ? '-'
+        : parcalar.join(' ');
+  }
+
   // ============================================================
   // BUILD
   // ============================================================
@@ -1197,7 +1214,76 @@ void initState() {
               ),
 
               const SizedBox(
-                height: 7,
+                height: 6,
+              ),
+
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(
+                  horizontal: 7,
+                  vertical: 5,
+                ),
+                decoration:
+                    BoxDecoration(
+                  color: accent
+                      .withOpacity(.045),
+                  borderRadius:
+                      BorderRadius.circular(
+                          7),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons
+                          .person_outline_rounded,
+                      size: 14,
+                      color: accent,
+                    ),
+                    const SizedBox(
+                      width: 5,
+                    ),
+                    const Text(
+                      'Talep Eden:',
+                      style:
+                          TextStyle(
+                        fontSize: 8.7,
+                        color:
+                            Colors.black45,
+                        fontWeight:
+                            FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(
+                      width: 4,
+                    ),
+                    Expanded(
+                      child: Text(
+                        _talepEdenMetni(
+                          evrak.olusturanAdi,
+                          evrak
+                              .olusturanProsisKodu,
+                        ),
+                        maxLines: 1,
+                        overflow:
+                            TextOverflow
+                                .ellipsis,
+                        style:
+                            const TextStyle(
+                          fontSize: 9.5,
+                          color:
+                              Colors.black87,
+                          fontWeight:
+                              FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(
+                height: 6,
               ),
 
               Container(
@@ -1519,6 +1605,94 @@ void initState() {
                 ),
               ),
             ],
+          ),
+
+          const SizedBox(
+            height: 6,
+          ),
+
+          Container(
+            width: double.infinity,
+            padding:
+                const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 7,
+            ),
+            decoration: BoxDecoration(
+              color:
+                  const Color(0xFFF7F7F9),
+              borderRadius:
+                  BorderRadius.circular(8),
+              border: Border.all(
+                color: Colors.black
+                    .withOpacity(.045),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  alignment:
+                      Alignment.center,
+                  decoration:
+                      BoxDecoration(
+                    color: accent
+                        .withOpacity(.09),
+                    borderRadius:
+                        BorderRadius.circular(
+                            7),
+                  ),
+                  child: const Icon(
+                    Icons
+                        .person_outline_rounded,
+                    size: 17,
+                    color: accent,
+                  ),
+                ),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment
+                            .start,
+                    children: [
+                      const Text(
+                        'Talep Eden',
+                        style: TextStyle(
+                          fontSize: 8.5,
+                          color:
+                              Colors.black38,
+                          fontWeight:
+                              FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 1,
+                      ),
+                      Text(
+                        _talepEdenMetni(
+                          _detay!
+                              .olusturanAdi,
+                          _detay!
+                              .olusturanProsisKodu,
+                        ),
+                        maxLines: 1,
+                        overflow:
+                            TextOverflow
+                                .ellipsis,
+                        style:
+                            const TextStyle(
+                          fontSize: 10.2,
+                          fontWeight:
+                              FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
 
           const SizedBox(
