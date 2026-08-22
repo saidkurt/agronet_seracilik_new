@@ -13,6 +13,7 @@ import 'package:agronet/page/paketleme_raporu.dart';
 import 'package:agronet/page/personel_anlik_durum.dart';
 import 'package:agronet/page/personel_listesi_page.dart';
 import 'package:agronet/page/sera_is_tarihleri.dart';
+import 'package:agronet/page/sera_kontrol_rapor.dart';
 import 'package:agronet/page/seraa_olcum_giris.dart';
 import 'package:agronet/page/tuta_giris.dart';
 import 'package:agronet/page/tuta_rapor.dart';
@@ -445,6 +446,22 @@ _MenuItem(
           );
         },
       ),
+      _MenuItem(
+  title: "Sera Kontrol Raporu",
+  icon: Icons.fact_check_outlined,
+  visible:
+      user.yetkisiVar("SERA_KONTROL_RAPORU"),
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            SeraKontrolRaporuPage(
+        ),
+      ),
+    );
+  },
+),
 
       _MenuItem(
         title: "Hasat Raporu",
