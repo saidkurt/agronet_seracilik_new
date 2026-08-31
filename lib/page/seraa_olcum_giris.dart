@@ -25,7 +25,7 @@ class _SeraOlcumGirisSayfaState
   // ============================================================
 
   static const Color accent = Color(0xFF1E6F5C);
-  static const Color bg = Color(0xFFF5F6F8);
+  static const Color bg = Color(0xFFF3F7F5);
 
   final SeraOlcumApi _api = SeraOlcumApi();
 
@@ -508,20 +508,20 @@ int _olcumSira(String tip) {
         backgroundColor: bg,
 
         appBar: AppBar(
-          toolbarHeight: 50,
+          toolbarHeight: 46,
           centerTitle: true,
           elevation: 0,
           backgroundColor:
-              Colors.white,
+              accent,
           surfaceTintColor:
-              Colors.white,
+              accent,
           foregroundColor:
-              Colors.black87,
+              Colors.white,
 
           title: const Text(
             'Ölçüm Giriş',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               fontWeight:
                   FontWeight.w900,
             ),
@@ -563,31 +563,31 @@ int _olcumSira(String tip) {
     return ListView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(
-        10,
-        9,
-        10,
-        20,
+        8,
+        7,
+        8,
+        12,
       ),
       children: [
         _personelBilgisi(),
 
-        const SizedBox(height: 7),
+        const SizedBox(height: 5),
 
         _tarihKart(),
 
-        const SizedBox(height: 7),
+        const SizedBox(height: 5),
 
         _seraKart(),
 
-        const SizedBox(height: 7),
+        const SizedBox(height: 5),
 
         _vanaKart(),
 
-        const SizedBox(height: 7),
+        const SizedBox(height: 5),
 
         _olcumlerKart(),
 
-        const SizedBox(height: 9),
+        const SizedBox(height: 6),
 
         _kaydetKart(),
       ],
@@ -600,7 +600,7 @@ int _olcumSira(String tip) {
 
   Widget _personelBilgisi() {
     return Container(
-      height: 47,
+      height: 40,
       padding:
           const EdgeInsets.symmetric(
         horizontal: 10,
@@ -619,8 +619,8 @@ int _olcumSira(String tip) {
       child: Row(
         children: [
           Container(
-            width: 31,
-            height: 31,
+            width: 27,
+            height: 27,
             decoration:
                 BoxDecoration(
               color: accent
@@ -643,7 +643,7 @@ int _olcumSira(String tip) {
           const Text(
             'Personel',
             style: TextStyle(
-              fontSize: 9.5,
+              fontSize: 8.8,
               color: Colors.black45,
               fontWeight:
                   FontWeight.w600,
@@ -687,7 +687,7 @@ int _olcumSira(String tip) {
         borderRadius:
             BorderRadius.circular(9),
         child: Container(
-          height: 44,
+          height: 38,
           padding:
               const EdgeInsets.symmetric(
             horizontal: 10,
@@ -697,8 +697,8 @@ int _olcumSira(String tip) {
           child: Row(
             children: [
               Container(
-                width: 28,
-                height: 28,
+                width: 24,
+                height: 24,
                 decoration:
                     BoxDecoration(
                   color: accent
@@ -728,7 +728,7 @@ int _olcumSira(String tip) {
                   _ddMmYyyy(_tarih),
                   style:
                       const TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 11.5,
                     fontWeight:
                         FontWeight
                             .w900,
@@ -791,7 +791,7 @@ int _olcumSira(String tip) {
                         const Duration(
                       milliseconds: 140,
                     ),
-                    height: 39,
+                    height: 34,
                     padding:
                         const EdgeInsets
                             .symmetric(
@@ -830,7 +830,7 @@ int _olcumSira(String tip) {
                             ? Colors.white
                             : Colors
                                 .black87,
-                        fontSize: 10.5,
+                        fontSize: 9.8,
                         fontWeight:
                             FontWeight
                                 .w900,
@@ -915,9 +915,9 @@ int _olcumSira(String tip) {
                     ),
                     constraints:
                         const BoxConstraints(
-                      minWidth: 66,
+                      minWidth: 58,
                     ),
-                    height: 48,
+                    height: 40,
                     padding:
                         const EdgeInsets
                             .symmetric(
@@ -965,7 +965,7 @@ int _olcumSira(String tip) {
                                 ? accent
                                 : Colors
                                     .black87,
-                            fontSize: 10.5,
+                            fontSize: 9.8,
                             fontWeight:
                                 FontWeight
                                     .w900,
@@ -984,7 +984,7 @@ int _olcumSira(String tip) {
                                 ? accent
                                 : Colors
                                     .black38,
-                            fontSize: 8.5,
+                            fontSize: 8.0,
                             fontWeight:
                                 FontWeight
                                     .w700,
@@ -1081,7 +1081,7 @@ int _olcumSira(String tip) {
                               .length -
                           1)
                     const SizedBox(
-                      height: 8,
+                      height: 5,
                     ),
                 ],
               ],
@@ -1107,8 +1107,8 @@ Widget _olcumSatiri(
 
   return Container(
     padding: const EdgeInsets.symmetric(
-      horizontal: 7,
-      vertical: 5,
+      horizontal: 6,
+      vertical: 3,
     ),
     decoration: BoxDecoration(
       color: dolu
@@ -1145,7 +1145,7 @@ Widget _olcumSatiri(
         Expanded(
           flex: 4,
           child: SizedBox(
-            height: 36,
+            height: 32,
             child: TextField(
               controller: state.controller,
               focusNode: state.focusNode,
@@ -1188,7 +1188,7 @@ Widget _olcumSatiri(
               decoration: InputDecoration(
                 hintText: 'Değer',
                 hintStyle: const TextStyle(
-                  fontSize: 9.5,
+                  fontSize: 8.8,
                   color: Colors.black38,
                 ),
 
@@ -1268,7 +1268,7 @@ Widget _olcumSatiri(
         .length;
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(11),
@@ -1296,7 +1296,7 @@ Widget _olcumSatiri(
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 9.5,
+                    fontSize: 8.8,
                     color: Colors.black45,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1306,8 +1306,8 @@ Widget _olcumSatiri(
           ),
           const SizedBox(width: 10),
           SizedBox(
-            width: 145,
-            height: 44,
+            width: 125,
+            height: 38,
             child: FilledButton.icon(
               onPressed:
                   _saving || toplamDolu == 0
@@ -1361,10 +1361,10 @@ Widget _olcumSatiri(
     return Container(
       padding:
           const EdgeInsets.fromLTRB(
-        10,
-        9,
-        10,
-        10,
+        8,
+        7,
+        8,
+        8,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1414,7 +1414,7 @@ Widget _olcumSatiri(
                   title,
                   style:
                       const TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 11.5,
                     fontWeight:
                         FontWeight
                             .w900,
@@ -1456,7 +1456,7 @@ Widget _olcumSatiri(
           children: [
             Container(
               width: 48,
-              height: 48,
+              height: 40,
               decoration:
                   BoxDecoration(
                 color: Colors.red
@@ -1520,7 +1520,7 @@ Widget _olcumSatiri(
                   'Tekrar Dene',
                   style:
                       TextStyle(
-                    fontSize: 10.5,
+                    fontSize: 9.8,
                     fontWeight:
                         FontWeight
                             .w800,

@@ -27,7 +27,7 @@ class BitkiOlcumSahaSayfa extends StatefulWidget {
 class _BitkiOlcumSahaSayfaState
     extends State<BitkiOlcumSahaSayfa> {
   static const Color accent = Color(0xFF1E6F5C);
-  static const Color bg = Color(0xFFF5F6F8);
+  static const Color bg = Color(0xFFF3F7F5);
 
   static const int idUzama = 35;
   static const int idKalinlik = 36;
@@ -706,7 +706,7 @@ class _BitkiOlcumSahaSayfaState
         content: Text(
           mesaj,
           style: const TextStyle(
-            fontSize: 11,
+            fontSize: 10.2,
           ),
         ),
         backgroundColor:
@@ -746,11 +746,11 @@ class _BitkiOlcumSahaSayfaState
         backgroundColor: bg,
 
         appBar: AppBar(
-          toolbarHeight: 50,
+          toolbarHeight: 46,
           title: const Text(
             'Bitki Ölçüm Girişi',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               fontWeight:
                   FontWeight.w900,
             ),
@@ -758,11 +758,11 @@ class _BitkiOlcumSahaSayfaState
           centerTitle: true,
           elevation: 0,
           backgroundColor:
-              Colors.white,
+              accent,
           surfaceTintColor:
-              Colors.white,
+              accent,
           foregroundColor:
-              Colors.black87,
+              Colors.white,
           actions: [
             if (bitkiBulundu)
               IconButton(
@@ -946,10 +946,10 @@ class _BitkiOlcumSahaSayfaState
                   const BouncingScrollPhysics(),
               padding:
                   const EdgeInsets.fromLTRB(
-                10,
-                9,
-                10,
-                18,
+                8,
+                7,
+                8,
+                12,
               ),
               children: [
                 _personelBilgisi(),
@@ -975,7 +975,7 @@ class _BitkiOlcumSahaSayfaState
                         BorderRadius.circular(
                             9),
                     child: Container(
-                      height: 45,
+                      height: 34,
                       padding:
                           const EdgeInsets
                               .symmetric(
@@ -1001,8 +1001,8 @@ class _BitkiOlcumSahaSayfaState
                       child: Row(
                         children: [
                           Container(
-                            width: 29,
-                            height: 29,
+                            width: 25,
+                            height: 25,
                             decoration:
                                 BoxDecoration(
                               color: accent
@@ -1019,7 +1019,7 @@ class _BitkiOlcumSahaSayfaState
                                   .event_rounded,
                               color:
                                   accent,
-                              size: 17,
+                              size: 15,
                             ),
                           ),
 
@@ -1120,8 +1120,8 @@ class _BitkiOlcumSahaSayfaState
                           ),
 
                           SizedBox(
-                            width: 92,
-                            height: 46,
+                            width: 82,
+                            height: 40,
                             child:
                                 FilledButton(
                               onPressed:
@@ -1169,7 +1169,7 @@ class _BitkiOlcumSahaSayfaState
                                       children: [
                                         Icon(
                                           Icons.search_rounded,
-                                          size: 17,
+                                          size: 15,
                                         ),
                                         SizedBox(
                                           width: 4,
@@ -1177,7 +1177,7 @@ class _BitkiOlcumSahaSayfaState
                                         Text(
                                           'GETİR',
                                           style: TextStyle(
-                                            fontSize: 10.5,
+                                            fontSize: 9.8,
                                             fontWeight: FontWeight.w900,
                                           ),
                                         ),
@@ -1194,7 +1194,7 @@ class _BitkiOlcumSahaSayfaState
                         ),
 
                         Container(
-                          height: 39,
+                          height: 34,
                           padding:
                               const EdgeInsets
                                   .symmetric(
@@ -1222,7 +1222,7 @@ class _BitkiOlcumSahaSayfaState
                                     .check_circle_rounded,
                                 color:
                                     accent,
-                                size: 17,
+                                size: 15,
                               ),
 
                               const SizedBox(
@@ -1338,7 +1338,7 @@ class _BitkiOlcumSahaSayfaState
                                     ),
 
                                     SizedBox(
-                                      height: 44,
+                                      height: 39,
                                       child:
                                           FilledButton.icon(
                                         onPressed: !zorunluHazir ||
@@ -1358,7 +1358,7 @@ class _BitkiOlcumSahaSayfaState
                                               )
                                             : const Icon(
                                                 Icons.save_rounded,
-                                                size: 17,
+                                                size: 15,
                                               ),
                                         label:
                                             const Text(
@@ -1415,7 +1415,7 @@ class _BitkiOlcumSahaSayfaState
                                         'Salkım bazlı ölçüm tipi bulunamadı.',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
-                                          fontSize: 11,
+                                          fontSize: 10.2,
                                           color: Colors.black45,
                                           fontWeight: FontWeight.w700,
                                         ),
@@ -1425,16 +1425,16 @@ class _BitkiOlcumSahaSayfaState
                                     const Text(
                                       'Salkım seçin',
                                       style: TextStyle(
-                                        fontSize: 10.5,
+                                        fontSize: 9.8,
                                         color: Colors.black45,
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
 
-                                    const SizedBox(height: 7),
+                                    const SizedBox(height: 5),
 
                                     SizedBox(
-                                      height: 39,
+                                      height: 34,
                                       child: ListView.separated(
                                         scrollDirection: Axis.horizontal,
                                         physics: const BouncingScrollPhysics(),
@@ -1460,7 +1460,7 @@ class _BitkiOlcumSahaSayfaState
                                             label: Text(
                                               '$salkimNo. Salkım',
                                               style: TextStyle(
-                                                fontSize: 10.5,
+                                                fontSize: 9.8,
                                                 fontWeight: FontWeight.w900,
                                                 color: secili
                                                     ? Colors.white
@@ -1488,7 +1488,7 @@ class _BitkiOlcumSahaSayfaState
                                       ),
                                     ),
 
-                                    const SizedBox(height: 10),
+                                    const SizedBox(height: 7),
 
                                     if (seciliSalkimNo == null)
                                       Container(
@@ -1509,14 +1509,14 @@ class _BitkiOlcumSahaSayfaState
                                           children: [
                                             Icon(
                                               Icons.touch_app_rounded,
-                                              size: 17,
+                                              size: 15,
                                               color: Colors.black38,
                                             ),
                                             SizedBox(width: 7),
                                             Text(
                                               'Değer girmek için salkım seçin.',
                                               style: TextStyle(
-                                                fontSize: 10.5,
+                                                fontSize: 9.8,
                                                 color: Colors.black45,
                                                 fontWeight: FontWeight.w700,
                                               ),
@@ -1526,7 +1526,7 @@ class _BitkiOlcumSahaSayfaState
                                       )
                                     else if (loadingOlcumDeger)
                                       Container(
-                                        height: 72,
+                                        height: 56,
                                         alignment: Alignment.center,
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFF7F7F9),
@@ -1550,7 +1550,7 @@ class _BitkiOlcumSahaSayfaState
                                             Text(
                                               'Salkım değerleri getiriliyor...',
                                               style: TextStyle(
-                                                fontSize: 10.5,
+                                                fontSize: 9.8,
                                               ),
                                             ),
                                           ],
@@ -1560,7 +1560,7 @@ class _BitkiOlcumSahaSayfaState
                                       Container(
                                         width: double.infinity,
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
+                                          horizontal: 8,
                                           vertical: 8,
                                         ),
                                         decoration: BoxDecoration(
@@ -1574,13 +1574,13 @@ class _BitkiOlcumSahaSayfaState
                                           '$seciliSalkimNo. SALKIM',
                                           style: const TextStyle(
                                             color: accent,
-                                            fontSize: 11.5,
+                                            fontSize: 10.8,
                                             fontWeight: FontWeight.w900,
                                           ),
                                         ),
                                       ),
 
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: 6),
 
                                       ...(
                                         salkimGruplari[seciliSalkimNo] ??
@@ -1609,7 +1609,7 @@ class _BitkiOlcumSahaSayfaState
                                         children: [
                                           Expanded(
                                             child: SizedBox(
-                                              height: 44,
+                                              height: 39,
                                               child: OutlinedButton.icon(
                                                 onPressed: loadingEk
                                                     ? null
@@ -1638,12 +1638,12 @@ class _BitkiOlcumSahaSayfaState
                                                 ),
                                                 icon: const Icon(
                                                   Icons.save_outlined,
-                                                  size: 17,
+                                                  size: 15,
                                                 ),
                                                 label: const Text(
                                                   'KAYDET',
                                                   style: TextStyle(
-                                                    fontSize: 10.5,
+                                                    fontSize: 9.8,
                                                     fontWeight: FontWeight.w900,
                                                   ),
                                                 ),
@@ -1656,7 +1656,7 @@ class _BitkiOlcumSahaSayfaState
                                           Expanded(
                                             flex: 2,
                                             child: SizedBox(
-                                              height: 44,
+                                              height: 39,
                                               child: FilledButton.icon(
                                                 onPressed: loadingEk
                                                     ? null
@@ -1693,14 +1693,14 @@ class _BitkiOlcumSahaSayfaState
                                                     : const Icon(
                                                         Icons
                                                             .arrow_forward_rounded,
-                                                        size: 17,
+                                                        size: 15,
                                                       ),
                                                 label: Text(
                                                   loadingEk
                                                       ? 'KAYDEDİLİYOR...'
                                                       : 'KAYDET + SONRAKİ',
                                                   style: const TextStyle(
-                                                    fontSize: 10.5,
+                                                    fontSize: 9.8,
                                                     fontWeight: FontWeight.w900,
                                                   ),
                                                 ),
@@ -1747,7 +1747,7 @@ class _BitkiOlcumSahaSayfaState
             ),
 
             const SizedBox(
-              height: 8,
+              height: 6,
             ),
 
             Text(
@@ -1756,7 +1756,7 @@ class _BitkiOlcumSahaSayfaState
                   TextAlign.center,
               style:
                   const TextStyle(
-                fontSize: 11,
+                fontSize: 10.2,
               ),
             ),
 
@@ -1776,14 +1776,14 @@ class _BitkiOlcumSahaSayfaState
                 },
                 icon: const Icon(
                   Icons.refresh_rounded,
-                  size: 17,
+                  size: 15,
                 ),
                 label:
                     const Text(
                   'Tekrar Dene',
                   style:
                       TextStyle(
-                    fontSize: 11,
+                    fontSize: 10.2,
                   ),
                 ),
               ),
@@ -1800,7 +1800,7 @@ class _BitkiOlcumSahaSayfaState
 
   Widget _personelBilgisi() {
     return Container(
-      height: 47,
+      height: 40,
       padding:
           const EdgeInsets.symmetric(
         horizontal: 9,
@@ -1817,8 +1817,8 @@ class _BitkiOlcumSahaSayfaState
       child: Row(
         children: [
           Container(
-            width: 31,
-            height: 31,
+            width: 24,
+            height: 24,
             decoration: BoxDecoration(
               color:
                   accent.withOpacity(.09),
@@ -1828,7 +1828,7 @@ class _BitkiOlcumSahaSayfaState
             child: const Icon(
               Icons.badge_outlined,
               color: accent,
-              size: 18,
+              size: 14,
             ),
           ),
 
@@ -1839,7 +1839,7 @@ class _BitkiOlcumSahaSayfaState
           const Text(
             'Personel',
             style: TextStyle(
-              fontSize: 9.5,
+              fontSize: 8.8,
               color:
                   Colors.black45,
               fontWeight:
@@ -1859,7 +1859,7 @@ class _BitkiOlcumSahaSayfaState
                   TextOverflow.ellipsis,
               style:
                   const TextStyle(
-                fontSize: 12,
+                fontSize: 10.2,
                 fontWeight:
                     FontWeight.w900,
               ),
@@ -1883,15 +1883,15 @@ class _BitkiOlcumSahaSayfaState
     return Container(
       padding:
           const EdgeInsets.fromLTRB(
-        10,
-        9,
-        10,
-        10,
+        8,
+        7,
+        8,
+        8,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius:
-            BorderRadius.circular(11),
+            BorderRadius.circular(10),
         border: Border.all(
           color:
               Colors.black.withOpacity(.05),
@@ -1910,8 +1910,8 @@ class _BitkiOlcumSahaSayfaState
             Row(
               children: [
                 Container(
-                  width: 27,
-                  height: 27,
+                  width: 24,
+                  height: 24,
                   decoration:
                       BoxDecoration(
                     color: muted
@@ -1928,7 +1928,7 @@ class _BitkiOlcumSahaSayfaState
                     color: muted
                         ? Colors.grey
                         : accent,
-                    size: 16,
+                    size: 14,
                   ),
                 ),
 
@@ -1941,7 +1941,7 @@ class _BitkiOlcumSahaSayfaState
                     title,
                     style:
                         TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 10.8,
                       fontWeight:
                           FontWeight.w900,
                       color: muted
@@ -1962,7 +1962,7 @@ class _BitkiOlcumSahaSayfaState
             ),
 
             const SizedBox(
-              height: 8,
+              height: 6,
             ),
 
             child,
@@ -1987,14 +1987,14 @@ class _BitkiOlcumSahaSayfaState
 
       labelStyle:
           const TextStyle(
-        fontSize: 10.5,
+        fontSize: 9.8,
         fontWeight:
             FontWeight.w700,
       ),
 
       hintStyle:
           const TextStyle(
-        fontSize: 11,
+        fontSize: 10.2,
         color:
             Colors.black38,
       ),
@@ -2003,7 +2003,7 @@ class _BitkiOlcumSahaSayfaState
           ? null
           : Icon(
               icon,
-              size: 18,
+              size: 14,
               color: accent,
             ),
 
@@ -2056,8 +2056,8 @@ class _BitkiOlcumSahaSayfaState
 
       contentPadding:
           const EdgeInsets.symmetric(
-        vertical: 12,
-        horizontal: 10,
+        vertical: 9,
+        horizontal: 8,
       ),
     );
   }
@@ -2087,7 +2087,7 @@ class _BitkiOlcumSahaSayfaState
 
       style:
           const TextStyle(
-        fontSize: 13,
+        fontSize: 10.8,
         fontWeight:
             FontWeight.w700,
       ),

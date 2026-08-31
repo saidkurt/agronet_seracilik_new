@@ -12,6 +12,7 @@ import 'package:agronet/page/paketleme.dart';
 import 'package:agronet/page/paketleme_raporu.dart';
 import 'package:agronet/page/personel_anlik_durum.dart';
 import 'package:agronet/page/personel_listesi_page.dart';
+import 'package:agronet/page/sarf_et_page.dart';
 import 'package:agronet/page/sera_is_tarihleri.dart';
 import 'package:agronet/page/sera_kontrol_rapor.dart';
 import 'package:agronet/page/seraa_olcum_giris.dart';
@@ -42,6 +43,8 @@ class HomeMenuPage extends StatefulWidget {
 class _HomeMenuPageState extends State<HomeMenuPage> {
   static const Color accent = Color(0xFF1E6F5C);
   static const Color background = Color(0xFFF5F6F8);
+
+  int _seciliMenu = 0;
 
   LoginUserModel get user => widget.user;
 
@@ -344,6 +347,51 @@ _MenuItem(
 ),
 
 _MenuItem(
+  title: "Sarf Et",
+  icon: Icons.remove_shopping_cart_rounded,
+  visible: user.yetkisiVar("SARF_ET"),
+  onTap: () {
+    if (!user.oturumGecerli) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Mobil oturum bilgisi bulunamadı. "
+            "Tekrar giriş yapın.",
+          ),
+        ),
+      );
+      return;
+    }
+
+    final kullaniciKodu =
+        (user.prosiskodu ?? '').trim();
+
+    if (kullaniciKodu.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Prosis kullanıcı kodu bulunamadı. "
+            "Tekrar giriş yapın.",
+          ),
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SarfEtPage(
+          kullaniciKodu: kullaniciKodu,
+          oturumId: user.oturumId ?? 0,
+          token: user.token ?? '',
+        ),
+      ),
+    );
+  },
+),
+
+_MenuItem(
   title: "Depo Talep Onay",
   icon: Icons.fact_check_rounded,
   visible: user.yetkisiVar("DEPO_TALEP"),
@@ -624,70 +672,55 @@ _MenuItem(
 
             const SizedBox(height: 8),
 
-            // ====================================================
-            // OPERASYON
-            // ====================================================
+            Builder(
+              builder: (context) {
+                final bolumler = <_MenuSection>[
+                  _MenuSection(
+                    title: 'Operasyon',
+                    icon: Icons.settings_suggest_outlined,
+                    items: operasyonItems.where((e) => e.visible).toList(),
+                  ),
+                  _MenuSection(
+                    title: 'Depo',
+                    icon: Icons.warehouse_outlined,
+                    items: depoItems.where((e) => e.visible).toList(),
+                  ),
+                  _MenuSection(
+                    title: 'Raporlar',
+                    icon: Icons.analytics_outlined,
+                    items: raporItems.where((e) => e.visible).toList(),
+                  ),
+                  _MenuSection(
+                    title: 'Yönetim',
+                    icon: Icons.admin_panel_settings_outlined,
+                    items: yonetimItems.where((e) => e.visible).toList(),
+                  ),
+                ].where((e) => e.items.isNotEmpty).toList();
 
-            _SectionRow(
-              title: "Operasyon",
-              icon:
-                  Icons.settings_suggest_outlined,
-              items: operasyonItems
-                  .where(
-                    (e) => e.visible,
-                  )
-                  .toList(),
-            ),
+                if (bolumler.isEmpty) {
+                  return const SizedBox.shrink();
+                }
 
-            const SizedBox(height: 8),
+                final aktifIndex =
+                    _seciliMenu >= bolumler.length ? 0 : _seciliMenu;
+                final aktif = bolumler[aktifIndex];
 
-            // ====================================================
-            // DEPO
-            // ====================================================
-
-            _SectionRow(
-              title: "Depo",
-              icon:
-                  Icons.warehouse_outlined,
-              items: depoItems
-                  .where(
-                    (e) => e.visible,
-                  )
-                  .toList(),
-            ),
-
-            const SizedBox(height: 8),
-
-            // ====================================================
-            // RAPORLAR
-            // ====================================================
-
-            _SectionRow(
-              title: "Raporlar",
-              icon:
-                  Icons.analytics_outlined,
-              items: raporItems
-                  .where(
-                    (e) => e.visible,
-                  )
-                  .toList(),
-            ),
-
-            const SizedBox(height: 8),
-
-            // ====================================================
-            // YÖNETİM
-            // ====================================================
-
-            _SectionRow(
-              title: "Yönetim",
-              icon: Icons
-                  .admin_panel_settings_outlined,
-              items: yonetimItems
-                  .where(
-                    (e) => e.visible,
-                  )
-                  .toList(),
+                return Column(
+                  children: [
+                    _MenuTabs(
+                      sections: bolumler,
+                      selectedIndex: aktifIndex,
+                      onChanged: (index) {
+                        setState(() {
+                          _seciliMenu = index;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    _MenuGridSection(section: aktif),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -700,127 +733,176 @@ _MenuItem(
 // BÖLÜM
 // ============================================================================
 
-class _SectionRow extends StatelessWidget {
+class _MenuSection {
   final String title;
   final IconData icon;
   final List<_MenuItem> items;
 
-  const _SectionRow({
+  const _MenuSection({
     required this.title,
     required this.icon,
     required this.items,
   });
+}
 
-  static const Color accent =
-      Color(0xFF1E6F5C);
+class _MenuTabs extends StatelessWidget {
+  final List<_MenuSection> sections;
+  final int selectedIndex;
+  final ValueChanged<int> onChanged;
+
+  const _MenuTabs({
+    required this.sections,
+    required this.selectedIndex,
+    required this.onChanged,
+  });
+
+  static const Color accent = Color(0xFF1E6F5C);
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
     return Container(
-      padding:
-          const EdgeInsets.fromLTRB(
-        9,
-        7,
-        9,
-        8,
-      ),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(13),
         border: Border.all(
-          color:
-              Colors.black.withOpacity(.05),
+          color: Colors.black.withOpacity(.05),
+        ),
+      ),
+      child: Row(
+        children: [
+          for (int i = 0; i < sections.length; i++)
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: i == sections.length - 1 ? 0 : 3,
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => onChanged(i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 160),
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: selectedIndex == i
+                          ? accent.withOpacity(.11)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          sections[i].icon,
+                          size: 17,
+                          color: selectedIndex == i
+                              ? accent
+                              : Colors.black45,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          sections[i].title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 8.8,
+                            fontWeight: FontWeight.w900,
+                            color: selectedIndex == i
+                                ? accent
+                                : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuGridSection extends StatelessWidget {
+  final _MenuSection section;
+
+  const _MenuGridSection({
+    required this.section,
+  });
+
+  static const Color accent = Color(0xFF1E6F5C);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(9, 8, 9, 9),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(
+          color: Colors.black.withOpacity(.05),
         ),
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ======================================================
-          // BAŞLIK
-          // ======================================================
-
           Row(
             children: [
               Container(
-                width: 22,
-                height: 22,
+                width: 24,
+                height: 24,
                 decoration: BoxDecoration(
-                  color:
-                      accent.withOpacity(.08),
-                  borderRadius:
-                      BorderRadius.circular(6),
+                  color: accent.withOpacity(.08),
+                  borderRadius: BorderRadius.circular(7),
                 ),
                 child: Icon(
-                  icon,
-                  size: 13,
+                  section.icon,
+                  size: 14,
                   color: accent,
                 ),
               ),
-
-              const SizedBox(width: 6),
-
+              const SizedBox(width: 7),
               Text(
-                title,
+                section.title,
                 style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight:
-                      FontWeight.w900,
-                  color: Colors.black
-                      .withOpacity(.57),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black.withOpacity(.65),
                 ),
               ),
-
               const Spacer(),
-
               Text(
-                '${items.length}',
+                '${section.items.length} menü',
                 style: TextStyle(
-                  fontSize: 9.5,
-                  color: Colors.black
-                      .withOpacity(.30),
-                  fontWeight:
-                      FontWeight.w800,
+                  fontSize: 9,
+                  color: Colors.black.withOpacity(.30),
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const gap = 7.0;
+              final columns = constraints.maxWidth >= 600 ? 4 : 3;
+              final width =
+                  (constraints.maxWidth - gap * (columns - 1)) / columns;
 
-          const SizedBox(height: 6),
-
-          // ======================================================
-          // YATAY MENÜ
-          // ======================================================
-
-          SizedBox(
-            height: 68,
-            child: ListView.separated(
-              scrollDirection:
-                  Axis.horizontal,
-              physics:
-                  const BouncingScrollPhysics(),
-              padding: EdgeInsets.zero,
-              itemCount: items.length,
-              separatorBuilder: (_, __) {
-                return const SizedBox(
-                  width: 6,
-                );
-              },
-              itemBuilder:
-                  (context, index) {
-                return SizedBox(
-                  width: 126,
-                  child: _MenuCard(
-                    item: items[index],
-                  ),
-                );
-              },
-            ),
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: [
+                  for (final item in section.items)
+                    SizedBox(
+                      width: width,
+                      height: 76,
+                      child: _MenuCard(item: item),
+                    ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -845,87 +927,46 @@ class _MenuCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFFF7F7F9),
-      borderRadius:
-          BorderRadius.circular(10),
+      color: const Color(0xFFF7F9F8),
+      borderRadius: BorderRadius.circular(11),
       child: InkWell(
         onTap: item.onTap,
-        borderRadius:
-            BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(11),
         child: Container(
-          padding:
-              const EdgeInsets.fromLTRB(
-            8,
-            7,
-            7,
-            6,
-          ),
+          padding: const EdgeInsets.fromLTRB(5, 7, 5, 6),
           decoration: BoxDecoration(
-            borderRadius:
-                BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(11),
             border: Border.all(
-              color: Colors.black
-                  .withOpacity(.045),
+              color: Colors.black.withOpacity(.045),
             ),
           ),
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // ==================================================
-              // ÜST
-              // ==================================================
-
-              Row(
-                children: [
-                  Container(
-                    width: 23,
-                    height: 23,
-                    decoration:
-                        BoxDecoration(
-                      color: accent
-                          .withOpacity(.09),
-                      borderRadius:
-                          BorderRadius.circular(
-                              7),
-                    ),
-                    child: Icon(
-                      item.icon,
-                      size: 14,
-                      color: accent,
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  Icon(
-                    Icons
-                        .chevron_right_rounded,
-                    size: 15,
-                    color: Colors.black
-                        .withOpacity(.25),
-                  ),
-                ],
+              Container(
+                width: 31,
+                height: 31,
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(.10),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(
+                  item.icon,
+                  size: 18,
+                  color: accent,
+                ),
               ),
-
-              const Spacer(),
-
-              // ==================================================
-              // BAŞLIK
-              // ==================================================
-
+              const SizedBox(height: 6),
               Text(
                 item.title,
                 maxLines: 2,
-                overflow:
-                    TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 10.5,
+                  fontSize: 9.5,
                   height: 1.05,
-                  fontWeight:
-                      FontWeight.w900,
-                  color: Colors.black
-                      .withOpacity(.82),
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black.withOpacity(.80),
                 ),
               ),
             ],

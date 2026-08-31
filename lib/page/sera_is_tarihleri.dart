@@ -20,8 +20,13 @@ class DonguKontrolPage extends StatefulWidget {
 class _DonguKontrolPageState extends State<DonguKontrolPage> {
   final SeraIsTarihleriApi _api = SeraIsTarihleriApi();
 
-  static const Color _bg = Color(0xFFF5F6F8);
+  static const Color _bg = Color(0xFFF3F7F5);
   static const Color _green = Color(0xFF1E6F5C);
+  static const Color _greenDark = Color(0xFF145447);
+  static const Color _greenSoft = Color(0xFFE8F3EF);
+  static const Color _card = Colors.white;
+  static const Color _text = Color(0xFF17342D);
+  static const Color _muted = Color(0xFF6F817B);
 
   List<DonguBolumModel> _bolumler = [];
   List<DonguIsModel> _isler = [];
@@ -438,53 +443,67 @@ class _DonguKontrolPageState extends State<DonguKontrolPage> {
         MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.08);
 
     return MediaQuery(
-      data: MediaQuery.of(context).copyWith(
-        textScaler: scaler,
-      ),
+      data: MediaQuery.of(context).copyWith(textScaler: scaler),
       child: Scaffold(
         backgroundColor: _bg,
         appBar: AppBar(
-          title: const Text(
-            'Döngü Kontrol',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-            ),
+          toolbarHeight: 54,
+          titleSpacing: 16,
+          title: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'AGRONET',
+                style: TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 2.1,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFFCDE5DC),
+                ),
+              ),
+              SizedBox(height: 2),
+              Text(
+                'Döngü Kontrol',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
-          centerTitle: true,
-          foregroundColor: Colors.black,
-          backgroundColor: Colors.white,
+          foregroundColor: Colors.white,
+          backgroundColor: _green,
           elevation: 0,
+          scrolledUnderElevation: 0,
           actions: [
-            IconButton(
-              tooltip: 'Yenile',
-              onPressed:
-                  _listeYukleniyor ? null : _listeyiGetir,
-              icon: const Icon(
-                Icons.refresh_rounded,
-                size: 22,
+            Container(
+              margin: const EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconButton(
+                tooltip: 'Yenile',
+                onPressed: _listeYukleniyor ? null : _listeyiGetir,
+                icon: const Icon(Icons.refresh_rounded, size: 21),
               ),
             ),
           ],
         ),
         body: _ilkYukleniyor
             ? const Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(color: _green),
               )
             : Column(
                 children: [
                   _filtrePaneli(),
-
-                  if (_hata != null)
-                    _hataSatiri(),
-
-                  Expanded(
-                    child: _icerik(),
-                  ),
+                  if (_hata != null) _hataSatiri(),
+                  Expanded(child: _icerik()),
                 ],
               ),
-        bottomNavigationBar:
-            _ilkYukleniyor ? null : _altBar(),
+        bottomNavigationBar: _ilkYukleniyor ? null : _altBar(),
       ),
     );
   }
@@ -495,127 +514,129 @@ class _DonguKontrolPageState extends State<DonguKontrolPage> {
 
   Widget _filtrePaneli() {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(
-        10,
-        7,
-        10,
-        7,
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 5),
+      decoration: const BoxDecoration(
+        color: _bg,
       ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _bolumDropdown(),
+      child: Container(
+        padding: const EdgeInsets.all(9),
+        decoration: BoxDecoration(
+          color: _card,
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(color: const Color(0xFFE4ECE8)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.035),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(child: _bolumDropdown()),
+                const SizedBox(width: 5),
+                Expanded(flex: 2, child: _isDropdown()),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Container(
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: _greenSoft,
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(width: 6),
-              Expanded(
-                flex: 2,
-                child: _isDropdown(),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 6),
-
-          Row(
-            children: [
-              _haftaButonu(
-                Icons.chevron_left_rounded,
-                () => _haftaDegistir(-1),
-              ),
-
-              Expanded(
-                child: Container(
-                  height: 34,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF6F7F9),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Colors.black.withOpacity(.07),
+              child: Row(
+                children: [
+                  _haftaButonu(
+                    Icons.chevron_left_rounded,
+                    () => _haftaDegistir(-1),
+                  ),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'DÖNEM',
+                          style: TextStyle(
+                            fontSize: 8,
+                            letterSpacing: .9,
+                            fontWeight: FontWeight.w800,
+                            color: _muted,
+                          ),
+                        ),
+                        Text(
+                          '$_yil  •  $_hafta. Hafta',
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w900,
+                            color: _greenDark,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Text(
-                    '$_yil  •  $_hafta. Hafta',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
+                  _haftaButonu(
+                    Icons.chevron_right_rounded,
+                    () => _haftaDegistir(1),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 3),
+            InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () async {
+                setState(() {
+                  _tamamlananlariGoster = !_tamamlananlariGoster;
+                });
+                if (_seciliIs != null) await _listeyiGetir();
+              },
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 25,
+                    height: 25,
+                    child: Checkbox(
+                      value: _tamamlananlariGoster,
+                      activeColor: _green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      onChanged: (value) async {
+                        setState(() {
+                          _tamamlananlariGoster = value ?? false;
+                        });
+                        if (_seciliIs != null) await _listeyiGetir();
+                      },
                     ),
                   ),
-                ),
-              ),
-
-              _haftaButonu(
-                Icons.chevron_right_rounded,
-                () => _haftaDegistir(1),
-              ),
-
-              const SizedBox(width: 8),
-
-              InkWell(
-                borderRadius: BorderRadius.circular(7),
-                onTap: () async {
-                  setState(() {
-                    _tamamlananlariGoster =
-                        !_tamamlananlariGoster;
-                  });
-
-                  if (_seciliIs != null) {
-                    await _listeyiGetir();
-                  }
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 3,
-                    vertical: 4,
+                  const SizedBox(width: 2),
+                  const Text(
+                    'Tamamlananları göster',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: _muted,
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 25,
-                        height: 25,
-                        child: Checkbox(
-                          value: _tamamlananlariGoster,
-                          activeColor: _green,
-                          visualDensity:
-                              VisualDensity.compact,
-                          onChanged: (value) async {
-                            setState(() {
-                              _tamamlananlariGoster =
-                                  value ?? false;
-                            });
-
-                            if (_seciliIs != null) {
-                              await _listeyiGetir();
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                      const Text(
-                        'Tamamlanan',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _bolumDropdown() {
     return SizedBox(
-      height: 38,
+      height: 35,
       child: DropdownButtonFormField<DonguBolumModel>(
         value: _seciliBolum,
         isExpanded: true,
@@ -661,7 +682,7 @@ class _DonguKontrolPageState extends State<DonguKontrolPage> {
 
   Widget _isDropdown() {
     return SizedBox(
-      height: 38,
+      height: 35,
       child: DropdownButtonFormField<DonguIsModel>(
         value: _seciliIs,
         isExpanded: true,
@@ -715,37 +736,28 @@ class _DonguKontrolPageState extends State<DonguKontrolPage> {
 
   InputDecoration _denseInput(String label) {
     return InputDecoration(
-      labelText: label,
+      labelText: label.toUpperCase(),
       labelStyle: const TextStyle(
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
+        fontSize: 9,
+        letterSpacing: .6,
+        fontWeight: FontWeight.w800,
+        color: _muted,
       ),
       isDense: true,
-      contentPadding: const EdgeInsets.fromLTRB(
-        9,
-        8,
-        6,
-        6,
-      ),
+      contentPadding: const EdgeInsets.fromLTRB(9, 8, 7, 7),
       filled: true,
-      fillColor: const Color(0xFFF7F7F9),
+      fillColor: const Color(0xFFF8FBFA),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: Colors.black.withOpacity(.07),
-        ),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE1EAE6)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: Colors.black.withOpacity(.07),
-        ),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE1EAE6)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(
-          color: _green,
-        ),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _green, width: 1.3),
       ),
     );
   }
@@ -803,7 +815,7 @@ class _DonguKontrolPageState extends State<DonguKontrolPage> {
 
     return Column(
       children: [
-        _listeBaslik(),
+        
 
         Expanded(
           child: RefreshIndicator(
@@ -811,15 +823,10 @@ class _DonguKontrolPageState extends State<DonguKontrolPage> {
             child: ListView.separated(
               physics:
                   const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                7,
-                5,
-                7,
-                8,
-              ),
+              padding: const EdgeInsets.fromLTRB(9, 1, 9, 8),
               itemCount: _liste.length,
               separatorBuilder: (_, __) {
-                return const SizedBox(height: 3);
+                return const SizedBox(height: 4);
               },
               itemBuilder: (_, index) {
                 return _listeSatiri(
@@ -833,77 +840,18 @@ class _DonguKontrolPageState extends State<DonguKontrolPage> {
     );
   }
 
-  Widget _listeBaslik() {
-    return Container(
-      height: 34,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 6,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F2F1),
-        border: Border(
-          top: BorderSide(
-            color: Colors.black.withOpacity(.04),
-          ),
-          bottom: BorderSide(
-            color: Colors.black.withOpacity(.06),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 32,
-            child: Checkbox(
-              value: _hepsiSecili,
-              visualDensity: VisualDensity.compact,
-              activeColor: _green,
-              onChanged: (value) {
-                _tumunuSec(value ?? false);
-              },
-            ),
-          ),
 
-          Expanded(
-            child: Text(
-              '${_liste.length} kayıt',
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: Colors.black54,
-              ),
-            ),
-          ),
-
-          if (_seciliSayisi > 0)
-            Text(
-              '$_seciliSayisi seçili',
-              style: const TextStyle(
-                fontSize: 10.5,
-                color: _green,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
 
   Widget _listeSatiri(
     DonguListeModel item,
   ) {
-    final renk = _durumRengi(
-      item.durum,
-      item.dongusuKacti,
-    );
-
+    final renk = _durumRengi(item.durum, item.dongusuKacti);
     final secilebilir = item.isEmriId > 0;
 
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(8),
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(11),
         onTap: secilebilir
             ? () {
                 setState(() {
@@ -911,35 +859,47 @@ class _DonguKontrolPageState extends State<DonguKontrolPage> {
                 });
               }
             : null,
-        child: Container(
-          height: 55,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          constraints: const BoxConstraints(minHeight: 54),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            color: item.sec ? _greenSoft.withOpacity(.68) : Colors.white,
+            borderRadius: BorderRadius.circular(11),
             border: Border.all(
               color: item.sec
-                  ? _green.withOpacity(.55)
-                  : Colors.black.withOpacity(.055),
+                  ? _green.withOpacity(.38)
+                  : const Color(0xFFE4ECE8),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(.025),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             children: [
               Container(
                 width: 4,
+                constraints: const BoxConstraints(minHeight: 52),
                 decoration: BoxDecoration(
                   color: renk,
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(7),
-                    bottomLeft: Radius.circular(7),
+                    topLeft: Radius.circular(10),
+                    bottomLeft: Radius.circular(10),
                   ),
                 ),
               ),
-
               SizedBox(
-                width: 33,
+                width: 32,
                 child: Checkbox(
                   value: item.sec,
                   visualDensity: VisualDensity.compact,
                   activeColor: _green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5),
+                  ),
                   onChanged: secilebilir
                       ? (value) {
                           setState(() {
@@ -949,129 +909,124 @@ class _DonguKontrolPageState extends State<DonguKontrolPage> {
                       : null,
                 ),
               ),
-
-              SizedBox(
-                width: 56,
+              Container(
+                width: 54,
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F8F7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Column(
-                  mainAxisAlignment:
-                      MainAxisAlignment.center,
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       item.tunel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w900,
+                        color: _text,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      item.koridor.isEmpty
-                          ? '-'
-                          : 'Kor. ${item.koridor}',
+                      item.koridor.isEmpty ? '-' : 'Kor. ${item.koridor}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 9.5,
-                        color: Colors.black45,
+                        fontSize: 9,
+                        color: _muted,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
                 ),
               ),
-
-              Container(
-                width: 1,
-                height: 30,
-                color: Colors.black.withOpacity(.05),
-              ),
-
               const SizedBox(width: 7),
-
               Expanded(
-                child: Column(
-                  mainAxisAlignment:
-                      MainAxisAlignment.center,
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.personelAdi.trim().isEmpty
-                          ? '-'
-                          : item.personelAdi,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.personelAdi.trim().isEmpty ? '-' : item.personelAdi,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10.8,
+                          fontWeight: FontWeight.w900,
+                          color: _text,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.tarih.trim().isEmpty
-                                ? '-'
-                                : item.tarih,
-                            maxLines: 1,
-                            overflow:
-                                TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 9.5,
-                              color: Colors.black45,
-                              fontWeight:
-                                  FontWeight.w600,
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 11,
+                            color: _muted,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              item.tarih.trim().isEmpty ? '-' : item.tarih,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 9.3,
+                                color: _muted,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
-                        Text(
-                          '${item.sure.toStringAsFixed(0)} dk',
-                          style: const TextStyle(
-                            fontSize: 9.5,
-                            color: Colors.black54,
-                            fontWeight:
-                                FontWeight.w800,
+                          const Icon(
+                            Icons.schedule_rounded,
+                            size: 11,
+                            color: _muted,
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 3),
+                          Text(
+                            '${item.sure.toStringAsFixed(0)} dk',
+                            style: const TextStyle(
+                              fontSize: 9.3,
+                              color: _muted,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-
-              const SizedBox(width: 7),
-
+              const SizedBox(width: 5),
               Container(
-                constraints: const BoxConstraints(
-                  maxWidth: 72,
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 4,
-                ),
+                constraints: const BoxConstraints(maxWidth: 78),
+                margin: const EdgeInsets.only(right: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 decoration: BoxDecoration(
-                  color: renk.withOpacity(.10),
-                  borderRadius: BorderRadius.circular(7),
+                  color: renk.withOpacity(.11),
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(color: renk.withOpacity(.18)),
                 ),
                 child: Text(
-                  item.dongusuKacti
-                      ? 'Döngü Kaçtı'
-                      : _durumKisa(item.durum),
+                  item.dongusuKacti ? 'Döngü Kaçtı' : _durumKisa(item.durum),
                   maxLines: 2,
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 8.8,
+                    fontSize: 8.2,
                     height: 1.05,
                     color: renk,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
-
-              const SizedBox(width: 6),
             ],
           ),
         ),
@@ -1128,12 +1083,19 @@ class _DonguKontrolPageState extends State<DonguKontrolPage> {
     return SafeArea(
       top: false,
       child: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.fromLTRB(
-          8,
-          6,
-          8,
-          6,
+        padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: const Border(
+            top: BorderSide(color: Color(0xFFE1EAE6)),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.05),
+              blurRadius: 16,
+              offset: const Offset(0, -4),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -1142,24 +1104,15 @@ class _DonguKontrolPageState extends State<DonguKontrolPage> {
                 height: 40,
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.black87,
-                    side: BorderSide(
-                      color: Colors.black.withOpacity(.12),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
-                    ),
+                    foregroundColor: _greenDark,
+                    side: const BorderSide(color: Color(0xFFD7E5DF)),
+                    backgroundColor: const Color(0xFFF8FBFA),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(9),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed:
-                      _seciliIs == null ? null : _tabloGoster,
-                  icon: const Icon(
-                    Icons.grid_on_rounded,
-                    size: 18,
-                  ),
+                  onPressed: _seciliIs == null ? null : _tabloGoster,
+                  icon: const Icon(Icons.grid_view_rounded, size: 18),
                   label: const Text(
                     'TABLO',
                     style: TextStyle(
@@ -1170,9 +1123,7 @@ class _DonguKontrolPageState extends State<DonguKontrolPage> {
                 ),
               ),
             ),
-
-            const SizedBox(width: 6),
-
+            const SizedBox(width: 5),
             Expanded(
               flex: 2,
               child: SizedBox(
@@ -1180,32 +1131,24 @@ class _DonguKontrolPageState extends State<DonguKontrolPage> {
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
                     backgroundColor: _green,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
-                    ),
+                    disabledBackgroundColor: const Color(0xFFB9C8C3),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(9),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed: _seciliSayisi == 0 ||
-                          _personelDegisiyor
+                  onPressed: _seciliSayisi == 0 || _personelDegisiyor
                       ? null
                       : _personelSec,
                   icon: _personelDegisiyor
                       ? const SizedBox(
                           width: 14,
                           height: 14,
-                          child:
-                              CircularProgressIndicator(
+                          child: CircularProgressIndicator(
                             strokeWidth: 2,
                             color: Colors.white,
                           ),
                         )
-                      : const Icon(
-                          Icons.manage_accounts_outlined,
-                          size: 18,
-                        ),
+                      : const Icon(Icons.manage_accounts_outlined, size: 18),
                   label: Text(
                     _seciliSayisi == 0
                         ? 'PERSONEL DEĞİŞTİR'
@@ -1287,7 +1230,7 @@ class _DonguKontrolPageState extends State<DonguKontrolPage> {
           size: 46,
           color: Colors.black26,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 6),
         Text(
           text,
           textAlign: TextAlign.center,
@@ -1372,14 +1315,14 @@ class _PersonelSecSheetState
       height:
           MediaQuery.of(context).size.height * .72,
       decoration: const BoxDecoration(
-        color: Color(0xFFF5F6F8),
+        color: Color(0xFFF3F7F5),
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(18),
+          top: Radius.circular(24),
         ),
       ),
       child: Column(
         children: [
-          const SizedBox(height: 8),
+          const SizedBox(height: 3),
 
           Container(
             width: 40,
@@ -1491,14 +1434,14 @@ class _PersonelSecSheetState
                     leading: CircleAvatar(
                       radius: 16,
                       backgroundColor:
-                          Colors.green.withOpacity(.10),
+                          const Color(0xFFE8F3EF),
                       child: Text(
                         item.grup.trim().isEmpty
                             ? '?'
                             : item.grup,
                         style: const TextStyle(
                           fontSize: 11,
-                          color: Colors.green,
+                          color: Color(0xFF1E6F5C),
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -1581,19 +1524,21 @@ class _DonguTabloPageState
       ),
       child: Scaffold(
         backgroundColor:
-            const Color(0xFFF5F6F8),
+            const Color(0xFFF3F7F5),
         appBar: AppBar(
           title: const Text(
             'Döngü Tablosu',
             style: TextStyle(
-              fontSize: 17,
+              fontSize: 16,
               fontWeight: FontWeight.w900,
+              color: Colors.white,
             ),
           ),
           centerTitle: true,
-          foregroundColor: Colors.black,
-          backgroundColor: Colors.white,
+          foregroundColor: Colors.white,
+          backgroundColor: _green,
           elevation: 0,
+          scrolledUnderElevation: 0,
         ),
         body: Column(
           children: [
@@ -1644,10 +1589,10 @@ class _DonguTabloPageState
       width: double.infinity,
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(
-        10,
-        5,
-        10,
-        6,
+        8,
+        3,
+        8,
+        3,
       ),
       child: Column(
         crossAxisAlignment:
@@ -1658,7 +1603,7 @@ class _DonguTabloPageState
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 10.5,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -1669,7 +1614,7 @@ class _DonguTabloPageState
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 9.5,
+              fontSize: 8.8,
               color: Colors.black45,
               fontWeight: FontWeight.w600,
             ),
@@ -1683,10 +1628,10 @@ class _DonguTabloPageState
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(
-        6,
+        5,
         1,
-        6,
-        6,
+        5,
+        3,
       ),
       child: Row(
         children: [
@@ -1727,11 +1672,11 @@ class _DonguTabloPageState
       child: AnimatedContainer(
         duration:
             const Duration(milliseconds: 120),
-        height: 34,
+        height: 28,
         decoration: BoxDecoration(
           color: secili
-              ? _green.withOpacity(.10)
-              : const Color(0xFFF7F7F9),
+              ? _green.withOpacity(.12)
+              : const Color(0xFFF8FBFA),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: secili
@@ -1745,7 +1690,7 @@ class _DonguTabloPageState
           children: [
             Icon(
               icon,
-              size: 15,
+              size: 13,
               color:
                   secili ? _green : Colors.black45,
             ),
@@ -1753,7 +1698,7 @@ class _DonguTabloPageState
             Text(
               text,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 9,
                 color:
                     secili ? _green : Colors.black54,
                 fontWeight: FontWeight.w900,
@@ -1770,15 +1715,15 @@ class _DonguTabloPageState
   // tamamı dikey ekrana sığar.
   Widget _baslik() {
     return Container(
-      height: 31,
+      height: 25,
       margin: const EdgeInsets.fromLTRB(
-        5,
-        5,
-        5,
+        4,
+        3,
+        4,
         0,
       ),
       decoration: const BoxDecoration(
-        color: Color(0xFFE7EAE9),
+        color: Color(0xFFE3EFEA),
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(7),
         ),
@@ -1786,12 +1731,12 @@ class _DonguTabloPageState
       child: const Row(
         children: [
           SizedBox(
-            width: 42,
+            width: 38,
             child: Center(
               child: Text(
                 'TÜN',
                 style: TextStyle(
-                  fontSize: 9,
+                  fontSize: 8.5,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -1831,7 +1776,7 @@ class _DonguTabloPageState
               ];
 
     return Container(
-      height: 48,
+      height: 34,
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -1849,12 +1794,12 @@ class _DonguTabloPageState
       child: Row(
         children: [
           SizedBox(
-            width: 42,
+            width: 38,
             child: Center(
               child: Text(
                 item.sira,
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -1892,14 +1837,14 @@ class _DonguTabloPageState
     return InkWell(
       onTap: () => _detayGoster(item),
       child: Container(
-        margin: const EdgeInsets.all(2),
+        margin: const EdgeInsets.all(1.5),
         decoration: BoxDecoration(
           color: renk.withOpacity(
             item.renk == 'donguKacti'
                 ? 1
                 : .15,
           ),
-          borderRadius: BorderRadius.circular(5),
+          borderRadius: BorderRadius.circular(4),
           border: Border.all(
             color: renk.withOpacity(.25),
           ),
@@ -1907,7 +1852,7 @@ class _DonguTabloPageState
         child: Center(
           child: Icon(
             _hucreIkon(item),
-            size: 16,
+            size: 13,
             color: item.renk == 'donguKacti'
                 ? Colors.white
                 : renk,
@@ -2021,7 +1966,7 @@ class _DonguTabloPageState
                   ],
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 6),
 
                 Text(
                   item.text,
@@ -2058,13 +2003,13 @@ class _DonguTabloPageState
         width: double.infinity,
         color: Colors.white,
         padding: const EdgeInsets.symmetric(
-          horizontal: 7,
-          vertical: 5,
+          horizontal: 6,
+          vertical: 3,
         ),
         child: const Wrap(
           alignment: WrapAlignment.center,
-          spacing: 9,
-          runSpacing: 3,
+          spacing: 7,
+          runSpacing: 2,
           children: [
             _Lejant(
               renk: Colors.green,
@@ -2133,18 +2078,18 @@ class _Lejant extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 8,
-          height: 8,
+          width: 7,
+          height: 7,
           decoration: BoxDecoration(
             color: renk,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-        const SizedBox(width: 3),
+        const SizedBox(width: 2),
         Text(
           yazi,
           style: const TextStyle(
-            fontSize: 8.5,
+            fontSize: 7.8,
             color: Colors.black54,
             fontWeight: FontWeight.w700,
           ),
