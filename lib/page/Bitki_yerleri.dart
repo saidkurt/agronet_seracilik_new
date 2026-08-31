@@ -1292,8 +1292,7 @@ class _BitkiOlcumSahaSayfaState
                             // ZORUNLU ÖLÇÜMLER
                             // ====================================
 
-                            if (!zorunluTamamlandi)
-                              _sectionCard(
+                            _sectionCard(
                                 title:
                                     'Zorunlu Ölçümler',
                                 icon: Icons
@@ -1361,10 +1360,12 @@ class _BitkiOlcumSahaSayfaState
                                                 size: 15,
                                               ),
                                         label:
-                                            const Text(
-                                          'ZORUNLU ÖLÇÜMLERİ KAYDET',
+                                            Text(
+                                          zorunluTamamlandi
+                                              ? 'ZORUNLU ÖLÇÜMLERİ GÜNCELLE'
+                                              : 'ZORUNLU ÖLÇÜMLERİ KAYDET',
                                           style:
-                                              TextStyle(
+                                              const TextStyle(
                                             fontSize:
                                                 10.5,
                                             fontWeight:
@@ -1387,10 +1388,9 @@ class _BitkiOlcumSahaSayfaState
                                 ),
                               ),
 
-                            if (!zorunluTamamlandi)
-                              const SizedBox(
-                                height: 7,
-                              ),
+                            const SizedBox(
+                              height: 7,
+                            ),
 
                             // ====================================
                             // DİĞER ÖLÇÜMLER - SALKIM BAZLI
