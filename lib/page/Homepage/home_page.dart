@@ -7,6 +7,7 @@ import 'package:agronet/page/depo_talep_fis.dart';
 import 'package:agronet/page/depo_talep_onay.dart';
 import 'package:agronet/page/hasat_raporu.dart';
 import 'package:agronet/page/iskontrol/konrol_home.dart';
+import 'package:agronet/page/operasyon/operasyon_panel.dart';
 import 'package:agronet/page/mobil_menu_yetki_page.dart';
 import 'package:agronet/page/paketleme.dart';
 import 'package:agronet/page/paketleme_raporu.dart';
@@ -672,8 +673,11 @@ _MenuItem(
 
             const SizedBox(height: 8),
 
-            Builder(
-              builder: (context) {
+            if (OperasyonPanel.seraPersoneliMi(user))
+              OperasyonPanel(user: user)
+            else
+              Builder(
+                builder: (context) {
                 final bolumler = <_MenuSection>[
                   _MenuSection(
                     title: 'Operasyon',
@@ -720,8 +724,8 @@ _MenuItem(
                     _MenuGridSection(section: aktif),
                   ],
                 );
-              },
-            ),
+                },
+              ),
           ],
         ),
       ),
