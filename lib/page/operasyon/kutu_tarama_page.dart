@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:collection';
 
-import 'package:agronet/api/operasyon_api.dart';
 import 'package:flutter/material.dart';
+
+import 'package:agronet/api/operasyon_api.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -26,16 +27,18 @@ class _KutuTaramaPageState extends State<KutuTaramaPage>
     with WidgetsBindingObserver {
   static const Color accent = Color(0xFF1E6F5C);
 
-  late final MobileScannerController _controller;
+  late MobileScannerController _controller;
   final Queue<String> _kuyruk = Queue<String>();
   final Set<String> _kilitliKodlar = <String>{};
   final List<_TaramaKaydi> _kayitlar = <_TaramaKaydi>[];
 
+  _TaramaModu _taramaModu = _TaramaModu.kasa;
+  bool _modDegisiyor = false;
   bool _kuyrukCalisiyor = false;
   bool _fenerAcik = false;
   int _basarili = 0;
   int _hatali = 0;
-  String _sonMesaj = 'Kamerayı barkoda yaklaştırın';
+  String _sonMesaj = 'Siyah kasa barkodunu yatay tutun';
   Color _sonRenk = Colors.blueGrey;
 
   @override
@@ -43,19 +46,71 @@ class _KutuTaramaPageState extends State<KutuTaramaPage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    _controller = MobileScannerController(
-      autoStart: false,
-      facing: CameraFacing.back,
-      detectionSpeed: DetectionSpeed.normal,
-      detectionTimeoutMs: 180,
-      formats: const [BarcodeFormat.qrCode],
-      returnImage: false,
-      autoZoom: true,
-    );
+    _controller = _controllerOlustur(_taramaModu);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_kamerayiBaslat());
     });
+  }
+
+  MobileScannerController _controllerOlustur(_TaramaModu mod) {
+    final kasaModu = mod == _TaramaModu.kasa;
+
+    return MobileScannerController(
+      autoStart: false,
+      facing: CameraFacing.back,
+      detectionSpeed: DetectionSpeed.normal,
+      detectionTimeoutMs: 180,
+      // Kasa modunda sadece 1D, kutu modunda sadece QR aranir. Bu ayrim
+      // algilamayi hizlandirir ve kadrajdaki ilgisiz kodlari filtreler.
+      formats: kasaModu
+          ? const [
+              BarcodeFormat.codabar,
+              BarcodeFormat.code39,
+              BarcodeFormat.code93,
+              BarcodeFormat.code128,
+              BarcodeFormat.ean8,
+              BarcodeFormat.ean13,
+              BarcodeFormat.itf,
+              BarcodeFormat.upcA,
+              BarcodeFormat.upcE,
+            ]
+          : const [BarcodeFormat.qrCode],
+      returnImage: false,
+      // Kasa: siyah zemin/beyaz cizgi. Kutu QR: normal acik zemin/koyu kod.
+      invertImage: kasaModu,
+      autoZoom: true,
+    );
+  }
+
+  Future<void> _taramaModunuDegistir(_TaramaModu yeniMod) async {
+    if (_modDegisiyor || yeniMod == _taramaModu) return;
+
+    setState(() => _modDegisiyor = true);
+
+    final eskiController = _controller;
+    try {
+      await eskiController.stop();
+    } catch (_) {}
+    try {
+      await eskiController.dispose();
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    final yeniController = _controllerOlustur(yeniMod);
+    setState(() {
+      _controller = yeniController;
+      _taramaModu = yeniMod;
+      _fenerAcik = false;
+      _sonMesaj = yeniMod == _TaramaModu.kasa
+          ? 'Siyah kasa barkodunu yatay tutun'
+          : 'Kutu QR kodunu çerçevenin ortasında tutun';
+      _sonRenk = Colors.blueGrey;
+    });
+
+    await _kamerayiBaslat();
+    if (mounted) setState(() => _modDegisiyor = false);
   }
 
   @override
@@ -144,7 +199,7 @@ class _KutuTaramaPageState extends State<KutuTaramaPage>
             _TaramaDurumu.basarili,
           );
           _sonMesaj = sonuc.zatenKayitli
-              ? 'Bu kutu zaten eklenmiş'
+              ? 'Bu barkod zaten eklenmiş'
               : sonuc.mesaj;
           _sonRenk = sonuc.zatenKayitli ? Colors.amber.shade800 : accent;
         });
@@ -196,16 +251,20 @@ class _KutuTaramaPageState extends State<KutuTaramaPage>
     return Scaffold(
         backgroundColor: const Color(0xFFF4F6F8),
         appBar: AppBar(
-          title: Text(widget.cikar ? 'Kutu Çıkarma' : 'Seri Kutu Okutma'),
+          title: Text(
+            widget.cikar ? 'Kasa / Kutu Çıkarma' : 'Kasa / Kutu Okutma',
+          ),
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
           actions: [
             IconButton(
               tooltip: 'Fener',
-              onPressed: () async {
-                await _controller.toggleTorch();
-                if (mounted) setState(() => _fenerAcik = !_fenerAcik);
-              },
+              onPressed: _modDegisiyor
+                  ? null
+                  : () async {
+                      await _controller.toggleTorch();
+                      if (mounted) setState(() => _fenerAcik = !_fenerAcik);
+                    },
               icon: Icon(
                 _fenerAcik ? Icons.flash_on_rounded : Icons.flash_off_rounded,
               ),
@@ -214,27 +273,69 @@ class _KutuTaramaPageState extends State<KutuTaramaPage>
         ),
         body: Column(
           children: [
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              child: Row(
+                children: [
+                  _TaramaModButonu(
+                    secili: _taramaModu == _TaramaModu.kasa,
+                    etkin: !_modDegisiyor,
+                    icon: Icons.view_week_rounded,
+                    baslik: 'KASA',
+                    aciklama: 'Siyah 1D barkod',
+                    onTap: () => unawaited(
+                      _taramaModunuDegistir(_TaramaModu.kasa),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _TaramaModButonu(
+                    secili: _taramaModu == _TaramaModu.kutu,
+                    etkin: !_modDegisiyor,
+                    icon: Icons.qr_code_2_rounded,
+                    baslik: 'KUTU',
+                    aciklama: 'QR kod',
+                    onTap: () => unawaited(
+                      _taramaModunuDegistir(_TaramaModu.kutu),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             SizedBox(
               height: 330,
               width: double.infinity,
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final kare = constraints.maxWidth
-                      .clamp(210.0, 285.0)
+                  // Kasa barkodu icin yatay, QR icin kare hedef alani.
+                  final kasaModu = _taramaModu == _TaramaModu.kasa;
+                  final qrKare = (constraints.maxWidth * .66)
+                      .clamp(210.0, 260.0)
                       .toDouble();
+                  final pencereGenisligi = kasaModu
+                      ? (constraints.maxWidth * .88)
+                          .clamp(260.0, 410.0)
+                          .toDouble()
+                      : qrKare;
+                  final pencereYuksekligi = kasaModu
+                      ? (constraints.maxHeight * .50)
+                          .clamp(150.0, 205.0)
+                          .toDouble()
+                      : qrKare;
                   final pencere = Rect.fromCenter(
                     center: Offset(
                       constraints.maxWidth / 2,
                       constraints.maxHeight / 2,
                     ),
-                    width: kare,
-                    height: kare,
+                    width: pencereGenisligi,
+                    height: pencereYuksekligi,
                   );
 
                   return Stack(
                     fit: StackFit.expand,
                     children: [
                       MobileScanner(
+                        key: ValueKey(_taramaModu),
                         controller: _controller,
                         scanWindow: pencere,
                         onDetect: _barkodAlgilandi,
@@ -242,6 +343,25 @@ class _KutuTaramaPageState extends State<KutuTaramaPage>
                       IgnorePointer(
                         child: CustomPaint(
                           painter: _TaramaCercevesiPainter(pencere),
+                        ),
+                      ),
+                      Positioned(
+                        left: 16,
+                        right: 16,
+                        bottom: 12,
+                        child: Text(
+                          kasaModu
+                              ? 'Siyah kasa barkodunu yatay ve tam çerçeveye alın'
+                              : 'Kutu QR kodunu çerçevenin ortasında tutun',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            shadows: [
+                              Shadow(color: Colors.black, blurRadius: 5),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -253,7 +373,10 @@ class _KutuTaramaPageState extends State<KutuTaramaPage>
               duration: const Duration(milliseconds: 180),
               width: double.infinity,
               color: _sonRenk,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 11,
+              ),
               child: Text(
                 _sonMesaj,
                 maxLines: 2,
@@ -273,7 +396,11 @@ class _KutuTaramaPageState extends State<KutuTaramaPage>
                   const SizedBox(width: 8),
                   _Sayac(title: 'Hatalı', value: _hatali, color: Colors.red),
                   const SizedBox(width: 8),
-                  _Sayac(title: 'Bekleyen', value: _bekleyen, color: Colors.orange),
+                  _Sayac(
+                    title: 'Bekleyen',
+                    value: _bekleyen,
+                    color: Colors.orange,
+                  ),
                 ],
               ),
             ),
@@ -304,7 +431,92 @@ class _KutuTaramaPageState extends State<KutuTaramaPage>
   }
 }
 
+enum _TaramaModu { kasa, kutu }
+
 enum _TaramaDurumu { bekliyor, basarili, hatali }
+
+class _TaramaModButonu extends StatelessWidget {
+  final bool secili;
+  final bool etkin;
+  final IconData icon;
+  final String baslik;
+  final String aciklama;
+  final VoidCallback onTap;
+
+  const _TaramaModButonu({
+    required this.secili,
+    required this.etkin,
+    required this.icon,
+    required this.baslik,
+    required this.aciklama,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const seciliRenk = Color(0xFF1E6F5C);
+
+    return Expanded(
+      child: Material(
+        color: secili ? seciliRenk : const Color(0xFFF1F4F3),
+        borderRadius: BorderRadius.circular(13),
+        child: InkWell(
+          onTap: etkin ? onTap : null,
+          borderRadius: BorderRadius.circular(13),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(13),
+              border: Border.all(
+                color: secili ? seciliRenk : const Color(0xFFDCE5E2),
+                width: 1.4,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: secili ? Colors.white : seciliRenk,
+                  size: 25,
+                ),
+                const SizedBox(width: 9),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        baslik,
+                        style: TextStyle(
+                          color: secili ? Colors.white : Colors.black87,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        aciklama,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: secili
+                              ? Colors.white.withOpacity(.82)
+                              : Colors.black54,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _TaramaKaydi {
   final String kod;
