@@ -1,5 +1,4 @@
 import 'package:agronet/models/login_user_model.dart';
-import 'package:agronet/widget/info_item.dart';
 import 'package:agronet/widget/mesaid_card.dart';
 import 'package:flutter/material.dart';
 
@@ -16,10 +15,10 @@ class ProfileCard extends StatelessWidget {
   static const Color accent = Color(0xFF1E6F5C);
 
   String _initial() {
-    final name = (user.kullaniciadi ?? "").trim();
+    final name = (user.kullaniciadi ?? '').trim();
 
     if (name.isEmpty) {
-      return "A";
+      return 'A';
     }
 
     return name.characters.first.toUpperCase();
@@ -27,203 +26,122 @@ class ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name =
-        (user.kullaniciadi ?? "Kullanıcı").trim();
+    final name = (user.kullaniciadi ?? 'Kullanıcı').trim();
+    final tip = (user.tip ?? '').trim();
+    final bileklik = (user.bileklikid ?? '').trim();
 
-    final tip =
-        (user.tip ?? "").trim();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Çok dar telefonlarda avatarı da biraz küçült.
+        final darEkran = constraints.maxWidth < 340;
 
-    final personel =
-        (user.prosiskodu ?? "").trim();
+        final avatarBoyut = darEkran ? 32.0 : 36.0;
+        final avatarYazi = darEkran ? 13.0 : 14.0;
 
-    final bileklik =
-        (user.bileklikid ?? "").trim();
-
-    return Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.black.withOpacity(.05),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(.035),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+        return Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(
+            horizontal: darEkran ? 7 : 9,
+            vertical: 7,
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // =====================================================
-          // ÜST - AVATAR / İSİM / PERSONEL TİPİ
-          // =====================================================
-
-          Row(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(
+              color: Colors.black.withOpacity(.05),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(.025),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // =================================================
+              // AVATAR
+              // =================================================
               Container(
-                width: 34,
-                height: 34,
+                width: avatarBoyut,
+                height: avatarBoyut,
                 decoration: BoxDecoration(
-                  borderRadius:
-                      BorderRadius.circular(10),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      accent.withOpacity(.22),
-                      accent.withOpacity(.06),
-                    ],
-                  ),
+                  color: accent.withOpacity(.10),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Center(
-                  child: Text(
-                    _initial(),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight:
-                          FontWeight.w900,
-                      color:
-                          accent.withOpacity(.95),
-                    ),
+                alignment: Alignment.center,
+                child: Text(
+                  _initial(),
+                  style: TextStyle(
+                    fontSize: avatarYazi,
+                    fontWeight: FontWeight.w900,
+                    color: accent,
                   ),
                 ),
               ),
 
-              const SizedBox(width: 7),
+              SizedBox(width: darEkran ? 6 : 8),
 
+              // =================================================
+              // İSİM + PERSONEL TİPİ
+              // =================================================
               Expanded(
                 child: Column(
-                  mainAxisSize:
-                      MainAxisSize.min,
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       name,
                       maxLines: 1,
-                      overflow:
-                          TextOverflow.ellipsis,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight:
-                            FontWeight.w900,
-                        height: 1.0,
-                        color:
-                            Colors.black.withOpacity(
-                          .88,
-                        ),
+                        fontSize: darEkran ? 11.5 : 12.5,
+                        height: 1.05,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black.withOpacity(.88),
                       ),
                     ),
 
                     if (tip.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-
+                      const SizedBox(height: 3),
                       Text(
                         tip,
                         maxLines: 1,
-                        overflow:
-                            TextOverflow.ellipsis,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 9.5,
-                          fontWeight:
-                              FontWeight.w700,
-                          height: 1.0,
-                          color:
-                              Colors.black.withOpacity(
-                            .50,
-                          ),
+                          fontSize: darEkran ? 8.5 : 9.2,
+                          height: 1.1,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black.withOpacity(.48),
                         ),
                       ),
                     ],
                   ],
                 ),
               ),
-            ],
-          ),
 
-          const SizedBox(height: 4),
+              // =================================================
+              // PRİM
+              // =================================================
+              if (bileklik.isNotEmpty) ...[
+                const SizedBox(width: 5),
 
-          // =====================================================
-          // PERSONEL / BİLEKLİK / MESAİ PRİM
-          // =====================================================
-
-          Container(
-            width: double.infinity,
-            padding:
-                const EdgeInsets.symmetric(
-              horizontal: 7,
-              vertical: 4,
-            ),
-            decoration: BoxDecoration(
-              color:
-                  const Color(0xFFF7F7F9),
-              borderRadius:
-                  BorderRadius.circular(9),
-              border: Border.all(
-                color:
-                    Colors.black.withOpacity(.045),
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: InfoItem(
-                        icon:
-                            Icons.badge_outlined,
-                        label: "Personel",
-                        value:
-                            personel.isEmpty
-                                ? "-"
-                                : personel,
-                      ),
-                    ),
-
-                    Container(
-                      width: 1,
-                      height: 14,
-                      margin:
-                          const EdgeInsets.symmetric(
-                        horizontal: 3,
-                      ),
-                      color:
-                          Colors.black.withOpacity(
-                        .07,
-                      ),
-                    ),
-
-                    Expanded(
-                      child: InfoItem(
-                        icon:
-                            Icons.watch_outlined,
-                        label: "Bileklik",
-                        value:
-                            bileklik.isEmpty
-                                ? "-"
-                                : bileklik,
-                      ),
-                    ),
-                  ],
-                ),
-
-                if (bileklik.isNotEmpty) ...[
-                  const SizedBox(height: 3),
-
-                  MesaiPrimPuanWidget(
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    // Kartın en fazla yaklaşık %28'ini kullanabilir.
+                    maxWidth: constraints.maxWidth * .28,
+                  ),
+                  child: MesaiPrimPuanWidget(
                     bileklikId: bileklik,
                   ),
-                ],
+                ),
               ],
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

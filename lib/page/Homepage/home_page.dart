@@ -21,6 +21,7 @@ import 'package:agronet/page/tuta_giris.dart';
 import 'package:agronet/page/tuta_rapor.dart';
 import 'package:agronet/services/bildirim_navigation_service.dart';
 import 'package:agronet/services/update_service.dart';
+import 'package:agronet/widget/mesaid_card.dart';
 import 'package:agronet/widget/profile_header.dart';
 
 import 'package:flutter/material.dart';
@@ -133,6 +134,16 @@ Future<void> _guncellemeKontrolEt() async {
         ? "Kullanıcı"
         : t;
   }
+
+  String _userInitial() {
+  final name = (user.kullaniciadi ?? '').trim();
+
+  if (name.isEmpty) {
+    return 'A';
+  }
+
+  return name.characters.first.toUpperCase();
+}
 
   @override
   Widget build(BuildContext context) {
@@ -631,21 +642,108 @@ _MenuItem(
         // APP BAR
         // ========================================================
 
-        appBar: AppBar(
-          toolbarHeight: 48,
-          title: const Text(
-            "Agronet Seracılık A.Ş",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight:
-                  FontWeight.w900,
+       appBar: AppBar(
+  toolbarHeight: 58,
+  elevation: 0,
+  scrolledUnderElevation: 0,
+  backgroundColor: Colors.white,
+  surfaceTintColor: Colors.white,
+  automaticallyImplyLeading: false,
+  titleSpacing: 10,
+
+  title: LayoutBuilder(
+    builder: (context, constraints) {
+      final name = (user.kullaniciadi ?? 'Kullanıcı').trim();
+      final tip = (user.tip ?? '').trim();
+      final bileklik = (user.bileklikid ?? '').trim();
+
+      final darEkran = constraints.maxWidth < 330;
+
+      return Row(
+        children: [
+          // =====================================================
+          // PERSONEL AVATAR
+          // =====================================================
+          Container(
+            width: darEkran ? 32 : 36,
+            height: darEkran ? 32 : 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E6F5C).withOpacity(.10),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              _userInitial(),
+              style: TextStyle(
+                color: const Color(0xFF1E6F5C),
+                fontSize: darEkran ? 12 : 14,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
-          centerTitle: true,
-          foregroundColor: Colors.black,
-          backgroundColor: Colors.white,
-          elevation: 0,
-        ),
+
+          SizedBox(width: darEkran ? 6 : 8),
+
+          // =====================================================
+          // İSİM + PERSONEL TİPİ
+          // =====================================================
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: darEkran ? 11.5 : 12.5,
+                    height: 1.05,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+
+                if (tip.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    tip,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.black.withOpacity(.50),
+                      fontSize: darEkran ? 8.2 : 9,
+                      height: 1.05,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // =====================================================
+          // PRİM PUANI
+          // =====================================================
+         if (bileklik.isNotEmpty)
+  MesaiPrimPuanWidget(
+    bileklikId: bileklik,
+    compact: true,
+  ),
+        ],
+      );
+    },
+  ),
+
+  bottom: const PreferredSize(
+    preferredSize: Size.fromHeight(1),
+    child: Divider(
+      height: 1,
+      thickness: 1,
+      color: Color(0xFFE7ECEA),
+    ),
+  ),
+),
 
         // ========================================================
         // BODY
@@ -666,10 +764,6 @@ _MenuItem(
             // PROFİL
             // ====================================================
 
-            ProfileCard(
-              user: user,
-              role: _roleLabel(),
-            ),
 
             const SizedBox(height: 8),
 
